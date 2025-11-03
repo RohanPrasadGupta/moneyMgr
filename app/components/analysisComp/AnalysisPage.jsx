@@ -786,14 +786,14 @@ const AnalysisPage = () => {
                   },
                   series: [
                     {
-                      name: "Expense",
+                      name: "Income",
                       data: barChartData.Expense.map((item) => item.value),
-                      color: "#ef5350",
+                      color: "#43a047",
                     },
                     {
-                      name: "Income",
+                      name: "Expense",
                       data: barChartData.Income.map((item) => item.value),
-                      color: "#43a047",
+                      color: "#ef5350",
                     },
                   ],
                 }}
