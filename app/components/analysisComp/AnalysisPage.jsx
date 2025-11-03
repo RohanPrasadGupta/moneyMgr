@@ -140,19 +140,37 @@ const AnalysisPage = () => {
   });
 
   const barChartData = React.useMemo(() => {
-    if (!allTransactionData?.data || !barYear || !barType) return [];
+    // if (!allTransactionData?.data || !barYear || !barType) return [];
+    if (!allTransactionData?.data || !barYear) return [];
 
-    const monthlySums = Array(12).fill(0); // Jan-Dec
-    allTransactionData.data.forEach((tx) => {
+    const monthlySumsIncome = Array(12).fill(0); // Jan-Dec
+    const monthlyIncomeData = allTransactionData.data.forEach((tx) => {
       const txDate = dayjs(tx.date);
-      if (txDate.year() === Number(barYear) && tx.type === barType) {
-        monthlySums[txDate.month()] += Number(tx.amount);
+      if (txDate.year() === Number(barYear) && tx.type === "Income") {
+        monthlySumsIncome[txDate.month()] += Number(tx.amount);
       }
     });
-    return monthlySums.map((sum, idx) => ({
-      month: Months[idx],
-      value: sum,
-    }));
+
+    const monthlySumsExpense = Array(12).fill(0); // Jan-Dec
+    const monthlyExpenseData = allTransactionData.data.forEach((tx) => {
+      const txDate = dayjs(tx.date);
+      if (txDate.year() === Number(barYear) && tx.type === "Expense") {
+        monthlySumsExpense[txDate.month()] += Number(tx.amount);
+      }
+    });
+
+    const allData = {
+      Expense: monthlySumsIncome.map((sum, idx) => ({
+        month: Months[idx],
+        value: sum,
+      })),
+      Income: monthlySumsExpense.map((sum, idx) => ({
+        month: Months[idx],
+        value: sum,
+      })),
+    };
+
+    return allData;
   }, [allTransactionData, barYear, barType]);
 
   return (
@@ -502,7 +520,7 @@ const AnalysisPage = () => {
                 </MenuItem>
               ))}
             </Select>
-            <Box
+            {/* <Box
               sx={{
                 display: "flex",
                 flexDirection: { xs: "column", sm: "row" },
@@ -584,7 +602,7 @@ const AnalysisPage = () => {
                   <span>{type}</span>
                 </Box>
               ))}
-            </Box>
+            </Box> */}
           </Box>
           <Box
             sx={{
@@ -711,7 +729,7 @@ const AnalysisPage = () => {
                     },
                   },
                   xAxis: {
-                    categories: barChartData.map((item) => item.month),
+                    categories: barChartData.Expense.map((item) => item.month),
                     title: {
                       text: "Month",
                       style: {
@@ -768,9 +786,14 @@ const AnalysisPage = () => {
                   },
                   series: [
                     {
-                      name: barType,
-                      data: barChartData.map((item) => item.value),
-                      color: barType === "Expense" ? "#ef5350" : "#43a047",
+                      name: "Expense",
+                      data: barChartData.Expense.map((item) => item.value),
+                      color: "#ef5350",
+                    },
+                    {
+                      name: "Income",
+                      data: barChartData.Income.map((item) => item.value),
+                      color: "#43a047",
                     },
                   ],
                 }}
