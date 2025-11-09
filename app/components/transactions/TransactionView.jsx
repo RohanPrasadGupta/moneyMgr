@@ -117,7 +117,7 @@ const TransactionView = () => {
     queryKey: ["getMonthlyTransactions", currentYear, currentMonth],
     queryFn: () =>
       fetch(
-        `https://moneymgrbackend.onrender.com/api/data/${currentYear}/${currentMonth}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/data/${currentYear}/${currentMonth}`,
         { method: "GET", credentials: "include" }
       ).then((res) => res.json()),
     enabled: Boolean(currentYear && currentMonth),
@@ -126,7 +126,7 @@ const TransactionView = () => {
   const mutation = useMutation({
     mutationFn: async ({ id }) => {
       const res = await fetch(
-        `https://moneymgrbackend.onrender.com/api/data/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/data/${id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -148,7 +148,7 @@ const TransactionView = () => {
   const updateTransactionMutation = useMutation({
     mutationFn: async (transactionData) => {
       const res = await fetch(
-        `https://moneymgrbackend.onrender.com/api/data/${transactionData._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/data/${transactionData._id}`,
         {
           method: "PUT",
           credentials: "include",

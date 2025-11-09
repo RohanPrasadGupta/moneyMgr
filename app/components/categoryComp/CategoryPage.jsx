@@ -142,7 +142,7 @@ const CategoryPage = () => {
   const categoryMutation = useMutation({
     mutationFn: async (categorydata) => {
       const res = await fetch(
-        "https://moneymgrbackend.onrender.com/api/category",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/category`,
         {
           method: "POST",
           credentials: "include",
@@ -176,7 +176,7 @@ const CategoryPage = () => {
   const categoryDeleteMutation = useMutation({
     mutationFn: async (categoryId) => {
       const res = await fetch(
-        `https://moneymgrbackend.onrender.com/api/category/${categoryId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/category/${categoryId}`,
         {
           method: "DELETE",
           credentials: "include",

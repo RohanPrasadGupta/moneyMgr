@@ -53,7 +53,7 @@ const AnalysisPage = () => {
     queryKey: ["getTransactionData", currentYear, currentMonth],
     queryFn: () =>
       fetch(
-        `https://moneymgrbackend.onrender.com/api/data/${currentYear}/${currentMonth}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/data/${currentYear}/${currentMonth}`,
         { method: "GET", credentials: "include" }
       ).then((res) => res.json()),
     enabled: viewMode === "monthly" && Boolean(currentYear && currentMonth),
@@ -66,7 +66,7 @@ const AnalysisPage = () => {
   const { isPending: isPendingAllData, data: allTransactionData } = useQuery({
     queryKey: ["getAllTransactionData"],
     queryFn: () =>
-      fetch(`https://moneymgrbackend.onrender.com/api/data`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/data`, {
         method: "GET",
         credentials: "include",
       }).then((res) => res.json()),

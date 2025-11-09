@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 export const useCategoryOptions = {
   queryKey: ["getCategories"],
   queryFn: () =>
-    fetch("https://moneymgrbackend.onrender.com/api/category", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/category`, {
       method: "GET",
       credentials: "include",
     }).then((res) => res.json()),
