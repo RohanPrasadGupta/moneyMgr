@@ -53,7 +53,7 @@ const AddTransaction = ({ setAddModalOpen }) => {
 
   const mutation = useMutation({
     mutationFn: async (submitData) => {
-      const res = await fetch("https://moneymgrbackend.onrender.com/api/data", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/data`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -108,7 +108,7 @@ const AddTransaction = ({ setAddModalOpen }) => {
   const categoryMutation = useMutation({
     mutationFn: async (categorydata) => {
       const res = await fetch(
-        "https://moneymgrbackend.onrender.com/api/category",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/category`,
         {
           method: "POST",
           credentials: "include",

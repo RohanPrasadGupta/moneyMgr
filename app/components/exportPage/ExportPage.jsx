@@ -70,7 +70,7 @@ const ExportPage = () => {
   } = useQuery({
     queryKey: ["getAllTransactionData"],
     queryFn: () =>
-      fetch(`https://moneymgrbackend.onrender.com/api/data`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/data`, {
         method: "GET",
         credentials: "include",
       }).then((res) => res.json()),
