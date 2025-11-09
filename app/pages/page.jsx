@@ -4,9 +4,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Box from "@mui/material/Box";
-import dotenv from "dotenv";
 
-dotenv.config();
 
 const Page = () => {
   const router = useRouter();
