@@ -32,18 +32,12 @@ const Months = [
 const Years = Array.from({ length: 10 }, (_, i) => 2029 - i);
 
 const AnalysisPage = () => {
-  const [currentYear, setCurrentYear] = React.useState("");
-  const [currentMonth, setCurrentMonth] = React.useState("");
+  const now = dayjs();
+  const [currentYear, setCurrentYear] = React.useState(now.year());
+  const [currentMonth, setCurrentMonth] = React.useState(now.format("MMMM"));
   const [viewMode, setViewMode] = React.useState("monthly");
-  const [barYear, setBarYear] = React.useState("");
+  const [barYear, setBarYear] = React.useState(now.year());
   const [barType, setBarType] = React.useState("Expense");
-
-  useEffect(() => {
-    const now = dayjs();
-    setCurrentYear(now.year());
-    setCurrentMonth(now.format("MMMM"));
-    setBarYear(now.year());
-  }, []);
 
   const {
     isPending,
@@ -160,11 +154,11 @@ const AnalysisPage = () => {
     });
 
     const allData = {
-      Expense: monthlySumsIncome.map((sum, idx) => ({
+      Expense: monthlySumsExpense.map((sum, idx) => ({
         month: Months[idx],
         value: sum,
       })),
-      Income: monthlySumsExpense.map((sum, idx) => ({
+      Income: monthlySumsIncome.map((sum, idx) => ({
         month: Months[idx],
         value: sum,
       })),
@@ -729,7 +723,7 @@ const AnalysisPage = () => {
                     },
                   },
                   xAxis: {
-                    categories: barChartData.Expense.map((item) => item.month),
+                    categories: barChartData?.[barType]?.map((item) => item.month) || [],
                     title: {
                       text: "Month",
                       style: {
@@ -787,12 +781,12 @@ const AnalysisPage = () => {
                   series: [
                     {
                       name: "Income",
-                      data: barChartData.Expense.map((item) => item.value),
+                      data: barChartData?.Income?.map((item) => item.value) || [],
                       color: "#43a047",
                     },
                     {
                       name: "Expense",
-                      data: barChartData.Income.map((item) => item.value),
+                      data: barChartData?.Expense?.map((item) => item.value) || [],
                       color: "#ef5350",
                     },
                   ],
