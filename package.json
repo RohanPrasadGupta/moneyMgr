@@ -29,6 +29,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hot-toast": "^2.6.0",
+    "recharts": "^3.6.0",
     "styled-components": "^6.1.19",
     "theme": "^0.1.0"
   },
