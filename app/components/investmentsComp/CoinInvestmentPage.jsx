@@ -22,6 +22,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
 import AddIcon from "@mui/icons-material/Add";
@@ -43,6 +45,10 @@ import {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_COIN_CAPITAL;
 
 const CoinInvestmentPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     date: "",
@@ -331,9 +337,10 @@ const CoinInvestmentPage = () => {
         onClose={() => setOpenAddDialog(false)}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx:{
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
             bgcolor: "background.paper",
             border: "1px solid #23272f",
           },
@@ -346,21 +353,23 @@ const CoinInvestmentPage = () => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            p: { xs: 2, sm: 2.5, md: 3 },
           }}
         >
-          <Typography variant="h6" fontWeight="bold">
+          <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}>
             Add New Coin Investment
           </Typography>
           <IconButton onClick={() => setOpenAddDialog(false)} size="small">
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
+        <DialogContent sx={{ mt: { xs: 2, sm: 2.5, md: 3 }, p: { xs: 2, sm: 2.5, md: 3 } }}>
           <Box component="form" id="add-form" onSubmit={handleAddSubmit}>
-            <Grid container spacing={3}>
+            <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  size={isMobile ? "small" : "medium"}
                   label="Date"
                   name="date"
                   type="date"
@@ -394,6 +403,7 @@ const CoinInvestmentPage = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  size={isMobile ? "small" : "medium"}
                   label="Amount (BHT)"
                   name="amount"
                   type="number"
@@ -418,6 +428,7 @@ const CoinInvestmentPage = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  size={isMobile ? "small" : "medium"}
                   label="Transaction Charge (BHT)"
                   name="transactionCharge"
                   type="number"
@@ -442,17 +453,18 @@ const CoinInvestmentPage = () => {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
+        <DialogActions sx={{ p: { xs: 2, sm: 2.5, md: 3 }, borderTop: "1px solid #23272f", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
           <Button
             onClick={() => setOpenAddDialog(false)}
             variant="contained"
+            fullWidth={isMobile}
             sx={{
               background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
-              px: 3,
-              py: 1.2,
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 1, sm: 1.1, md: 1.2 },
               boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
               "&:hover": {
                 background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
@@ -468,14 +480,15 @@ const CoinInvestmentPage = () => {
             type="submit"
             form="add-form"
             variant="contained"
+            fullWidth={isMobile}
             disabled={addInvestmentMutation.isPending}
             sx={{
               background: "linear-gradient(135deg, #66bb6a 0%, #4caf50 100%)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
-              px: 3,
-              py: 1.2,
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 1, sm: 1.1, md: 1.2 },
               boxShadow: "0 4px 12px rgba(102, 187, 106, 0.3)",
               "&:hover": {
                 background: "linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)",
@@ -503,9 +516,10 @@ const CoinInvestmentPage = () => {
         onClose={() => setOpenEditDialog(false)}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx:{
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
             bgcolor: "background.paper",
             border: "1px solid #23272f",
           },
@@ -518,21 +532,23 @@ const CoinInvestmentPage = () => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            p: { xs: 2, sm: 2.5, md: 3 },
           }}
         >
-          <Typography variant="h6" fontWeight="bold">
+          <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}>
             Edit Coin Investment
           </Typography>
           <IconButton onClick={() => setOpenEditDialog(false)} size="small">
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
+        <DialogContent sx={{ mt: { xs: 2, sm: 2.5, md: 3 }, p: { xs: 2, sm: 2.5, md: 3 } }}>
           <Box component="form" id="edit-form" onSubmit={handleEditSubmit}>
-            <Grid container spacing={3}>
+            <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  size={isMobile ? "small" : "medium"}
                   label="Date"
                   name="date"
                   type="date"
@@ -566,6 +582,7 @@ const CoinInvestmentPage = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  size={isMobile ? "small" : "medium"}
                   label="Amount (BHT)"
                   name="amount"
                   type="number"
@@ -590,6 +607,7 @@ const CoinInvestmentPage = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  size={isMobile ? "small" : "medium"}
                   label="Transaction Charge (BHT)"
                   name="transactionCharge"
                   type="number"
@@ -614,17 +632,18 @@ const CoinInvestmentPage = () => {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
+        <DialogActions sx={{ p: { xs: 2, sm: 2.5, md: 3 }, borderTop: "1px solid #23272f", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
           <Button
             onClick={() => setOpenEditDialog(false)}
             variant="contained"
+            fullWidth={isMobile}
             sx={{
               background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
-              px: 3,
-              py: 1.2,
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 1, sm: 1.1, md: 1.2 },
               boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
               "&:hover": {
                 background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
@@ -640,14 +659,15 @@ const CoinInvestmentPage = () => {
             type="submit"
             form="edit-form"
             variant="contained"
+            fullWidth={isMobile}
             disabled={updateInvestmentMutation.isPending}
             sx={{
               background: "linear-gradient(135deg, #90caf9 0%, #42a5f5 100%)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
-              px: 3,
-              py: 1.2,
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 1, sm: 1.1, md: 1.2 },
               boxShadow: "0 4px 12px rgba(144, 202, 249, 0.3)",
               "&:hover": {
                 background: "linear-gradient(135deg, #42a5f5 0%, #90caf9 100%)",
@@ -675,9 +695,10 @@ const CoinInvestmentPage = () => {
         onClose={() => setOpenDeleteDialog(false)}
         maxWidth="xs"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx:{
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
             bgcolor: "background.paper",
             border: "1px solid #23272f",
           },
@@ -687,48 +708,50 @@ const CoinInvestmentPage = () => {
           sx={{
             bgcolor: "background.default",
             borderBottom: "1px solid #23272f",
+            p: { xs: 2, sm: 2.5, md: 3 },
           }}
         >
-          <Typography variant="h6" fontWeight="bold" sx={{ color: "#ef5350" }}>
+          <Typography variant="h6" fontWeight="bold" sx={{ color: "#ef5350", fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}>
             Confirm Delete
           </Typography>
         </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
-          <Typography variant="body1" sx={{ mb: 2 }}>
+        <DialogContent sx={{ mt: { xs: 2, sm: 2.5, md: 3 }, p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <Typography variant="body1" sx={{ mb: 2, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
             Are you sure you want to delete this coin investment?
           </Typography>
           {selectedInvestment && (
             <Paper
               sx={{
-                p: 2,
+                p: { xs: 1.5, sm: 2 },
                 bgcolor: "background.default",
                 border: "1px solid #23272f",
                 borderRadius: 2,
               }}
             >
-              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
                 Date: <strong>{formatDate(selectedInvestment.date)}</strong>
               </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
                 Amount: <strong>{formatCurrencyBHT(selectedInvestment.amount)}</strong>
               </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
                 Total: <strong>{formatCurrencyBHT(selectedInvestment.totalAmount)}</strong>
               </Typography>
             </Paper>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
+        <DialogActions sx={{ p: { xs: 2, sm: 2.5, md: 3 }, borderTop: "1px solid #23272f", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
           <Button
             onClick={() => setOpenDeleteDialog(false)}
             variant="contained"
+            fullWidth={isMobile}
             sx={{
               background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
-              px: 3,
-              py: 1.2,
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 1, sm: 1.1, md: 1.2 },
               boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
               "&:hover": {
                 background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
@@ -743,14 +766,15 @@ const CoinInvestmentPage = () => {
           <Button
             onClick={handleDeleteConfirm}
             variant="contained"
+            fullWidth={isMobile}
             disabled={deleteInvestmentMutation.isPending}
             sx={{
               background: "linear-gradient(135deg, #ef5350 0%, #f44336 100%)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
-              px: 3,
-              py: 1.2,
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 1, sm: 1.1, md: 1.2 },
               boxShadow: "0 4px 12px rgba(239, 83, 80, 0.3)",
               "&:hover": {
                 background: "linear-gradient(135deg, #f44336 0%, #ef5350 100%)",
@@ -773,92 +797,98 @@ const CoinInvestmentPage = () => {
       </Dialog>
 
       {/* Statistics Cards with Add Button */}
-      <Grid container spacing={3} sx={{ mb: 3, alignItems: "center" }}>
-        <Grid item xs={12} md={2}>
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, alignItems: "stretch" }}>
+        <Grid item xs={12} sm={6} md={2}>
           <Paper
             sx={{
-              p: 3,
-              borderRadius: 3,
+              p: { xs: 2, sm: 2.5, md: 3 },
+              borderRadius: { xs: 2, sm: 2.5, md: 3 },
               bgcolor: "background.paper",
               border: "1px solid #23272f",
               textAlign: "center",
+              height: "100%",
             }}
           >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
               TOTAL INVESTMENT (BHT)
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#ff9966", mt: 1 }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "#ff9966", mt: 1, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
               {formatCurrencyBHT(totalInvestment)}
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={2.4}>
+        <Grid item xs={12} sm={6} md={2.4}>
           <Paper
             sx={{
-              p: 3,
-              borderRadius: 3,
+              p: { xs: 2, sm: 2.5, md: 3 },
+              borderRadius: { xs: 2, sm: 2.5, md: 3 },
               bgcolor: "background.paper",
               border: "1px solid #23272f",
               textAlign: "center",
+              height: "100%",
             }}
           >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
               TRANSACTION CHARGES
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#ef5350", mt: 1 }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "#ef5350", mt: 1, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
               {formatCurrencyBHT(totalCharges)}
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={2.4}>
+        <Grid item xs={12} sm={6} md={2.4}>
           <Paper
             sx={{
-              p: 3,
-              borderRadius: 3,
+              p: { xs: 2, sm: 2.5, md: 3 },
+              borderRadius: { xs: 2, sm: 2.5, md: 3 },
               bgcolor: "background.paper",
               border: "1px solid #23272f",
               textAlign: "center",
+              height: "100%",
             }}
           >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
               GRAND TOTAL (BHT)
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#90caf9", mt: 1 }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "#90caf9", mt: 1, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
               {formatCurrencyBHT(grandTotal)}
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={2.4}>
+        <Grid item xs={12} sm={6} md={2.4}>
           <Paper
             sx={{
-              p: 3,
-              borderRadius: 3,
+              p: { xs: 2, sm: 2.5, md: 3 },
+              borderRadius: { xs: 2, sm: 2.5, md: 3 },
               bgcolor: "background.paper",
               border: "1px solid rgba(102, 187, 106, 0.5)",
               textAlign: "center",
               boxShadow: "0 4px 12px rgba(102, 187, 106, 0.2)",
+              height: "100%",
             }}
           >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
               NPR AMOUNT (×4.3)
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#66bb6a", mt: 1 }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "#66bb6a", mt: 1, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
               {formatCurrencyNPR(grandTotalInNPR)}
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={4} sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Grid item xs={12} md={2.8} sx={{ display: "flex", justifyContent: { xs: 'center', md: 'flex-end' }, alignItems: "center" }}>
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            startIcon={<AddIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />}
             onClick={handleOpenAddDialog}
+            fullWidth={isMobile}
             sx={{
               background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
-              px: 3,
-              py: 1.5,
+              px: { xs: 2.5, sm: 3, md: 3 },
+              py: { xs: 1.25, sm: 1.375, md: 1.5 },
+              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
               boxShadow: "0 4px 12px rgba(255, 94, 98, 0.3)",
               "&:hover": {
                 background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
@@ -877,47 +907,47 @@ const CoinInvestmentPage = () => {
       {coinInvestments.length > 0 ? (
         <Paper
         sx={{
-          p: 4,
-          borderRadius: 3,
+          p: { xs: 2, sm: 3, md: 4 },
+          borderRadius: { xs: 2, sm: 2.5, md: 3 },
           bgcolor: "background.paper",
           border: "1px solid #23272f",
-          mb: 3,
+          mb: { xs: 2, sm: 2.5, md: 3 },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: { xs: 2, sm: 2.5, md: 3 } }}>
           <Box
             sx={{
               background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
               borderRadius: 2,
-              p: 1.5,
+              p: { xs: 1, sm: 1.25, md: 1.5 },
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <CurrencyBitcoinIcon sx={{ fontSize: 32, color: "#fff" }} />
+            <CurrencyBitcoinIcon sx={{ fontSize: { xs: 24, sm: 28, md: 32 }, color: "#fff" }} />
           </Box>
           <Box>
-            <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>
+            <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' } }}>
               Yearly Coin Investment Overview
             </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary", fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
               Total amount invested per year in BHT (including transaction charges)
             </Typography>
           </Box>
         </Box>
 
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : isTablet ? 350 : 400}>
+          <BarChart data={chartData} margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 10 : 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#23272f" />
             <XAxis
               dataKey="year"
               stroke="#b0b8c1"
-              style={{ fontSize: "14px", fontWeight: 600 }}
+              style={{ fontSize: isMobile ? "12px" : "14px", fontWeight: 600 }}
             />
             <YAxis
               stroke="#b0b8c1"
-              style={{ fontSize: "14px" }}
+              style={{ fontSize: isMobile ? "11px" : "14px" }}
               tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255, 94, 98, 0.1)" }} />
@@ -925,7 +955,7 @@ const CoinInvestmentPage = () => {
               wrapperStyle={{ paddingTop: "20px" }}
               iconType="circle"
               formatter={(value) => (
-                <span style={{ color: "#f5f6fa", fontSize: "14px", fontWeight: 600 }}>
+                <span style={{ color: "#f5f6fa", fontSize: isMobile ? "12px" : "14px", fontWeight: 600 }}>
                   {value}
                 </span>
               )}
@@ -948,11 +978,11 @@ const CoinInvestmentPage = () => {
       ) : (
         <Paper
           sx={{
-            p: 6,
-            borderRadius: 3,
+            p: { xs: 4, sm: 5, md: 6 },
+            borderRadius: { xs: 2, sm: 2.5, md: 3 },
             bgcolor: "background.paper",
             border: "1px solid #23272f",
-            mb: 3,
+            mb: { xs: 2, sm: 2.5, md: 3 },
             textAlign: "center",
           }}
         >
@@ -961,16 +991,16 @@ const CoinInvestmentPage = () => {
               display: "inline-flex",
               background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
               borderRadius: 3,
-              p: 3,
-              mb: 3,
+              p: { xs: 2, sm: 2.5, md: 3 },
+              mb: { xs: 2, sm: 2.5, md: 3 },
             }}
           >
-            <CurrencyBitcoinIcon sx={{ fontSize: 64, color: "#fff", opacity: 0.7 }} />
+            <CurrencyBitcoinIcon sx={{ fontSize: { xs: 48, sm: 56, md: 64 }, color: "#fff", opacity: 0.7 }} />
           </Box>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", mb: 1 }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", mb: 1, fontSize: { xs: '1.25rem', sm: '1.375rem', md: '1.5rem' } }}>
             No Coin Investment Data
           </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary", fontSize: { xs: '0.875rem', sm: '1rem' } }}>
             Start by adding your first coin investment using the button above.
           </Typography>
         </Paper>
@@ -980,7 +1010,7 @@ const CoinInvestmentPage = () => {
       {coinInvestments.length > 0 && (
         <Paper
           sx={{
-            borderRadius: 3,
+            borderRadius: { xs: 2, sm: 2.5, md: 3 },
             bgcolor: "background.paper",
             border: "1px solid #23272f",
             overflow: "hidden",
@@ -988,20 +1018,20 @@ const CoinInvestmentPage = () => {
         >
         <Box
           sx={{
-            p: 3,
+            p: { xs: 2, sm: 2.5, md: 3 },
             borderBottom: "1px solid #23272f",
             bgcolor: "background.default",
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' } }}>
             Transaction History
           </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
             Detailed list of all coin investments in BHT with transaction charges
           </Typography>
         </Box>
 
-        <TableContainer sx={{ maxHeight: 500 }}>
+        <TableContainer sx={{ maxHeight: isMobile ? 400 : 500, overflowX: 'auto' }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -1009,12 +1039,13 @@ const CoinInvestmentPage = () => {
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    fontSize: "0.85rem",
+                    fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
                     bgcolor: "#1e1e1e",
                     color: "#f5f6fa",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
                     borderBottom: "2px solid #ff5e62",
+                    px: { xs: 1, sm: 2 },
                   }}
                 >
                   Date
@@ -1023,12 +1054,13 @@ const CoinInvestmentPage = () => {
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    fontSize: "0.85rem",
+                    fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
                     bgcolor: "#1e1e1e",
                     color: "#f5f6fa",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
                     borderBottom: "2px solid #ff5e62",
+                    px: { xs: 1, sm: 2 },
                   }}
                 >
                   Amount (BHT)
@@ -1037,12 +1069,14 @@ const CoinInvestmentPage = () => {
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    fontSize: "0.85rem",
+                    fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
                     bgcolor: "#1e1e1e",
                     color: "#f5f6fa",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
                     borderBottom: "2px solid #ff5e62",
+                    display: { xs: 'none', sm: 'table-cell' },
+                    px: { xs: 1, sm: 2 },
                   }}
                 >
                   Charges (BHT)
@@ -1051,12 +1085,13 @@ const CoinInvestmentPage = () => {
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    fontSize: "0.85rem",
+                    fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
                     bgcolor: "#1e1e1e",
                     color: "#f5f6fa",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
                     borderBottom: "2px solid #ff5e62",
+                    px: { xs: 1, sm: 2 },
                   }}
                 >
                   Total (BHT)
@@ -1065,12 +1100,14 @@ const CoinInvestmentPage = () => {
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    fontSize: "0.85rem",
+                    fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
                     bgcolor: "#1e1e1e",
                     color: "#f5f6fa",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
                     borderBottom: "2px solid #ff5e62",
+                    display: { xs: 'none', md: 'table-cell' },
+                    px: { xs: 1, sm: 2 },
                   }}
                 >
                   Year
@@ -1079,12 +1116,13 @@ const CoinInvestmentPage = () => {
                   align="center"
                   sx={{
                     fontWeight: "bold",
-                    fontSize: "0.85rem",
+                    fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
                     bgcolor: "#1e1e1e",
                     color: "#f5f6fa",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
                     borderBottom: "2px solid #ff5e62",
+                    px: { xs: 1, sm: 2 },
                   }}
                 >
                   Actions
@@ -1099,7 +1137,7 @@ const CoinInvestmentPage = () => {
                   key={transaction._id}
                   sx={{
                     "&:hover": {
-                      bgcolor: "rgba(255, 94, 98, 0.08)",
+                      bgcolor: isMobile ? "transparent" : "rgba(255, 94, 98, 0.08)",
                     },
                     transition: "all 0.2s ease",
                     "&:nth-of-type(odd)": {
@@ -1110,17 +1148,17 @@ const CoinInvestmentPage = () => {
                     },
                   }}
                 >
-                  <TableCell align="center">
-                    <Typography variant="body2" sx={{ color: "text.primary" }}>
+                  <TableCell align="center" sx={{ px: { xs: 1, sm: 2 } }}>
+                    <Typography variant="body2" sx={{ color: "text.primary", fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                       {formatDate(transaction.date)}
                     </Typography>
                   </TableCell>
-                  <TableCell align="center">
-                    <Typography variant="body1" fontWeight="700" sx={{ color: "#ff9966" }}>
+                  <TableCell align="center" sx={{ px: { xs: 1, sm: 2 } }}>
+                    <Typography variant="body1" fontWeight="700" sx={{ color: "#ff9966", fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                       {formatCurrencyBHT(transaction.amount)}
                     </Typography>
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ display: { xs: 'none', sm: 'table-cell' }, px: { xs: 1, sm: 2 } }}>
                     <Chip
                       label={formatCurrencyBHT(transaction.transactionCharge)}
                       size="small"
@@ -1129,21 +1167,22 @@ const CoinInvestmentPage = () => {
                         color: "#ef5350",
                         fontWeight: 600,
                         border: "1px solid rgba(239, 83, 80, 0.3)",
+                        fontSize: { xs: '0.7rem', sm: '0.8125rem' },
                       }}
                     />
                   </TableCell>
-                  <TableCell align="center">
-                    <Typography variant="body1" fontWeight="bold" sx={{ color: "#90caf9" }}>
+                  <TableCell align="center" sx={{ px: { xs: 1, sm: 2 } }}>
+                    <Typography variant="body1" fontWeight="bold" sx={{ color: "#90caf9", fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                       {formatCurrencyBHT(transaction.totalAmount)}
                     </Typography>
                   </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2" fontWeight="600" sx={{ color: "#f48fb1" }}>
+                <TableCell align="center" sx={{ display: { xs: 'none', md: 'table-cell' }, px: { xs: 1, sm: 2 } }}>
+                  <Typography variant="body2" fontWeight="600" sx={{ color: "#f48fb1", fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     {new Date(transaction.date).getFullYear()}
                   </Typography>
                 </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                <TableCell align="center" sx={{ px: { xs: 0.5, sm: 2 } }}>
+                  <Box sx={{ display: "flex", gap: { xs: 0.5, sm: 1 }, justifyContent: "center" }}>
                     <IconButton
                       size="small"
                       sx={{
@@ -1152,13 +1191,14 @@ const CoinInvestmentPage = () => {
                         border: "1px solid rgba(144, 202, 249, 0.3)",
                         "&:hover": {
                           bgcolor: "rgba(144, 202, 249, 0.2)",
-                          transform: "scale(1.1)",
+                          transform: isMobile ? "none" : "scale(1.1)",
                         },
                         transition: "all 0.2s ease",
+                        p: { xs: 0.5, sm: 1 },
                       }}
                       onClick={() => handleOpenEditDialog(transaction)}
                     >
-                      <EditIcon fontSize="small" />
+                      <EditIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
                     </IconButton>
                     <IconButton
                       size="small"
@@ -1168,13 +1208,14 @@ const CoinInvestmentPage = () => {
                         border: "1px solid rgba(239, 83, 80, 0.3)",
                         "&:hover": {
                           bgcolor: "rgba(239, 83, 80, 0.2)",
-                          transform: "scale(1.1)",
+                          transform: isMobile ? "none" : "scale(1.1)",
                         },
                         transition: "all 0.2s ease",
+                        p: { xs: 0.5, sm: 1 },
                       }}
                       onClick={() => handleOpenDeleteDialog(transaction)}
                     >
-                      <DeleteIcon fontSize="small" />
+                      <DeleteIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
                     </IconButton>
                   </Box>
                 </TableCell>

@@ -96,6 +96,7 @@ const Navbar = () => {
             borderRadius: "16px",
             textTransform: "none",
             fontWeight: 600,
+            whiteSpace: "nowrap",
             fontSize: "1rem",
             width: "100%",
             py: 1.5,

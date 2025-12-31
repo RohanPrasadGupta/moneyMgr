@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Box, Typography, Paper, Tabs, Tab } from "@mui/material";
+import { Box, Typography, Paper, Tabs, Tab, useMediaQuery, useTheme } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
@@ -9,6 +9,8 @@ import StockInvestmentPage from "./StockInvestmentPage";
 import CoinInvestmentPage from "./CoinInvestmentPage";
 
 const InvestmentsPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (event, newValue) => {
@@ -21,7 +23,7 @@ const InvestmentsPage = () => {
         width: "100%",
         height: "100%",
         minHeight: "100vh",
-        p: 4,
+        p: { xs: 2, sm: 3, md: 4 },
         bgcolor: "background.default",
       }}
     >
@@ -29,25 +31,31 @@ const InvestmentsPage = () => {
       <Paper
         elevation={3}
         sx={{
-          p: 3,
-          borderRadius: 3,
+          p: { xs: 2, sm: 2.5, md: 3 },
+          borderRadius: { xs: 2, sm: 3 },
           bgcolor: "background.paper",
           border: "1px solid #23272f",
-          mb: 3,
+          mb: { xs: 2, sm: 3 },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+        <Box sx={{ 
+          display: "flex", 
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { xs: "flex-start", sm: "center" }, 
+          gap: { xs: 1.5, sm: 2 }, 
+          mb: { xs: 1.5, sm: 2 } 
+        }}>
           <Box
             sx={{
               background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
               borderRadius: 2,
-              p: 1.5,
+              p: { xs: 1, sm: 1.5 },
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <AccountBalanceIcon sx={{ fontSize: 36, color: "#fff" }} />
+            <AccountBalanceIcon sx={{ fontSize: { xs: 28, sm: 32, md: 36 }, color: "#fff" }} />
           </Box>
           <Box>
             <Typography
@@ -56,11 +64,19 @@ const InvestmentsPage = () => {
               sx={{
                 color: "text.primary",
                 letterSpacing: 0.5,
+                fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.125rem" }
               }}
             >
               Investments
             </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: "text.secondary", 
+                mt: 0.5,
+                fontSize: { xs: "0.8rem", sm: "0.875rem" }
+              }}
+            >
               Manage and monitor your investment portfolio
             </Typography>
           </Box>
@@ -70,25 +86,30 @@ const InvestmentsPage = () => {
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
+          variant={isMobile ? "fullWidth" : "standard"}
           sx={{
-            mt: 2,
+            mt: { xs: 1.5, sm: 2 },
             "& .MuiTabs-indicator": {
               background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
               height: 3,
               borderRadius: 1,
             },
+            "& .MuiTabs-flexContainer": {
+              gap: { xs: 0, sm: 1 },
+            }
           }}
         >
           <Tab
-            icon={<ShowChartIcon />}
+            icon={<ShowChartIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />}
             iconPosition="start"
-            label="Stock Investment"
+            label={isMobile ? "Stocks" : "Stock Investment"}
             sx={{
               textTransform: "none",
-              fontSize: "1rem",
+              fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
               fontWeight: 600,
               color: "text.secondary",
-              minHeight: 56,
+              minHeight: { xs: 48, sm: 56 },
+              px: { xs: 1, sm: 2 },
               "&.Mui-selected": {
                 color: "#ff9966",
               },
@@ -99,15 +120,16 @@ const InvestmentsPage = () => {
             }}
           />
           <Tab
-            icon={<CurrencyBitcoinIcon />}
+            icon={<CurrencyBitcoinIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />}
             iconPosition="start"
-            label="Coin Investment"
+            label={isMobile ? "Coins" : "Coin Investment"}
             sx={{
               textTransform: "none",
-              fontSize: "1rem",
+              fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
               fontWeight: 600,
               color: "text.secondary",
-              minHeight: 56,
+              minHeight: { xs: 48, sm: 56 },
+              px: { xs: 1, sm: 2 },
               "&.Mui-selected": {
                 color: "#ff5e62",
               },

@@ -9,22 +9,54 @@ import SpeedDialIcon from "@mui/material/SpeedDialIcon";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import CategoryIcon from "@mui/icons-material/Category";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import WidgetsIcon from "@mui/icons-material/Widgets";
 
 const SpeedDialNavbar = () => {
   const actions = [
-    { icon: <HomeIcon />, name: "Home", link: "/pages/home" },
+    { 
+      icon: <HomeIcon />, 
+      name: "Home", 
+      link: "/pages/home",
+      gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      color: "#667eea"
+    },
     {
-      icon: <CategoryIcon />,
-      name: "Categories",
-      link: "/pages/categories",
+      icon: <BarChartIcon />,
+      name: "Analysis",
+      link: "/pages/analysis",
+      gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      color: "#f5576c"
     },
     {
       icon: <FileDownloadIcon />,
       name: "Export Data",
       link: "/pages/exportinfo",
+      gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      color: "#4facfe"
     },
-    { icon: <BarChartIcon />, name: "Analysis", link: "/pages/analysis" },
+    {
+      icon: <CategoryIcon />,
+      name: "Categories",
+      link: "/pages/categories",
+      gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      color: "#fa709a"
+    },
+    {
+      icon: <TrendingUpIcon />,
+      name: "Stock Analysis",
+      link: "/pages/stocks",
+      gradient: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
+      color: "#30cfd0"
+    },
+    {
+      icon: <AccountBalanceIcon />,
+      name: "Investments",
+      link: "/pages/investments",
+      gradient: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+      color: "#ff9966"
+    },
   ];
 
   const router = useRouter();
@@ -40,13 +72,14 @@ const SpeedDialNavbar = () => {
         m: 0,
         zIndex: 1500,
         ".MuiSpeedDial-fab": {
-          background:
-            "linear-gradient(135deg, rgb(255, 146, 78) 0%, #23272f 100%)",
+          background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
           color: "#fff",
-          boxShadow: 6,
+          boxShadow: "0 4px 15px rgba(255, 153, 102, 0.4)",
+          transition: "all 0.3s ease",
           "&:hover": {
-            background:
-              "linear-gradient(135deg, rgb(235, 126, 58) 0%, #23272f 100%)",
+            background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
+            boxShadow: "0 6px 20px rgba(255, 153, 102, 0.6)",
+            transform: "scale(1.05)",
           },
         },
       }}
@@ -61,16 +94,8 @@ const SpeedDialNavbar = () => {
           key={action.name}
           icon={React.cloneElement(action.icon, {
             sx: {
-              color:
-                action.name === "Home"
-                  ? "#43a047"
-                  : action.name === "Export Data"
-                  ? "#29b6f6"
-                  : "#ffb300",
-              // bgcolor: "#23272f",
-              borderRadius: 2,
-              fontSize: 28,
-              p: 0.5,
+              color: "#fff",
+              fontSize: 22,
             },
           })}
           tooltipPlacement="right"
@@ -80,10 +105,22 @@ const SpeedDialNavbar = () => {
               title: (
                 <span style={{ whiteSpace: "nowrap" }}>{action.name}</span>
               ),
-              sx: { whiteSpace: "nowrap" },
+              sx: { 
+                whiteSpace: "nowrap",
+                bgcolor: "background.paper",
+                color: "text.primary",
+                border: "1px solid #23272f",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+              },
             },
           }}
-          sx={{ color: "#fff" }}
+          sx={{
+            color: "#fff",
+            transition: "all 0.3s ease",
+            "&:hover": {
+              transform: "scale(1.1)",
+            },
+          }}
           onClick={() => {
             setOpen(false);
             setTimeout(() => {

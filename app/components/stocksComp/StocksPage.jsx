@@ -27,6 +27,8 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import TrendingDownIcon from '@mui/icons-material/TrendingDown'
@@ -40,6 +42,9 @@ import DeleteIcon from '@mui/icons-material/Delete'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK
 
 const StocksPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const queryClient = useQueryClient()
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
@@ -349,7 +354,7 @@ const StocksPage = () => {
     <Box sx={{ 
       minHeight: '100vh',
       width: '100%',
-      p: 4,
+      p: { xs: 2, sm: 3, md: 4 },
       bgcolor: 'background.default'
     }}>
       {/* Loading State */}
@@ -396,88 +401,141 @@ const StocksPage = () => {
       {!isLoading && !isError && (
         <>
       <Box sx={{ 
-        mb: 4, 
+        mb: { xs: 3, sm: 4 }, 
         display: 'flex', 
-        alignItems: 'center', 
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: { xs: 'stretch', md: 'center' }, 
         justifyContent: 'space-between',
+        gap: { xs: 2, sm: 3 },
         bgcolor: 'background.paper',
-        p: 3,
-        borderRadius: 3,
+        p: { xs: 2, sm: 2.5, md: 3 },
+        borderRadius: { xs: 2, sm: 3 },
         border: '1px solid #23272f',
         boxShadow: 3
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 } }}>
           <Box sx={{
             background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
             borderRadius: 2,
-            p: 1.5,
+            p: { xs: 1, sm: 1.5 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <ShowChartIcon sx={{ fontSize: 36, color: '#fff' }} />
+            <ShowChartIcon sx={{ fontSize: { xs: 28, sm: 32, md: 36 }, color: '#fff' }} />
           </Box>
           <Box>
-            <Typography variant="h4" fontWeight="bold" sx={{ 
-              color: 'text.primary',
-              letterSpacing: 0.5
-            }}>
+            <Typography 
+              variant="h4" 
+              fontWeight="bold" 
+              sx={{ 
+                color: 'text.primary',
+                letterSpacing: 0.5,
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' }
+              }}
+            >
               Stock Portfolio
             </Typography>
-            <Typography variant="body2" sx={{ mt: 0.5, color: 'text.secondary' }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                mt: 0.5, 
+                color: 'text.secondary',
+                fontSize: { xs: '0.8rem', sm: '0.875rem' }
+              }}
+            >
               Track your investments and performance
             </Typography>
           </Box>
         </Box>
         <Box sx={{ 
           display: 'flex', 
-          gap: 3,
+          flexDirection: { xs: 'row', sm: 'row' },
+          justifyContent: { xs: 'space-between', md: 'flex-start' },
+          gap: { xs: 2, sm: 3 },
           bgcolor: 'background.paper',
-          p: 2.5,
+          p: { xs: 1.5, sm: 2.5 },
           borderRadius: 2,
-          border: '1px solid #23272f'
+          border: '1px solid #23272f',
+          flexWrap: 'wrap'
         }}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 0.5, display: 'block', mb: 0.5 }}>
+          <Box sx={{ textAlign: 'center', minWidth: { xs: 'auto', sm: '80px' } }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'text.secondary', 
+                fontWeight: 600, 
+                letterSpacing: 0.5, 
+                display: 'block', 
+                mb: 0.5,
+                fontSize: { xs: '0.7rem', sm: '0.75rem' }
+              }}
+            >
               TOTAL STOCKS
             </Typography>
-            <Typography variant="h5" fontWeight="bold" sx={{ color: '#90caf9' }}>
+            <Typography 
+              variant="h5" 
+              fontWeight="bold" 
+              sx={{ 
+                color: '#90caf9',
+                fontSize: { xs: '1.25rem', sm: '1.5rem' }
+              }}
+            >
               {Object.keys(groupedTransactions).length}
             </Typography>
           </Box>
           <Box sx={{ 
             width: '1px', 
             bgcolor: '#23272f',
-            mx: 1
+            mx: { xs: 0, sm: 1 },
+            display: { xs: 'none', sm: 'block' }
           }} />
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 0.5, display: 'block', mb: 0.5 }}>
+          <Box sx={{ textAlign: 'center', minWidth: { xs: 'auto', sm: '80px' } }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'text.secondary', 
+                fontWeight: 600, 
+                letterSpacing: 0.5, 
+                display: 'block', 
+                mb: 0.5,
+                fontSize: { xs: '0.7rem', sm: '0.75rem' }
+              }}
+            >
               TRANSACTIONS
             </Typography>
-            <Typography variant="h5" fontWeight="bold" sx={{ color: '#f48fb1' }}>
+            <Typography 
+              variant="h5" 
+              fontWeight="bold" 
+              sx={{ 
+                color: '#f48fb1',
+                fontSize: { xs: '1.25rem', sm: '1.5rem' }
+              }}
+            >
               {transactions.length}
             </Typography>
           </Box>
         </Box>
         <Button
           variant="contained"
-          startIcon={<AddIcon />}
+          startIcon={<AddIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />}
           onClick={() => handleOpenDialog()}
           sx={{
             background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
             color: '#fff',
             fontWeight: 600,
-            fontSize: '1rem',
-            px: 4,
-            py: 1.5,
-            borderRadius: '16px',
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            px: { xs: 3, sm: 4 },
+            py: { xs: 1.25, sm: 1.5 },
+            borderRadius: { xs: 2, sm: '16px' },
             textTransform: 'none',
             boxShadow: '0 4px 15px rgba(48, 207, 208, 0.4)',
             transition: 'all 0.3s ease',
+            width: { xs: '100%', md: 'auto' },
             '&:hover': {
               background: 'linear-gradient(135deg, #330867 0%, #30cfd0 100%)',
               boxShadow: '0 6px 20px rgba(48, 207, 208, 0.6)',
-              transform: 'translateY(-2px)'
+              transform: { xs: 'none', md: 'translateY(-2px)' }
             },
             '&:active': {
               transform: 'translateY(0px)',
@@ -488,7 +546,7 @@ const StocksPage = () => {
         </Button>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 3 } }}>
         {Object.entries(groupedTransactions).map(([symbol, symbolTransactions]) => {
           const totalInvestment = calculateTotalInvestment(symbolTransactions)
           const totalSold = calculateTotalSold(symbolTransactions)
@@ -502,13 +560,13 @@ const StocksPage = () => {
             <Accordion 
               key={symbol} 
               sx={{ 
-                borderRadius: 3,
+                borderRadius: { xs: 2, sm: 3 },
                 '&:before': { display: 'none' },
                 '&:first-of-type': {
-                  borderRadius: 3,
+                  borderRadius: { xs: 2, sm: 3 },
                 },
                 '&:last-of-type': {
-                  borderRadius: 3,
+                  borderRadius: { xs: 2, sm: 3 },
                 },
                 boxShadow: 3,
                 bgcolor: 'background.paper',
@@ -516,81 +574,128 @@ const StocksPage = () => {
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
                 '&:hover': {
-                  boxShadow: '0 8px 24px rgba(48, 207, 208, 0.2)',
-                  transform: 'translateY(-2px)',
-                  borderColor: 'rgba(48, 207, 208, 0.3)'
+                  boxShadow: { xs: 3, sm: '0 8px 24px rgba(48, 207, 208, 0.2)' },
+                  transform: { xs: 'none', sm: 'translateY(-2px)' },
+                  borderColor: { xs: '#23272f', sm: 'rgba(48, 207, 208, 0.3)' }
                 }
               }}
             >
               <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: '#90caf9' }} />}
+                expandIcon={<ExpandMoreIcon sx={{ color: '#90caf9', fontSize: { xs: 24, sm: 28 } }} />}
                 sx={{
                   bgcolor: 'background.paper',
-                  borderRadius: 3,
-                  minHeight: '80px',
+                  borderRadius: { xs: 2, sm: 3 },
+                  minHeight: { xs: 'auto', sm: '80px' },
                   '&:hover': { 
                     bgcolor: 'rgba(144, 202, 249, 0.08)',
                   },
                   '& .MuiAccordionSummary-content': {
-                    margin: '16px 0'
+                    margin: { xs: '12px 0', sm: '16px 0' },
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    gap: { xs: 1.5, sm: 2 }
                   }
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: { xs: 1.5, sm: 2 }, 
+                  width: '100%',
+                  flexDirection: { xs: 'column', sm: 'row' }
+                }}>
                   <Box sx={{ 
-                    background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
-                    borderRadius: 2,
-                    p: 1.5,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(48, 207, 208, 0.3)'
+                    gap: { xs: 1.5, sm: 2 },
+                    width: { xs: '100%', sm: 'auto' }
                   }}>
-                    <ShowChartIcon sx={{ color: '#fff', fontSize: 32 }} />
-                  </Box>
-                  <Box sx={{ flexGrow: 1, minWidth: '180px' }}>
-                    <Typography variant="h5" fontWeight="bold" sx={{ 
-                      color: 'text.primary',
-                      mb: 0.5 
+                    <Box sx={{ 
+                      background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+                      borderRadius: 2,
+                      p: { xs: 1, sm: 1.5 },
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(48, 207, 208, 0.3)'
                     }}>
-                      {symbol}
-                    </Typography>
-                    <Typography variant="body2" sx={{ 
-                      color: '#90caf9',
-                      fontWeight: 500
-                    }}>
-                      {stockName}
-                    </Typography>
-                    <Typography variant="caption" sx={{ 
-                      color: 'text.secondary',
-                      fontWeight: 400,
-                      display: 'block',
-                      mt: 0.5
-                    }}>
-                      {symbolTransactions.length} transactions • {totalQuantity} shares
-                    </Typography>
+                      <ShowChartIcon sx={{ color: '#fff', fontSize: { xs: 24, sm: 32 } }} />
+                    </Box>
+                    <Box sx={{ flexGrow: 1, minWidth: { xs: 'auto', sm: '180px' } }}>
+                      <Typography 
+                        variant="h5" 
+                        fontWeight="bold" 
+                        sx={{ 
+                          color: 'text.primary',
+                          mb: 0.5,
+                          fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                        }}
+                      >
+                        {symbol}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: '#90caf9',
+                          fontWeight: 500,
+                          fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                        }}
+                      >
+                        {stockName}
+                      </Typography>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: 'text.secondary',
+                          fontWeight: 400,
+                          display: 'block',
+                          mt: 0.5,
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                        }}
+                      >
+                        {symbolTransactions.length} transactions • {totalQuantity} shares
+                      </Typography>
+                    </Box>
                   </Box>
                   
                   {/* Metrics Grid */}
                   <Box sx={{ 
                     display: 'flex',
-                    gap: 1.5,
-                    flexWrap: 'nowrap',
-                    alignItems: 'center'
+                    gap: { xs: 1, sm: 1.5 },
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    width: { xs: '100%', lg: 'auto' },
+                    justifyContent: { xs: 'space-between', sm: 'flex-start' }
                   }}>
                     <Box sx={{ 
                       textAlign: 'center',
                       bgcolor: 'background.default',
-                      p: 1.5,
+                      p: { xs: 1, sm: 1.5 },
                       borderRadius: 2,
-                      width: '140px',
-                      flex: '0 0 140px',
+                      width: { xs: 'calc(50% - 4px)', sm: '120px', md: '140px' },
+                      flex: { xs: 'none', lg: '0 0 140px' },
                       border: '1px solid #23272f'
                     }}>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 0.5, display: 'block' }}>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: 'text.secondary', 
+                          fontWeight: 600, 
+                          letterSpacing: 0.5, 
+                          display: 'block',
+                          fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                        }}
+                      >
                         AVG PRICE
                       </Typography>
-                      <Typography variant="body1" fontWeight="bold" sx={{ color: '#90caf9', mt: 0.5 }}>
+                      <Typography 
+                        variant="body1" 
+                        fontWeight="bold" 
+                        sx={{ 
+                          color: '#90caf9', 
+                          mt: 0.5,
+                          fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }}
+                      >
                         {formatCurrency(averagePrice)}
                       </Typography>
                     </Box>
@@ -598,16 +703,33 @@ const StocksPage = () => {
                     <Box sx={{ 
                       textAlign: 'center',
                       bgcolor: 'background.default',
-                      p: 1.5,
+                      p: { xs: 1, sm: 1.5 },
                       borderRadius: 2,
-                      width: '140px',
-                      flex: '0 0 140px',
+                      width: { xs: 'calc(50% - 4px)', sm: '120px', md: '140px' },
+                      flex: { xs: 'none', lg: '0 0 140px' },
                       border: '1px solid rgba(102, 187, 106, 0.5)'
                     }}>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 0.5, display: 'block' }}>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: 'text.secondary', 
+                          fontWeight: 600, 
+                          letterSpacing: 0.5, 
+                          display: 'block',
+                          fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                        }}
+                      >
                         INVESTED
                       </Typography>
-                      <Typography variant="body1" fontWeight="bold" sx={{ color: '#66bb6a', mt: 0.5 }}>
+                      <Typography 
+                        variant="body1" 
+                        fontWeight="bold" 
+                        sx={{ 
+                          color: '#66bb6a', 
+                          mt: 0.5,
+                          fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }}
+                      >
                         {formatCurrency(totalInvestment)}
                       </Typography>
                     </Box>
@@ -616,16 +738,33 @@ const StocksPage = () => {
                       <Box sx={{ 
                         textAlign: 'center',
                         bgcolor: 'background.default',
-                        p: 1.5,
+                        p: { xs: 1, sm: 1.5 },
                         borderRadius: 2,
-                        width: '140px',
-                        flex: '0 0 140px',
+                        width: { xs: 'calc(50% - 4px)', sm: '120px', md: '140px' },
+                        flex: { xs: 'none', lg: '0 0 140px' },
                         border: '1px solid rgba(239, 83, 80, 0.5)'
                       }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 0.5, display: 'block' }}>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'text.secondary', 
+                            fontWeight: 600, 
+                            letterSpacing: 0.5, 
+                            display: 'block',
+                            fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                          }}
+                        >
                           SOLD
                         </Typography>
-                        <Typography variant="body1" fontWeight="bold" sx={{ color: '#ef5350', mt: 0.5 }}>
+                        <Typography 
+                          variant="body1" 
+                          fontWeight="bold" 
+                          sx={{ 
+                            color: '#ef5350', 
+                            mt: 0.5,
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                          }}
+                        >
                           {formatCurrency(totalSold)}
                         </Typography>
                       </Box>
@@ -634,16 +773,33 @@ const StocksPage = () => {
                     <Box sx={{ 
                       textAlign: 'center',
                       bgcolor: 'background.default',
-                      p: 1.5,
+                      p: { xs: 1, sm: 1.5 },
                       borderRadius: 2,
-                      width: '140px',
-                      flex: '0 0 140px',
+                      width: { xs: 'calc(50% - 4px)', sm: '120px', md: '140px' },
+                      flex: { xs: 'none', lg: '0 0 140px' },
                       border: '1px solid #23272f'
                     }}>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 0.5, display: 'block' }}>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: 'text.secondary', 
+                          fontWeight: 600, 
+                          letterSpacing: 0.5, 
+                          display: 'block',
+                          fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                        }}
+                      >
                         NET
                       </Typography>
-                      <Typography variant="body1" fontWeight="bold" sx={{ color: '#f5f6fa', mt: 0.5 }}>
+                      <Typography 
+                        variant="body1" 
+                        fontWeight="bold" 
+                        sx={{ 
+                          color: '#f5f6fa', 
+                          mt: 0.5,
+                          fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }}
+                      >
                         {formatCurrency(netInvestment)}
                       </Typography>
                     </Box>
@@ -652,20 +808,33 @@ const StocksPage = () => {
                       <Box sx={{ 
                         textAlign: 'center',
                         bgcolor: 'background.default',
-                        p: 1.5,
+                        p: { xs: 1, sm: 1.5 },
                         borderRadius: 2,
-                        width: '140px',
-                        flex: '0 0 140px',
+                        width: { xs: 'calc(50% - 4px)', sm: '120px', md: '140px' },
+                        flex: { xs: 'none', lg: '0 0 140px' },
                         border: '1px solid',
                         borderColor: profitLoss >= 0 ? 'rgba(102, 187, 106, 0.5)' : 'rgba(239, 83, 80, 0.5)'
                       }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 0.5, display: 'block' }}>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'text.secondary', 
+                            fontWeight: 600, 
+                            letterSpacing: 0.5, 
+                            display: 'block',
+                            fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                          }}
+                        >
                           P/L
                         </Typography>
                         <Typography 
                           variant="body1" 
                           fontWeight="bold" 
-                          sx={{ color: profitLoss >= 0 ? '#66bb6a' : '#ef5350', mt: 0.5 }}
+                          sx={{ 
+                            color: profitLoss >= 0 ? '#66bb6a' : '#ef5350', 
+                            mt: 0.5,
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                          }}
                         >
                           {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss)}
                         </Typography>
@@ -682,8 +851,8 @@ const StocksPage = () => {
                     sx={{
                       background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
                       color: '#fff',
-                      width: 48,
-                      height: 48,
+                      width: { xs: 40, sm: 48 },
+                      height: { xs: 40, sm: 48 },
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
@@ -692,86 +861,101 @@ const StocksPage = () => {
                       boxShadow: '0 4px 12px rgba(48, 207, 208, 0.4)',
                       '&:hover': {
                         background: 'linear-gradient(135deg, #330867 0%, #30cfd0 100%)',
-                        transform: 'scale(1.1)',
+                        transform: { xs: 'none', sm: 'scale(1.1)' },
                         boxShadow: '0 6px 16px rgba(48, 207, 208, 0.6)'
                       },
                       transition: 'all 0.3s ease',
-                      ml: 1
+                      ml: { xs: 'auto', sm: 1 },
+                      alignSelf: { xs: 'center', sm: 'auto' }
                     }}
                   >
-                    <AddIcon />
+                    <AddIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </Box>
                 </Box>
               </AccordionSummary>
               
               <AccordionDetails sx={{ p: 0, bgcolor: 'background.default' }}>
-                <TableContainer sx={{ maxHeight: 450 }}>
+                <TableContainer sx={{ maxHeight: { xs: 350, sm: 450 }, overflowX: 'auto' }}>
                   <Table stickyHeader>
                     <TableHead>
                       <TableRow>
                         <TableCell align="center" sx={{ 
                           fontWeight: 'bold', 
-                          fontSize: '0.85rem', 
+                          fontSize: { xs: '0.7rem', sm: '0.85rem' }, 
                           bgcolor: '#1e1e1e',
                           color: '#f5f6fa',
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
-                          borderBottom: '2px solid #90caf9'
+                          borderBottom: '2px solid #90caf9',
+                          px: { xs: 1, sm: 2 },
+                          py: { xs: 1.5, sm: 2 }
                         }}>
                           Type
                         </TableCell>
                         <TableCell align="center" sx={{ 
                           fontWeight: 'bold', 
-                          fontSize: '0.85rem', 
+                          fontSize: { xs: '0.7rem', sm: '0.85rem' }, 
                           bgcolor: '#1e1e1e',
                           color: '#f5f6fa',
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
-                          borderBottom: '2px solid #90caf9'
+                          borderBottom: '2px solid #90caf9',
+                          px: { xs: 1, sm: 2 },
+                          py: { xs: 1.5, sm: 2 }
                         }}>
                           Price
                         </TableCell>
                         <TableCell align="center" sx={{ 
                           fontWeight: 'bold', 
-                          fontSize: '0.85rem', 
+                          fontSize: { xs: '0.7rem', sm: '0.85rem' }, 
                           bgcolor: '#1e1e1e',
                           color: '#f5f6fa',
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
-                          borderBottom: '2px solid #90caf9'
+                          borderBottom: '2px solid #90caf9',
+                          px: { xs: 1, sm: 2 },
+                          py: { xs: 1.5, sm: 2 }
                         }}>
-                          Quantity
+                          Qty
                         </TableCell>
                         <TableCell align="center" sx={{ 
                           fontWeight: 'bold', 
-                          fontSize: '0.85rem', 
+                          fontSize: { xs: '0.7rem', sm: '0.85rem' }, 
                           bgcolor: '#1e1e1e',
                           color: '#f5f6fa',
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
-                          borderBottom: '2px solid #90caf9'
+                          borderBottom: '2px solid #90caf9',
+                          px: { xs: 1, sm: 2 },
+                          py: { xs: 1.5, sm: 2 },
+                          display: { xs: 'none', sm: 'table-cell' }
                         }}>
                           Total Amount
                         </TableCell>
                         <TableCell align="center" sx={{ 
                           fontWeight: 'bold', 
-                          fontSize: '0.85rem', 
+                          fontSize: { xs: '0.7rem', sm: '0.85rem' }, 
                           bgcolor: '#1e1e1e',
                           color: '#f5f6fa',
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
-                          borderBottom: '2px solid #90caf9'
+                          borderBottom: '2px solid #90caf9',
+                          px: { xs: 1, sm: 2 },
+                          py: { xs: 1.5, sm: 2 },
+                          display: { xs: 'none', md: 'table-cell' }
                         }}>
                           Date
                         </TableCell>
                         <TableCell align="center" sx={{ 
                           fontWeight: 'bold', 
-                          fontSize: '0.85rem', 
+                          fontSize: { xs: '0.7rem', sm: '0.85rem' }, 
                           bgcolor: '#1e1e1e',
                           color: '#f5f6fa',
                           letterSpacing: 0.5,
                           textTransform: 'uppercase',
-                          borderBottom: '2px solid #90caf9'
+                          borderBottom: '2px solid #90caf9',
+                          px: { xs: 1, sm: 2 },
+                          py: { xs: 1.5, sm: 2 }
                         }}>
                           Actions
                         </TableCell>
@@ -784,7 +968,7 @@ const StocksPage = () => {
                           sx={{ 
                             '&:hover': { 
                               bgcolor: 'rgba(144, 202, 249, 0.08)',
-                              transform: 'scale(1.002)'
+                              transform: { xs: 'none', sm: 'scale(1.002)' }
                             },
                             transition: 'all 0.2s ease',
                             '&:nth-of-type(odd)': {
@@ -795,7 +979,7 @@ const StocksPage = () => {
                             }
                           }}
                         >
-                          <TableCell align="center">
+                          <TableCell align="center" sx={{ px: { xs: 1, sm: 2 }, py: { xs: 1.5, sm: 2 } }}>
                             <Chip
                               label={transaction.type}
                               icon={transaction.type === 'BUY' ? <TrendingUpIcon /> : <TrendingDownIcon />}
@@ -803,46 +987,78 @@ const StocksPage = () => {
                               size="small"
                               sx={{ 
                                 fontWeight: 'bold',
-                                fontSize: '0.75rem',
-                                height: '28px'
+                                fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                                height: { xs: '24px', sm: '28px' },
+                                '& .MuiChip-icon': {
+                                  fontSize: { xs: 14, sm: 16 }
+                                }
                               }}
                             />
                           </TableCell>
-                          <TableCell align="center">
-                            <Typography variant="body2" fontWeight="500" sx={{ color: 'text.primary' }}>
+                          <TableCell align="center" sx={{ px: { xs: 1, sm: 2 }, py: { xs: 1.5, sm: 2 } }}>
+                            <Typography 
+                              variant="body2" 
+                              fontWeight="500" 
+                              sx={{ 
+                                color: 'text.primary',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                              }}
+                            >
                               {formatCurrency(transaction.price)}
                             </Typography>
                           </TableCell>
-                          <TableCell align="center">
-                            <Typography variant="body2" fontWeight="600" sx={{ color: '#90caf9' }}>
+                          <TableCell align="center" sx={{ px: { xs: 1, sm: 2 }, py: { xs: 1.5, sm: 2 } }}>
+                            <Typography 
+                              variant="body2" 
+                              fontWeight="600" 
+                              sx={{ 
+                                color: '#90caf9',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                              }}
+                            >
                               {transaction.quantity}
                             </Typography>
                           </TableCell>
-                          <TableCell align="center">
-                            <Typography variant="body1" fontWeight="700" sx={{ color: 'text.primary' }}>
+                          <TableCell align="center" sx={{ px: { xs: 1, sm: 2 }, py: { xs: 1.5, sm: 2 }, display: { xs: 'none', sm: 'table-cell' } }}>
+                            <Typography 
+                              variant="body1" 
+                              fontWeight="700" 
+                              sx={{ 
+                                color: 'text.primary',
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                              }}
+                            >
                               {formatCurrency(transaction.totalAmount)}
                             </Typography>
                           </TableCell>
-                          <TableCell align="center">
-                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          <TableCell align="center" sx={{ px: { xs: 1, sm: 2 }, py: { xs: 1.5, sm: 2 }, display: { xs: 'none', md: 'table-cell' } }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                color: 'text.secondary',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                              }}
+                            >
                               {formatDate(transaction.investedDate)}
                             </Typography>
                           </TableCell>
-                          <TableCell align="center">
-                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                          <TableCell align="center" sx={{ px: { xs: 0.5, sm: 2 }, py: { xs: 1.5, sm: 2 } }}>
+                            <Box sx={{ display: 'flex', gap: { xs: 0.5, sm: 1 }, justifyContent: 'center' }}>
                               <IconButton
                                 size="small"
                                 onClick={() => handleEditTransaction(transaction)}
                                 sx={{
                                   color: '#90caf9',
+                                  width: { xs: 32, sm: 36 },
+                                  height: { xs: 32, sm: 36 },
                                   '&:hover': {
                                     bgcolor: 'rgba(144, 202, 249, 0.2)',
-                                    transform: 'scale(1.1)'
+                                    transform: { xs: 'none', sm: 'scale(1.1)' }
                                   },
                                   transition: 'all 0.2s ease'
                                 }}
                               >
-                                <EditIcon fontSize="small" />
+                                <EditIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />
                               </IconButton>
                               <IconButton
                                 size="small"
@@ -850,14 +1066,16 @@ const StocksPage = () => {
                                 disabled={deleteTransactionMutation.isPending}
                                 sx={{
                                   color: '#ef5350',
+                                  width: { xs: 32, sm: 36 },
+                                  height: { xs: 32, sm: 36 },
                                   '&:hover': {
                                     bgcolor: 'rgba(239, 83, 80, 0.2)',
-                                    transform: 'scale(1.1)'
+                                    transform: { xs: 'none', sm: 'scale(1.1)' }
                                   },
                                   transition: 'all 0.2s ease'
                                 }}
                               >
-                                <DeleteIcon fontSize="small" />
+                                <DeleteIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />
                               </IconButton>
                             </Box>
                           </TableCell>
@@ -878,12 +1096,14 @@ const StocksPage = () => {
         onClose={handleCloseDialog}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
-            borderRadius: 3,
+            borderRadius: { xs: 0, sm: 3 },
             bgcolor: 'background.paper',
-            border: '1px solid #23272f',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)'
+            border: { xs: 'none', sm: '1px solid #23272f' },
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
+            m: { xs: 0, sm: 2 }
           }
         }}
       >
@@ -893,21 +1113,34 @@ const StocksPage = () => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          pb: 2
+          pb: 2,
+          px: { xs: 2, sm: 3 },
+          pt: { xs: 2, sm: 3 }
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {editingTransaction ? <EditIcon /> : <AddIcon />}
-            <Typography variant="h6" fontWeight="bold">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, sm: 1 } }}>
+            {editingTransaction ? <EditIcon sx={{ fontSize: { xs: 20, sm: 24 } }} /> : <AddIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />}
+            <Typography 
+              variant="h6" 
+              fontWeight="bold"
+              sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+            >
               {editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}
             </Typography>
           </Box>
-          <IconButton onClick={handleCloseDialog} sx={{ color: '#fff' }}>
-            <CloseIcon />
+          <IconButton 
+            onClick={handleCloseDialog} 
+            sx={{ 
+              color: '#fff',
+              width: { xs: 36, sm: 40 },
+              height: { xs: 36, sm: 40 }
+            }}
+          >
+            <CloseIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
           </IconButton>
         </DialogTitle>
         
-        <DialogContent sx={{ mt: 3 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <DialogContent sx={{ mt: { xs: 2, sm: 3 }, px: { xs: 2, sm: 3 } }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2.5, sm: 3 } }}>
             {/* Stock Symbol Field */}
             <Autocomplete
               freeSolo
@@ -953,6 +1186,7 @@ const StocksPage = () => {
                   label="Stock Symbol"
                   required
                   fullWidth
+                  size={isMobile ? "small" : "medium"}
                   placeholder="Enter or select stock symbol"
                   helperText={
                     editingTransaction 
@@ -961,6 +1195,11 @@ const StocksPage = () => {
                         ? `Adding transaction for ${selectedStock}` 
                         : 'Select existing or enter new stock symbol'
                   }
+                  sx={{
+                    '& .MuiInputBase-input': {
+                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                    }
+                  }}
                 />
               )}
             />
@@ -972,9 +1211,15 @@ const StocksPage = () => {
               onChange={(e) => handleFormChange('stockName', e.target.value)}
               required
               fullWidth
+              size={isMobile ? "small" : "medium"}
               disabled={!!editingTransaction}
               placeholder="Enter the full company name"
               helperText={editingTransaction ? 'Stock name cannot be changed' : 'Full name of the company'}
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
             />
 
             {/* Transaction Type */}
@@ -985,6 +1230,12 @@ const StocksPage = () => {
               onChange={(e) => handleFormChange('type', e.target.value)}
               required
               fullWidth
+              size={isMobile ? "small" : "medium"}
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
             >
               <MenuItem value="BUY">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1008,8 +1259,14 @@ const StocksPage = () => {
               onChange={(e) => handleFormChange('price', e.target.value)}
               required
               fullWidth
+              size={isMobile ? "small" : "medium"}
               inputProps={{ min: 0, step: 0.01 }}
               helperText="Enter the price per share"
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
             />
 
             {/* Quantity */}
@@ -1020,8 +1277,14 @@ const StocksPage = () => {
               onChange={(e) => handleFormChange('quantity', e.target.value)}
               required
               fullWidth
+              size={isMobile ? "small" : "medium"}
               inputProps={{ min: 1, step: 1 }}
               helperText="Enter the number of shares"
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
             />
 
             {/* Date */}
@@ -1032,21 +1295,43 @@ const StocksPage = () => {
               onChange={(e) => handleFormChange('investedDate', e.target.value)}
               required
               fullWidth
+              size={isMobile ? "small" : "medium"}
               InputLabelProps={{ shrink: true }}
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
             />
 
             {/* Total Amount Display */}
             {formData.price && formData.quantity && (
               <Box sx={{ 
-                p: 2.5, 
+                p: { xs: 2, sm: 2.5 }, 
                 bgcolor: 'background.default',
                 borderRadius: 2,
                 border: '2px solid #90caf9'
               }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 0.5 }}>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: 'text.secondary', 
+                    fontWeight: 600, 
+                    letterSpacing: 0.5,
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                  }}
+                >
                   TOTAL AMOUNT
                 </Typography>
-                <Typography variant="h5" fontWeight="bold" sx={{ color: '#90caf9', mt: 0.5 }}>
+                <Typography 
+                  variant="h5" 
+                  fontWeight="bold" 
+                  sx={{ 
+                    color: '#90caf9', 
+                    mt: 0.5,
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                  }}
+                >
                   {formatCurrency(parseFloat(formData.price) * parseFloat(formData.quantity))}
                 </Typography>
               </Box>
@@ -1054,13 +1339,15 @@ const StocksPage = () => {
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 3, pt: 2 }}>
+        <DialogActions sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 1.5, sm: 2 }, gap: { xs: 1, sm: 0 } }}>
           <Button 
             onClick={handleCloseDialog}
             sx={{ 
               color: 'text.secondary',
               textTransform: 'none',
               fontWeight: 600,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              px: { xs: 2, sm: 3 },
               '&:hover': {
                 bgcolor: 'rgba(48, 207, 208, 0.1)'
               }
@@ -1084,7 +1371,8 @@ const StocksPage = () => {
               background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
               color: '#fff',
               fontWeight: 600,
-              px: 3,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              px: { xs: 2, sm: 3 },
               textTransform: 'none',
               boxShadow: '0 4px 15px rgba(48, 207, 208, 0.4)',
               '&:hover': {
@@ -1117,10 +1405,11 @@ const StocksPage = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 3,
+            borderRadius: { xs: 2, sm: 3 },
             bgcolor: 'background.paper',
             border: '1px solid #23272f',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
+            m: { xs: 2, sm: 2 }
           }
         }}
       >
@@ -1129,21 +1418,28 @@ const StocksPage = () => {
           borderBottom: '1px solid rgba(239, 83, 80, 0.3)',
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
-          color: '#ef5350'
+          gap: { xs: 0.75, sm: 1 },
+          color: '#ef5350',
+          px: { xs: 2, sm: 3 },
+          pt: { xs: 2, sm: 3 },
+          pb: { xs: 1.5, sm: 2 }
         }}>
-          <DeleteIcon />
-          <Typography variant="h6" fontWeight="bold">
+          <DeleteIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+          <Typography 
+            variant="h6" 
+            fontWeight="bold"
+            sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+          >
             Delete Transaction
           </Typography>
         </DialogTitle>
         
-        <DialogContent sx={{ mt: 3 }}>
+        <DialogContent sx={{ mt: { xs: 2, sm: 3 }, px: { xs: 2, sm: 3 } }}>
           <Box sx={{ textAlign: 'center' }}>
             <Box
               sx={{
-                width: 64,
-                height: 64,
+                width: { xs: 56, sm: 64 },
+                height: { xs: 56, sm: 64 },
                 borderRadius: '50%',
                 bgcolor: 'rgba(239, 83, 80, 0.1)',
                 border: '2px solid #ef5350',
@@ -1154,12 +1450,26 @@ const StocksPage = () => {
                 mb: 2
               }}
             >
-              <DeleteIcon sx={{ fontSize: 32, color: '#ef5350' }} />
+              <DeleteIcon sx={{ fontSize: { xs: 28, sm: 32 }, color: '#ef5350' }} />
             </Box>
-            <Typography variant="h6" gutterBottom sx={{ color: 'text.primary' }}>
+            <Typography 
+              variant="h6" 
+              gutterBottom 
+              sx={{ 
+                color: 'text.primary',
+                fontSize: { xs: '1.125rem', sm: '1.25rem' }
+              }}
+            >
               Are you sure?
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'text.secondary', 
+                mb: 2,
+                fontSize: { xs: '0.8rem', sm: '0.875rem' }
+              }}
+            >
               Do you really want to delete this transaction? This action cannot be undone.
             </Typography>
             
@@ -1167,22 +1477,51 @@ const StocksPage = () => {
               <Box
                 sx={{
                   bgcolor: 'background.default',
-                  p: 2,
+                  p: { xs: 1.5, sm: 2 },
                   borderRadius: 2,
                   border: '1px solid #23272f',
                   mt: 2
                 }}
               >
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: 'text.secondary', 
+                    display: 'block',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                  }}
+                >
                   Transaction Details:
                 </Typography>
-                <Typography variant="body1" fontWeight="bold" sx={{ color: 'text.primary', mt: 1 }}>
+                <Typography 
+                  variant="body1" 
+                  fontWeight="bold" 
+                  sx={{ 
+                    color: 'text.primary', 
+                    mt: 1,
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }}
+                >
                   {transactionToDelete.stockSymbol} - {transactionToDelete.type}
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: 'text.secondary',
+                    fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                  }}
+                >
                   {transactionToDelete.quantity} shares @ {formatCurrency(transactionToDelete.price)}
                 </Typography>
-                <Typography variant="body2" fontWeight="bold" sx={{ color: '#90caf9', mt: 0.5 }}>
+                <Typography 
+                  variant="body2" 
+                  fontWeight="bold" 
+                  sx={{ 
+                    color: '#90caf9', 
+                    mt: 0.5,
+                    fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                  }}
+                >
                   Total: {formatCurrency(transactionToDelete.totalAmount)}
                 </Typography>
               </Box>
@@ -1190,7 +1529,7 @@ const StocksPage = () => {
           </Box>
         </DialogContent>
         
-        <DialogActions sx={{ p: 3, pt: 2, gap: 1 }}>
+        <DialogActions sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 1.5, sm: 2 }, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
           <Button
             onClick={cancelDelete}
             variant="outlined"
@@ -1200,6 +1539,8 @@ const StocksPage = () => {
               borderColor: '#23272f',
               textTransform: 'none',
               fontWeight: 600,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              order: { xs: 2, sm: 1 },
               '&:hover': {
                 bgcolor: 'rgba(144, 202, 249, 0.1)',
                 borderColor: '#90caf9'
@@ -1218,6 +1559,8 @@ const StocksPage = () => {
               color: '#fff',
               fontWeight: 600,
               textTransform: 'none',
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              order: { xs: 1, sm: 2 },
               '&:hover': {
                 bgcolor: '#d32f2f'
               },
