@@ -181,6 +181,17 @@ const TransactionView = () => {
     },
   });
 
+  // Generate year options (5 years before and 5 years after current year)
+  const yearOptions = React.useMemo(() => {
+    const now = dayjs();
+    const currentYearValue = now.year();
+    const years = [];
+    for (let i = currentYearValue - 5; i <= currentYearValue + 5; i++) {
+      years.push(i);
+    }
+    return years;
+  }, []);
+
   useEffect(() => {
     const now = dayjs();
     setCurrentYear(now.year());
@@ -344,12 +355,29 @@ const TransactionView = () => {
                   justifyContent: { xs: "space-between", sm: "flex-start" },
                 }}
               >
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <ReceiptLongIcon sx={{ color: "#ff9966", fontSize: { xs: 20, sm: 24 } }} />
-                  <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
-                    Year: {currentYear}
-                  </Typography>
-                </Stack>
+                <ReceiptLongIcon sx={{ color: "#ff9966", fontSize: { xs: 20, sm: 24 } }} />
+                <Select
+                  value={currentYear}
+                  onChange={(e) => setCurrentYear(e.target.value)}
+                  size="small"
+                  sx={{
+                    minWidth: { xs: "auto", sm: 90 },
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      border: "none",
+                    },
+                    "& .MuiSelect-select": {
+                      fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                      py: { xs: 0.5, sm: 1 },
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  {yearOptions.map((year) => (
+                    <MenuItem key={year} value={year}>
+                      {year}
+                    </MenuItem>
+                  ))}
+                </Select>
                 <Divider 
                   orientation="vertical" 
                   flexItem 
