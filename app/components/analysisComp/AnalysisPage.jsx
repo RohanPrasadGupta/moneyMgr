@@ -53,9 +53,66 @@ const AnalysisPage = () => {
     enabled: viewMode === "monthly" && Boolean(currentYear && currentMonth),
   });
 
+   const {
+    isPending:testLoading,
+    data: testTransactionDetails,
+    isError:testError,
+    refetch: refetchYearly,
+  } = useQuery({
+    queryKey: ["getTransactionDataYearly", barYear],
+    queryFn: () =>
+      fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/dataPerYear/${barYear}`,
+        { method: "GET", credentials: "include" }
+      ).then((res) => res.json()),
+    enabled: Boolean(barYear),
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
+
+
+  useEffect(()=>{
+    console.log("testLoading",testLoading)
+    console.log("testTransactionDetails",testTransactionDetails)
+    console.log("testError",testError)
+
+  },[testLoading,testTransactionDetails,testError])
+
   // Get categories from backend API
   const { isPending: isPendingCategories, data: categoryData } =
     useCategoryQuery();
+
+  // New aggregated analysis API for yearly/monthly by types
+  const {
+    isPending: isPendingAnalysis,
+    data: analysisData,
+    isError: isErrorAnalysis,
+    refetch: refetchAnalysis,
+  } = useQuery({
+    queryKey: ["getDataAnalysis", viewMode, currentYear, currentMonth],
+    queryFn: () =>
+      fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/dataAnalysis/${currentYear}${
+          viewMode === "monthly" ? `/${currentMonth}` : ""
+        }`,
+        { method: "GET", credentials: "include" }
+      ).then((res) => res.json()),
+    enabled:
+      (viewMode === "yearly" && Boolean(currentYear)) ||
+      (viewMode === "monthly" && Boolean(currentYear && currentMonth)),
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 0,
+  });
+    useEffect(()=>{
+    console.log("isPendingAnalysis",isPendingAnalysis)
+    console.log("analysisData",analysisData)
+    console.log("isErrorAnalysis",isErrorAnalysis)
+
+  },[isPendingAnalysis,analysisData,isErrorAnalysis])
 
   const { isPending: isPendingAllData, data: allTransactionData } = useQuery({
     queryKey: ["getAllTransactionData"],
@@ -66,57 +123,39 @@ const AnalysisPage = () => {
       }).then((res) => res.json()),
   });
 
-  const pieDataExpense = React.useMemo(() => {
-    const source =
-      viewMode === "monthly"
-        ? transactionDetails?.data
-        : allTransactionData?.data;
-    if (!source) return [];
-    const sums = {};
-    source.forEach((tx) => {
-      if (viewMode === "yearly") {
-        const txDate = dayjs(tx.date);
-        if (txDate.year() !== Number(currentYear)) return;
-      }
-      if (tx.type !== "Expense") return;
-      const category = tx.category || "Uncategorized";
-      sums[category] = (sums[category] || 0) + Number(tx.amount || 0);
-    });
+  // If any other feature dispatches a global transactions change event, refresh this page's data
+  useEffect(() => {
+    const onTxChanged = () => {
+      refetchAnalysis();
+      refetchYearly();
+    };
+    window.addEventListener("transactions:changed", onTxChanged);
+    return () => window.removeEventListener("transactions:changed", onTxChanged);
+  }, [refetchAnalysis, refetchYearly]);
 
-    return Object.entries(sums)
+  const pieDataExpense = React.useMemo(() => {
+    const sourceObj = analysisData?.expenseTypes ?? analysisData?.data?.expenseTypes;
+    if (!sourceObj) return [];
+    return Object.entries(sourceObj)
       .sort((a, b) => b[1] - a[1])
       .map(([category, value], idx) => ({
         id: idx,
         value,
         label: category,
       }));
-  }, [transactionDetails, allTransactionData, viewMode, currentYear]);
+  }, [analysisData]);
 
   const pieDataIncome = React.useMemo(() => {
-    const source =
-      viewMode === "monthly"
-        ? transactionDetails?.data
-        : allTransactionData?.data;
-    if (!source) return [];
-    const sums = {};
-    source.forEach((tx) => {
-      if (viewMode === "yearly") {
-        const txDate = dayjs(tx.date);
-        if (txDate.year() !== Number(currentYear)) return;
-      }
-      if (tx.type !== "Income") return;
-      const category = tx.category || "Uncategorized";
-      sums[category] = (sums[category] || 0) + Number(tx.amount || 0);
-    });
-
-    return Object.entries(sums)
+    const sourceObj = analysisData?.incomeTypes ?? analysisData?.data?.incomeTypes;
+    if (!sourceObj) return [];
+    return Object.entries(sourceObj)
       .sort((a, b) => b[1] - a[1])
       .map(([category, value], idx) => ({
         id: idx,
         value,
         label: category,
       }));
-  }, [transactionDetails, allTransactionData, viewMode, currentYear]);
+  }, [analysisData]);
 
   const pieTotalExpense = React.useMemo(
     () => pieDataExpense.reduce((s, d) => s + Number(d.value || 0), 0),
@@ -279,13 +318,13 @@ const AnalysisPage = () => {
               maxWidth: "500px",
             }}
           >
-            {isPendingAllData ? (
+            {isPendingAnalysis ? (
               <span style={{ color: "#ef5350", fontWeight: 600 }}>
                 Loading chart...
               </span>
             ) : (
               <>
-                {pieTotalExpense === 0 ? (
+                {pieDataExpense.length === 0 ? (
                   <span style={{ color: "#ef5350", fontWeight: 600 }}>
                     No data found
                   </span>
@@ -371,13 +410,13 @@ const AnalysisPage = () => {
               maxWidth: "500px",
             }}
           >
-            {isPendingAllData ? (
+            {isPendingAnalysis ? (
               <span style={{ color: "#ef5350", fontWeight: 600 }}>
                 Loading chart...
               </span>
             ) : (
               <>
-                {pieIncomeTotal === 0 ? (
+                {pieDataIncome.length === 0 ? (
                   <span style={{ color: "#ef5350", fontWeight: 600 }}>
                     No data available
                   </span>
@@ -456,14 +495,14 @@ const AnalysisPage = () => {
             )}
           </Box>
         </Box>
-        {isPending && (
+        {isPendingAnalysis && (
           <Box sx={{ mt: 2, textAlign: "center", width: "100%" }}>
             <span style={{ color: "#ef5350", fontWeight: 600 }}>
               Loading data...
             </span>
           </Box>
         )}
-        {isError && (
+        {isErrorAnalysis && (
           <Box sx={{ mt: 2, textAlign: "center", width: "100%" }}>
             <span style={{ color: "#ef5350", fontWeight: 600 }}>
               Error loading data.
@@ -514,89 +553,6 @@ const AnalysisPage = () => {
                 </MenuItem>
               ))}
             </Select>
-            {/* <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                gap: 2,
-                width: "100%",
-                maxWidth: 400,
-                mx: "auto",
-              }}
-            >
-              {["Expense", "Income"].map((type) => (
-                <Box
-                  key={type}
-                  onClick={() => setBarType(type)}
-                  sx={{
-                    cursor: "pointer",
-                    padding: "12px 24px",
-                    borderRadius: 2,
-                    bgcolor: "rgba(0,0,0,0.04)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flex: 1,
-                    position: "relative",
-                    overflow: "hidden",
-                    border: "2px solid",
-                    borderColor:
-                      barType === type
-                        ? type === "Expense"
-                          ? "#ef5350"
-                          : "#43a047"
-                        : "transparent",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    "&::before": {
-                      content: '""',
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor:
-                        type === "Expense" ? "#ef5350" : "#43a047",
-                      opacity: barType === type ? 1 : 0,
-                      transition: "opacity 0.3s ease",
-                      zIndex: 0,
-                    },
-                    "& > span": {
-                      position: "relative",
-                      zIndex: 1,
-                      fontSize: "1rem",
-                      fontWeight: barType === type ? 600 : 500,
-                      color:
-                        barType === type
-                          ? "white"
-                          : type === "Expense"
-                          ? "#ef5350"
-                          : "#43a047",
-                      transition: "all 0.3s ease",
-                    },
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow:
-                        barType === type
-                          ? "none"
-                          : "0 4px 12px rgba(0,0,0,0.1)",
-                      "&::before": {
-                        opacity: barType === type ? 1 : 0.1,
-                      },
-                      "& > span": {
-                        color:
-                          barType === type
-                            ? "white"
-                            : type === "Expense"
-                            ? "#ef5350"
-                            : "#43a047",
-                      },
-                    },
-                  }}
-                >
-                  <span>{type}</span>
-                </Box>
-              ))}
-            </Box> */}
           </Box>
           <Box
             sx={{
@@ -629,13 +585,9 @@ const AnalysisPage = () => {
                 }}
               >
                 {currencyFmt.format(
-                  allTransactionData?.data
-                    ?.filter(
-                      (tx) =>
-                        dayjs(tx.date).year() === Number(barYear) &&
-                        tx.type === "Expense"
-                    )
-                    .reduce((sum, tx) => sum + Number(tx.amount || 0), 0) || 0
+                  ((testTransactionDetails?.data?.monthlyDataArray?.ExpensesArray ??
+                    testTransactionDetails?.monthlyDataArray?.ExpensesArray) || [])
+                    .reduce((sum, v) => sum + Number(v || 0), 0)
                 )}
               </Box>
             </Box>
@@ -658,13 +610,9 @@ const AnalysisPage = () => {
                 }}
               >
                 {currencyFmt.format(
-                  allTransactionData?.data
-                    ?.filter(
-                      (tx) =>
-                        dayjs(tx.date).year() === Number(barYear) &&
-                        tx.type === "Income"
-                    )
-                    .reduce((sum, tx) => sum + Number(tx.amount || 0), 0) || 0
+                  ((testTransactionDetails?.data?.monthlyDataArray?.IncomeArray ??
+                    testTransactionDetails?.monthlyDataArray?.IncomeArray) || [])
+                    .reduce((sum, v) => sum + Number(v || 0), 0)
                 )}
               </Box>
             </Box>
@@ -679,7 +627,7 @@ const AnalysisPage = () => {
             minHeight: { xs: 180, sm: 220 },
           }}
         >
-          {isPendingAllData ? (
+          {testLoading ? (
             <span style={{ color: "#ef5350", fontWeight: 600 }}>
               Loading chart...
             </span>
@@ -712,10 +660,7 @@ const AnalysisPage = () => {
                     },
                   },
                   title: {
-                    text:
-                      barType === "Expense"
-                        ? "Monthly Expense"
-                        : "Monthly Income",
+                    text: "Monthly Income vs Expense",
                     style: {
                       color: "white",
                       fontSize: "16px",
@@ -723,7 +668,7 @@ const AnalysisPage = () => {
                     },
                   },
                   xAxis: {
-                    categories: barChartData?.[barType]?.map((item) => item.month) || [],
+                    categories: Months,
                     title: {
                       text: "Month",
                       style: {
@@ -781,12 +726,16 @@ const AnalysisPage = () => {
                   series: [
                     {
                       name: "Income",
-                      data: barChartData?.Income?.map((item) => item.value) || [],
+                      data:
+                        (testTransactionDetails?.data?.monthlyDataArray?.IncomeArray ??
+                          testTransactionDetails?.monthlyDataArray?.IncomeArray) || [],
                       color: "#43a047",
                     },
                     {
                       name: "Expense",
-                      data: barChartData?.Expense?.map((item) => item.value) || [],
+                      data:
+                        (testTransactionDetails?.data?.monthlyDataArray?.ExpensesArray ??
+                          testTransactionDetails?.monthlyDataArray?.ExpensesArray) || [],
                       color: "#ef5350",
                     },
                   ],

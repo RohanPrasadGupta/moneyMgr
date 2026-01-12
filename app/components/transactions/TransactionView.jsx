@@ -131,6 +131,10 @@ const TransactionView = () => {
         { method: "GET", credentials: "include" }
       ).then((res) => res.json()),
     enabled: Boolean(currentYear && currentMonth),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 0,
   });
 
   const mutation = useMutation({
@@ -149,7 +153,9 @@ const TransactionView = () => {
     onSuccess: () => {
       setDeleteDialogOpen(false);
       setSelectedTxId(null);
+      // Invalidate and immediately refetch the current month view
       queryClient.invalidateQueries({ queryKey: ["getMonthlyTransactions"] });
+      
       toast.success("Transaction deleted successfully");
     },
     onError: () => toast.error("Failed to delete transaction"),
@@ -172,7 +178,9 @@ const TransactionView = () => {
     },
     onSuccess: () => {
       toast.success("Transaction updated successfully");
+      // Invalidate and immediately refetch the current month view
       queryClient.invalidateQueries({ queryKey: ["getMonthlyTransactions"] });
+     
       setEditDialogOpen(false);
       setEditData(null);
     },
@@ -197,6 +205,20 @@ const TransactionView = () => {
     setCurrentYear(now.year());
     setCurrentMonth(now.format("MMMM"));
   }, []);
+
+  // Listen for global transaction changes (e.g., from AddTransaction) and refetch
+  useEffect(() => {
+    const onTransactionsChanged = () => {
+      if (currentYear && currentMonth) {
+        queryClient.invalidateQueries({ queryKey: ["getMonthlyTransactions"] });
+        
+      }
+    };
+    window.addEventListener("transactions:changed", onTransactionsChanged);
+    return () => {
+      window.removeEventListener("transactions:changed", onTransactionsChanged);
+    };
+  }, [queryClient, currentYear, currentMonth]);
 
   const handleDeleteClick = (id) => {
     setSelectedTxId(id);
