@@ -73,12 +73,12 @@ const AnalysisPage = () => {
   });
 
 
-  useEffect(()=>{
-    console.log("testLoading",testLoading)
-    console.log("testTransactionDetails",testTransactionDetails)
-    console.log("testError",testError)
+  // useEffect(()=>{
+  //   console.log("testLoading",testLoading)
+  //   console.log("testTransactionDetails",testTransactionDetails)
+  //   console.log("testError",testError)
 
-  },[testLoading,testTransactionDetails,testError])
+  // },[testLoading,testTransactionDetails,testError])
 
   // Get categories from backend API
   const { isPending: isPendingCategories, data: categoryData } =
