@@ -92,14 +92,22 @@ const AnalysisPage = () => {
     refetch: refetchAnalysis,
   } = useQuery({
     queryKey: ["getDataAnalysis", viewMode, currentYear, currentMonth],
-    queryFn: () =>
-      fetch(
+    queryFn: () => {
+      if (viewMode === "all") {
+        return fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/dataReportAll`,
+          { method: "GET", credentials: "include" }
+        ).then((res) => res.json());
+      }
+      return fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/dataAnalysis/${currentYear}${
           viewMode === "monthly" ? `/${currentMonth}` : ""
         }`,
         { method: "GET", credentials: "include" }
-      ).then((res) => res.json()),
+      ).then((res) => res.json());
+    },
     enabled:
+      viewMode === "all" ||
       (viewMode === "yearly" && Boolean(currentYear)) ||
       (viewMode === "monthly" && Boolean(currentYear && currentMonth)),
     refetchOnMount: "always",
@@ -241,6 +249,7 @@ const AnalysisPage = () => {
             id="year-select"
             value={currentYear}
             onChange={(e) => setCurrentYear(e.target.value)}
+            disabled={viewMode === "all"}
             sx={{
               fontSize: { xs: "0.95rem", sm: "1.05rem" },
               minWidth: 90,
@@ -274,13 +283,14 @@ const AnalysisPage = () => {
           >
             <MenuItem value="monthly">Monthly</MenuItem>
             <MenuItem value="yearly">Yearly</MenuItem>
+            <MenuItem value="all">View All</MenuItem>
           </Select>
           <Select
             labelId="month-select-label"
             id="month-select"
             value={currentMonth}
             onChange={(e) => setCurrentMonth(e.target.value)}
-            disabled={viewMode === "yearly"}
+            disabled={viewMode === "yearly" || viewMode === "all"}
             sx={{
               fontSize: { xs: "0.95rem", sm: "1.05rem" },
               minWidth: 110,
@@ -585,8 +595,8 @@ const AnalysisPage = () => {
                 }}
               >
                 {currencyFmt.format(
-                  ((testTransactionDetails?.data?.monthlyDataArray?.ExpensesArray ??
-                    testTransactionDetails?.monthlyDataArray?.ExpensesArray) || [])
+                  ((testTransactionDetails?.data?.ExpensesArray ??
+                    testTransactionDetails?.data?.ExpensesArray) || [])
                     .reduce((sum, v) => sum + Number(v || 0), 0)
                 )}
               </Box>
@@ -610,8 +620,8 @@ const AnalysisPage = () => {
                 }}
               >
                 {currencyFmt.format(
-                  ((testTransactionDetails?.data?.monthlyDataArray?.IncomeArray ??
-                    testTransactionDetails?.monthlyDataArray?.IncomeArray) || [])
+                  ((testTransactionDetails?.data?.IncomeArray ??
+                    testTransactionDetails?.data?.IncomeArray) || [])
                     .reduce((sum, v) => sum + Number(v || 0), 0)
                 )}
               </Box>
@@ -727,15 +737,15 @@ const AnalysisPage = () => {
                     {
                       name: "Income",
                       data:
-                        (testTransactionDetails?.data?.monthlyDataArray?.IncomeArray ??
-                          testTransactionDetails?.monthlyDataArray?.IncomeArray) || [],
+                        (testTransactionDetails?.data?.IncomeArray ??
+                          testTransactionDetails?.data?.IncomeArray) || [],
                       color: "#43a047",
                     },
                     {
                       name: "Expense",
                       data:
-                        (testTransactionDetails?.data?.monthlyDataArray?.ExpensesArray ??
-                          testTransactionDetails?.monthlyDataArray?.ExpensesArray) || [],
+                        (testTransactionDetails?.data?.ExpensesArray ??
+                          testTransactionDetails?.data?.ExpensesArray) || [],
                       color: "#ef5350",
                     },
                   ],
