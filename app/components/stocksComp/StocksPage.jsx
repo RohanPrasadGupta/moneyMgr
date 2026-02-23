@@ -338,9 +338,10 @@ const StocksPage = () => {
   };
 
   const calculateNetInvestment = (transactionList) => {
-    const totalBought = calculateTotalInvestment(transactionList);
-    const totalSold = calculateTotalSold(transactionList);
-    return totalBought - totalSold;
+    // Remaining invested capital = avgBuyPrice × shares still held
+    const avgPrice = calculateAveragePrice(transactionList);
+    const remainingQuantity = calculateTotalQuantity(transactionList);
+    return Math.max(0, avgPrice * remainingQuantity);
   };
 
   const calculateTotalQuantity = (transactionList) => {
@@ -366,19 +367,16 @@ const StocksPage = () => {
   };
 
   const calculateProfitLoss = (transactionList) => {
-    const totalSold = calculateTotalSold(transactionList);
-    const soldTransactions = transactionList.filter((t) => t.type === "SELL");
+    const sellTransactions = transactionList.filter((t) => t.type === "SELL");
+    if (sellTransactions.length === 0) return 0;
 
-    // Calculate cost basis for sold shares
-    let costBasis = 0;
-    const avgPrice = calculateAveragePrice(transactionList);
-    const totalSoldQuantity = soldTransactions.reduce(
-      (sum, t) => sum + t.quantity,
-      0
-    );
-    costBasis = avgPrice * totalSoldQuantity;
+    // Weighted average buy price across all BUY transactions
+    const avgBuyPrice = calculateAveragePrice(transactionList);
 
-    return totalSold - costBasis;
+    // For each SELL: profit = (sellPrice - avgBuyPrice) × quantity
+    return sellTransactions.reduce((sum, t) => {
+      return sum + (t.price - avgBuyPrice) * t.quantity;
+    }, 0);
   };
 
   return (
@@ -630,7 +628,7 @@ const StocksPage = () => {
                 const totalQuantity =
                   calculateTotalQuantity(symbolTransactions);
                 const averagePrice = calculateAveragePrice(symbolTransactions);
-                const profitLoss = calculateProfitLoss(symbolTransactions);
+                const profitLoss = calculateProfitLoss(symbolTransactions) - calculateNetInvestment(symbolTransactions);
                 const stockName = symbolTransactions[0]?.stockName || "";
 
                 return (
@@ -845,7 +843,7 @@ const StocksPage = () => {
                                 fontSize: { xs: "0.65rem", sm: "0.75rem" },
                               }}
                             >
-                              INVESTED
+                              TOTAL BOUGHT
                             </Typography>
                             <Typography
                               variant="body1"
@@ -857,6 +855,17 @@ const StocksPage = () => {
                               }}
                             >
                               {formatCurrency(totalInvestment)}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: "text.secondary",
+                                fontSize: { xs: "0.6rem", sm: "0.65rem" },
+                                display: "block",
+                                mt: 0.25,
+                              }}
+                            >
+                              all buys ever
                             </Typography>
                           </Box>
 
@@ -899,6 +908,17 @@ const StocksPage = () => {
                               >
                                 {formatCurrency(totalSold)}
                               </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "text.secondary",
+                                  fontSize: { xs: "0.6rem", sm: "0.65rem" },
+                                  display: "block",
+                                  mt: 0.25,
+                                }}
+                              >
+                                revenue received
+                              </Typography>
                             </Box>
                           )}
 
@@ -914,7 +934,7 @@ const StocksPage = () => {
                                 md: "140px",
                               },
                               flex: { xs: "none", lg: "0 0 140px" },
-                              border: "1px solid #23272f",
+                              border: "1px solid rgba(144, 202, 249, 0.4)",
                             }}
                           >
                             <Typography
@@ -927,68 +947,96 @@ const StocksPage = () => {
                                 fontSize: { xs: "0.65rem", sm: "0.75rem" },
                               }}
                             >
-                              NET
+                              REMAINING
                             </Typography>
                             <Typography
                               variant="body1"
                               fontWeight="bold"
                               sx={{
-                                color: "#f5f6fa",
+                                color: "#90caf9",
                                 mt: 0.5,
                                 fontSize: { xs: "0.875rem", sm: "1rem" },
                               }}
                             >
                               {formatCurrency(netInvestment)}
                             </Typography>
-                          </Box>
-
-                          {totalSold > 0 && (
-                            <Box
+                            <Typography
+                              variant="caption"
                               sx={{
-                                textAlign: "center",
-                                bgcolor: "background.default",
-                                p: { xs: 1, sm: 1.5 },
-                                borderRadius: 2,
-                                width: {
-                                  xs: "calc(50% - 4px)",
-                                  sm: "120px",
-                                  md: "140px",
-                                },
-                                flex: { xs: "none", lg: "0 0 140px" },
-                                border: "1px solid",
-                                borderColor:
-                                  profitLoss >= 0
-                                    ? "rgba(102, 187, 106, 0.5)"
-                                    : "rgba(239, 83, 80, 0.5)",
+                                color: "text.secondary",
+                                fontSize: { xs: "0.6rem", sm: "0.65rem" },
+                                display: "block",
+                                mt: 0.25,
                               }}
                             >
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: "text.secondary",
-                                  fontWeight: 600,
-                                  letterSpacing: 0.5,
-                                  display: "block",
-                                  fontSize: { xs: "0.65rem", sm: "0.75rem" },
-                                }}
-                              >
-                                P/L
-                              </Typography>
-                              <Typography
-                                variant="body1"
-                                fontWeight="bold"
-                                sx={{
-                                  color:
-                                    profitLoss >= 0 ? "#66bb6a" : "#ef5350",
-                                  mt: 0.5,
-                                  fontSize: { xs: "0.875rem", sm: "1rem" },
-                                }}
-                              >
-                                {profitLoss >= 0 ? "+" : ""}
-                                {formatCurrency(profitLoss)}
-                              </Typography>
-                            </Box>
-                          )}
+                              capital at stake
+                            </Typography>
+                          </Box>
+
+                          <Box
+                            sx={{
+                              textAlign: "center",
+                              bgcolor: "background.default",
+                              p: { xs: 1, sm: 1.5 },
+                              borderRadius: 2,
+                              width: {
+                                xs: "calc(50% - 4px)",
+                                sm: "120px",
+                                md: "140px",
+                              },
+                              flex: { xs: "none", lg: "0 0 140px" },
+                              border: "1px solid",
+                              borderColor:
+                                profitLoss > 0
+                                  ? "rgba(102, 187, 106, 0.5)"
+                                  : profitLoss < 0
+                                  ? "rgba(239, 83, 80, 0.5)"
+                                  : "#23272f",
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: "text.secondary",
+                                fontWeight: 600,
+                                letterSpacing: 0.5,
+                                display: "block",
+                                fontSize: { xs: "0.65rem", sm: "0.75rem" },
+                              }}
+                            >
+                              REALIZED P/L
+                            </Typography>
+                            <Typography
+                              variant="body1"
+                              fontWeight="bold"
+                              sx={{
+                                color:
+                                  profitLoss > 0
+                                    ? "#66bb6a"
+                                    : profitLoss < 0
+                                    ? "#ef5350"
+                                    : "text.secondary",
+                                mt: 0.5,
+                                fontSize: { xs: "0.875rem", sm: "1rem" },
+                              }}
+                            >
+                              {profitLoss > 0 ? "+" : ""}
+                              {totalSold > 0
+                                ? formatCurrency(profitLoss) 
+                                : "—"}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: "text.secondary",
+                                fontSize: { xs: "0.6rem", sm: "0.65rem" },
+                                display: "block",
+                                mt: 0.25,
+                              }}
+                            >
+                              {totalSold > 0 ? "on sold shares" : "no sells yet"}
+                            </Typography>
+                          </Box>
 
                           {/* Add Transaction Button */}
                           <Box
