@@ -5,8 +5,10 @@ import { Box, Typography, Paper, Tabs, Tab, useMediaQuery, useTheme } from "@mui
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
+import SavingsIcon from "@mui/icons-material/Savings";
 import StockInvestmentPage from "./StockInvestmentPage";
 import CoinInvestmentPage from "./CoinInvestmentPage";
+import SipInvestmentPage from "./SipInvestmentPage";
 
 const InvestmentsPage = () => {
   const theme = useTheme();
@@ -139,6 +141,26 @@ const InvestmentsPage = () => {
               transition: "all 0.3s ease",
             }}
           />
+          <Tab
+            icon={<SavingsIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />}
+            iconPosition="start"
+            label={isMobile ? "SIP" : "SIP Investment"}
+            sx={{
+              textTransform: "none",
+              fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+              fontWeight: 600,
+              color: "text.secondary",
+              minHeight: { xs: 48, sm: 56 },
+              px: { xs: 1, sm: 2 },
+              "&.Mui-selected": {
+                color: "#ce93d8",
+              },
+              "&:hover": {
+                bgcolor: "rgba(206, 147, 216, 0.08)",
+              },
+              transition: "all 0.3s ease",
+            }}
+          />
         </Tabs>
       </Paper>
 
@@ -146,6 +168,7 @@ const InvestmentsPage = () => {
       <Box>
         {activeTab === 0 && <StockInvestmentPage />}
         {activeTab === 1 && <CoinInvestmentPage />}
+        {activeTab === 2 && <SipInvestmentPage />}
       </Box>
     </Box>
   );
