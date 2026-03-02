@@ -924,7 +924,7 @@ const StockInvestmentPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {[...stockInvestments].reverse().map((transaction, index) => (
+              {[...stockInvestments].map((transaction, index) => (
                 <TableRow
                   key={transaction._id}
                   sx={{

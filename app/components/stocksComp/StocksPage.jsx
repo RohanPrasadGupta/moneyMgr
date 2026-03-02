@@ -373,10 +373,17 @@ const StocksPage = () => {
     // Weighted average buy price across all BUY transactions
     const avgBuyPrice = calculateAveragePrice(transactionList);
 
-    // For each SELL: profit = (sellPrice - avgBuyPrice) × quantity
-    return sellTransactions.reduce((sum, t) => {
-      return sum + (t.price - avgBuyPrice) * t.quantity;
-    }, 0);
+    // Realized P&L = total sell revenue − (avgBuyPrice × total sold quantity)
+    const totalSellRevenue = sellTransactions.reduce(
+      (sum, t) => sum + t.totalAmount,
+      0
+    );
+    const totalSoldQuantity = sellTransactions.reduce(
+      (sum, t) => sum + t.quantity,
+      0
+    );
+
+    return totalSellRevenue - avgBuyPrice * totalSoldQuantity;
   };
 
   return (
@@ -503,80 +510,49 @@ const StocksPage = () => {
                 display: "flex",
                 flexDirection: { xs: "row", sm: "row" },
                 justifyContent: { xs: "space-between", md: "flex-start" },
-                gap: { xs: 2, sm: 3 },
+                gap: { xs: 1, sm: 2 },
                 bgcolor: "background.paper",
-                p: { xs: 1.5, sm: 2.5 },
+                p: { xs: 1, sm: 1.5 },
                 borderRadius: 2,
                 border: "1px solid #23272f",
                 flexWrap: "wrap",
+                alignItems: "center",
               }}
             >
-              <Box
-                sx={{
-                  textAlign: "center",
-                  minWidth: { xs: "auto", sm: "80px" },
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    fontWeight: 600,
-                    letterSpacing: 0.5,
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                  }}
-                >
+              {/* TOTAL STOCKS */}
+              <Box sx={{ textAlign: "center", minWidth: { xs: "auto", sm: "60px" } }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.5, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.65rem" } }}>
                   TOTAL STOCKS
                 </Typography>
-                <Typography
-                  variant="h5"
-                  fontWeight="bold"
-                  sx={{
-                    color: "#90caf9",
-                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
-                  }}
-                >
+                <Typography variant="h5" fontWeight="bold" sx={{ color: "#90caf9", fontSize: { xs: "1rem", sm: "1.1rem" } }}>
                   {Object.keys(groupedTransactions).length}
                 </Typography>
               </Box>
-              <Box
-                sx={{
-                  width: "1px",
-                  bgcolor: "#23272f",
-                  mx: { xs: 0, sm: 1 },
-                  display: { xs: "none", sm: "block" },
-                }}
-              />
-              <Box
-                sx={{
-                  textAlign: "center",
-                  minWidth: { xs: "auto", sm: "80px" },
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    fontWeight: 600,
-                    letterSpacing: 0.5,
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                  }}
-                >
+              <Box sx={{ width: "1px", bgcolor: "#23272f", mx: { xs: 0, sm: 0.5 }, alignSelf: "stretch", display: { xs: "none", sm: "block" } }} />
+
+              {/* TRANSACTIONS */}
+              <Box sx={{ textAlign: "center", minWidth: { xs: "auto", sm: "60px" } }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.5, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.65rem" } }}>
                   TRANSACTIONS
                 </Typography>
-                <Typography
-                  variant="h5"
-                  fontWeight="bold"
-                  sx={{
-                    color: "#f48fb1",
-                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
-                  }}
-                >
+                <Typography variant="h5" fontWeight="bold" sx={{ color: "#f48fb1", fontSize: { xs: "1rem", sm: "1.1rem" } }}>
                   {transactions.length}
+                </Typography>
+              </Box>
+              <Box sx={{ width: "1px", bgcolor: "#23272f", mx: { xs: 0, sm: 0.5 }, alignSelf: "stretch", display: { xs: "none", sm: "block" } }} />
+
+              {/* TOTAL REMAINING */}
+              <Box sx={{ textAlign: "center", minWidth: { xs: "auto", sm: "60px" } }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.5, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.65rem" } }}>
+                  TOTAL AMOUNT
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" sx={{ color: "#ffe082", fontSize: { xs: "1rem", sm: "1.1rem" } }}>
+                  {formatCurrency(
+                    Object.values(groupedTransactions).reduce(
+                      (sum, txList) => sum + calculateNetInvestment(txList),
+                      0
+                    )
+                  )}
                 </Typography>
               </Box>
             </Box>
@@ -815,6 +791,17 @@ const StocksPage = () => {
                               }}
                             >
                               {formatCurrency(averagePrice)}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: "text.secondary",
+                                fontSize: { xs: "0.6rem", sm: "0.65rem" },
+                                display: "block",
+                                mt: 0.25,
+                              }}
+                            >
+                              Avg buys amount
                             </Typography>
                           </Box>
 
