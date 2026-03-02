@@ -215,8 +215,8 @@ const SipInvestmentPage = () => {
     sipInvestments.reduce((sum, inv) => sum + inv.amount, 0);
 
   const PIE_COLORS = [
-    "#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#FF922B",
-    "#CC5DE8", "#20C997", "#F06595", "#74C0FC", "#A9E34B",
+    "#66bb6a", "#388e3c", "#a5d6a7", "#1b5e20", "#81c784",
+    "#2e7d32", "#c8e6c9", "#43a047", "#00e676", "#1de9b6",
   ];
 
   const CustomTooltip = ({ active, payload }) => {
