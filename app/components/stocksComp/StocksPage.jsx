@@ -386,6 +386,20 @@ const StocksPage = () => {
     return totalSellRevenue - avgBuyPrice * totalSoldQuantity;
   };
 
+  const getLatestBuyPrice = (transactionList) => {
+    const buyTransactions = transactionList
+      .filter((t) => t.type === "BUY")
+      .sort((a, b) => new Date(b.investedDate) - new Date(a.investedDate));
+    return buyTransactions.length > 0 ? buyTransactions[0].price : null;
+  };
+
+  const getLatestSellPrice = (transactionList) => {
+    const sellTransactions = transactionList
+      .filter((t) => t.type === "SELL")
+      .sort((a, b) => new Date(b.investedDate) - new Date(a.investedDate));
+    return sellTransactions.length > 0 ? sellTransactions[0].price : null;
+  };
+
   return (
     <Box
       sx={{
@@ -606,6 +620,8 @@ const StocksPage = () => {
                 const averagePrice = calculateAveragePrice(symbolTransactions);
                 const profitLoss = calculateProfitLoss(symbolTransactions) - calculateNetInvestment(symbolTransactions);
                 const stockName = symbolTransactions[0]?.stockName || "";
+                const latestBuyPrice = getLatestBuyPrice(symbolTransactions);
+                const latestSellPrice = getLatestSellPrice(symbolTransactions);
 
                 return (
                   <Accordion
@@ -737,6 +753,52 @@ const StocksPage = () => {
                               {symbolTransactions.length} transactions •{" "}
                               {totalQuantity} shares
                             </Typography>
+                            {(latestBuyPrice !== null || latestSellPrice !== null) && (
+                              <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mt: 0.75 }}>
+                                {latestBuyPrice !== null && (
+                                  <Chip
+                                    icon={
+                                      <TrendingUpIcon
+                                        sx={{ fontSize: { xs: 13, sm: 15 } }}
+                                      />
+                                    }
+                                    label={`Buy: ${formatCurrency(latestBuyPrice)}`}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: "rgba(102, 187, 106, 0.12)",
+                                      color: "#66bb6a",
+                                      border: "1px solid rgba(102, 187, 106, 0.4)",
+                                      fontWeight: 600,
+                                      fontSize: { xs: "0.6rem", sm: "0.68rem" },
+                                      height: { xs: 20, sm: 22 },
+                                      "& .MuiChip-icon": { color: "#66bb6a" },
+                                      "& .MuiChip-label": { px: { xs: 0.75, sm: 1 } },
+                                    }}
+                                  />
+                                )}
+                                {latestSellPrice !== null && (
+                                  <Chip
+                                    icon={
+                                      <TrendingDownIcon
+                                        sx={{ fontSize: { xs: 13, sm: 15 } }}
+                                      />
+                                    }
+                                    label={`Sell: ${formatCurrency(latestSellPrice)}`}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: "rgba(239, 83, 80, 0.12)",
+                                      color: "#ef5350",
+                                      border: "1px solid rgba(239, 83, 80, 0.4)",
+                                      fontWeight: 600,
+                                      fontSize: { xs: "0.6rem", sm: "0.68rem" },
+                                      height: { xs: 20, sm: 22 },
+                                      "& .MuiChip-icon": { color: "#ef5350" },
+                                      "& .MuiChip-label": { px: { xs: 0.75, sm: 1 } },
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            )}
                           </Box>
                         </Box>
 
