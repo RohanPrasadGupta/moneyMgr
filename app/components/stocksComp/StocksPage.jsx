@@ -622,6 +622,7 @@ const StocksPage = () => {
                 const stockName = symbolTransactions[0]?.stockName || "";
                 const latestBuyPrice = getLatestBuyPrice(symbolTransactions);
                 const latestSellPrice = getLatestSellPrice(symbolTransactions);
+                const isZeroHolding = totalQuantity === 0;
 
                 return (
                   <Accordion
@@ -637,20 +638,31 @@ const StocksPage = () => {
                       },
                       boxShadow: 3,
                       bgcolor: "background.paper",
-                      border: "1px solid #23272f",
+                      border: isZeroHolding ? "1px dashed rgba(255,255,255,0.06)" : "1px solid #23272f",
+                      opacity: isZeroHolding ? 0.65 : 1,
                       overflow: "hidden",
                       transition: "all 0.3s ease",
-                      "&:hover": {
-                        boxShadow: {
-                          xs: 3,
-                          sm: "0 8px 24px rgba(48, 207, 208, 0.2)",
-                        },
-                        transform: { xs: "none", sm: "translateY(-2px)" },
-                        borderColor: {
-                          xs: "#23272f",
-                          sm: "rgba(48, 207, 208, 0.3)",
-                        },
-                      },
+                      ...(isZeroHolding
+                        ? {
+                            "&:hover": {
+                              boxShadow: 1,
+                              transform: "none",
+                              borderColor: "rgba(255,255,255,0.06)",
+                            },
+                          }
+                        : {
+                            "&:hover": {
+                              boxShadow: {
+                                xs: 3,
+                                sm: "0 8px 24px rgba(48, 207, 208, 0.2)",
+                              },
+                              transform: { xs: "none", sm: "translateY(-2px)" },
+                              borderColor: {
+                                xs: "#23272f",
+                                sm: "rgba(48, 207, 208, 0.3)",
+                              },
+                            },
+                          }),
                     }}
                   >
                     <AccordionSummary
