@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Box, Typography, Paper, Tabs, Tab, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Typography, Paper, Tabs, Tab, useMediaQuery, useTheme, Chip, Stack } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
@@ -27,8 +27,22 @@ const InvestmentsPage = () => {
         minHeight: "100vh",
         p: { xs: 2, sm: 3, md: 4 },
         bgcolor: "background.default",
+        position: "relative",
+        overflowX: "hidden",
+        overflowY: "visible",
       }}
     >
+      {/* Subtle background accents */}
+      <Box
+        aria-hidden
+        sx={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: "radial-gradient(500px at 20% 20%, rgba(255,153,102,0.08), transparent), radial-gradient(500px at 80% 0%, rgba(255,94,98,0.06), transparent)",
+        }}
+      />
+
       {/* Header */}
       <Paper
         elevation={3}
@@ -38,15 +52,27 @@ const InvestmentsPage = () => {
           bgcolor: "background.paper",
           border: "1px solid #23272f",
           mb: { xs: 2, sm: 3 },
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <Box sx={{ 
-          display: "flex", 
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: { xs: "flex-start", sm: "center" }, 
-          gap: { xs: 1.5, sm: 2 }, 
-          mb: { xs: 1.5, sm: 2 } 
-        }}>
+        <Box
+          aria-hidden
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(135deg, rgba(255,153,102,0.08), rgba(255,94,98,0.04))",
+            opacity: 0.7,
+          }}
+        />
+        <Box sx={{ position: "relative", zIndex: 1 }}>
+          <Box sx={{ 
+            display: "flex", 
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "flex-start", sm: "center" }, 
+            gap: { xs: 1.5, sm: 2 }, 
+            mb: { xs: 1.5, sm: 2 } 
+          }}>
           <Box
             sx={{
               background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
@@ -82,6 +108,14 @@ const InvestmentsPage = () => {
               Manage and monitor your investment portfolio
             </Typography>
           </Box>
+          </Box>
+
+          <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: { xs: 1, sm: 1.5 } }}>
+            <Chip label="Stocks" icon={<ShowChartIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid #23272f" }} />
+            <Chip label="Crypto" icon={<CurrencyBitcoinIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid #23272f" }} />
+            <Chip label="SIP" icon={<SavingsIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid #23272f" }} />
+            <Chip label="Multi-asset view" sx={{ border: "1px solid #23272f", bgcolor: "rgba(255,255,255,0.04)" }} />
+          </Stack>
         </Box>
 
         {/* Tabs */}
@@ -90,6 +124,8 @@ const InvestmentsPage = () => {
           onChange={handleTabChange}
           variant={isMobile ? "fullWidth" : "standard"}
           sx={{
+            position: "relative",
+            zIndex: 1,
             mt: { xs: 1.5, sm: 2 },
             "& .MuiTabs-indicator": {
               background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",

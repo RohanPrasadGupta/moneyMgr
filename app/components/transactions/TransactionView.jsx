@@ -18,6 +18,9 @@ import {
   MenuItem,
   Button,
   Grid,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -28,6 +31,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import SearchIcon from "@mui/icons-material/Search";
+import TuneIcon from "@mui/icons-material/Tune";
+import SortIcon from "@mui/icons-material/Sort";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -112,6 +119,11 @@ const TransactionView = () => {
   const [currentMonth, setCurrentMonth] = React.useState("");
   const queryClient = useQueryClient();
   const [newCategory, setNewCategory] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [accountFilter, setAccountFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("date");
+  const [sortDir, setSortDir] = useState("desc");
 
   const {
     isPending: isCategoriesPending,
@@ -277,7 +289,51 @@ const TransactionView = () => {
     updateTransactionMutation.mutate(payload);
   };
 
-  const totals = getTotals(transactionDetails?.data);
+  const baseTransactions = transactionDetails?.data || [];
+
+  const filteredTransactions = React.useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    let list = [...baseTransactions];
+
+    if (typeFilter !== "all") {
+      const targetType = typeFilter === "income" ? "Income" : "Expense";
+      list = list.filter((tx) => tx.type === targetType);
+    }
+
+    if (accountFilter !== "all") {
+      list = list.filter(
+        (tx) => tx.account?.toLowerCase() === accountFilter.toLowerCase()
+      );
+    }
+
+    if (term) {
+      list = list.filter((tx) =>
+        `${tx.category || ""} ${tx.note || ""}`
+          .toLowerCase()
+          .includes(term)
+      );
+    }
+
+    list.sort((a, b) => {
+      if (sortBy === "amount") {
+        const aVal = Number(a.amount) || 0;
+        const bVal = Number(b.amount) || 0;
+        return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+      }
+      const aDate = dayjs(a.date);
+      const bDate = dayjs(b.date);
+      return sortDir === "asc" ? aDate.diff(bDate) : bDate.diff(aDate);
+    });
+
+    return list;
+  }, [baseTransactions, typeFilter, accountFilter, searchTerm, sortBy, sortDir]);
+
+  const groupedTransactions = groupByDay(filteredTransactions);
+
+  const totals = getTotals(filteredTransactions);
+  const incomeNumber = totals.income === "-" ? 0 : Number(totals.income);
+  const expenseNumber = totals.expense === "-" ? 0 : Number(totals.expense);
+  const netTotal = incomeNumber - expenseNumber;
 
   if (isPending)
     return (
@@ -431,7 +487,11 @@ const TransactionView = () => {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Stack direction={{ xs: "row", sm: "row" }} spacing={{ xs: 1.5, sm: 2 }} height="100%">
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={{ xs: 1.5, sm: 2 }}
+              height="100%"
+            >
               <Paper
                 sx={{
                   flex: 1,
@@ -440,13 +500,15 @@ const TransactionView = () => {
                   border: "1px solid rgba(67, 160, 71, 0.3)",
                   borderRadius: 2,
                   minWidth: 0,
+                  position: "relative",
+                  overflow: "hidden",
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
                   <TrendingUpIcon sx={{ color: "#43a047", fontSize: { xs: 18, sm: 20 } }} />
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
+                  <Typography
+                    variant="caption"
+                    sx={{
                       color: "text.secondary",
                       fontSize: { xs: "0.7rem", sm: "0.75rem" },
                     }}
@@ -454,10 +516,10 @@ const TransactionView = () => {
                     Income
                   </Typography>
                 </Stack>
-                <Typography 
-                  variant="h6" 
-                  fontWeight={700} 
-                  sx={{ 
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  sx={{
                     color: "#43a047",
                     fontSize: { xs: "0.95rem", sm: "1.25rem" },
                     wordBreak: "break-all",
@@ -477,13 +539,15 @@ const TransactionView = () => {
                   border: "1px solid rgba(239, 83, 80, 0.3)",
                   borderRadius: 2,
                   minWidth: 0,
+                  position: "relative",
+                  overflow: "hidden",
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
                   <TrendingDownIcon sx={{ color: "#ef5350", fontSize: { xs: 18, sm: 20 } }} />
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
+                  <Typography
+                    variant="caption"
+                    sx={{
                       color: "text.secondary",
                       fontSize: { xs: "0.7rem", sm: "0.75rem" },
                     }}
@@ -491,10 +555,10 @@ const TransactionView = () => {
                     Expense
                   </Typography>
                 </Stack>
-                <Typography 
-                  variant="h6" 
-                  fontWeight={700} 
-                  sx={{ 
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  sx={{
                     color: "#ef5350",
                     fontSize: { xs: "0.95rem", sm: "1.25rem" },
                     wordBreak: "break-all",
@@ -505,13 +569,200 @@ const TransactionView = () => {
                     : new Intl.NumberFormat().format(totals.expense)}
                 </Typography>
               </Paper>
+
+              <Paper
+                sx={{
+                  flex: 1,
+                  p: { xs: 1.5, sm: 2 },
+                  bgcolor: "background.default",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: 2,
+                  minWidth: 0,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                  <AccountBalanceWalletIcon sx={{ color: netTotal >= 0 ? "#64b5f6" : "#ff5e62", fontSize: { xs: 18, sm: 20 } }} />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                    }}
+                  >
+                    Net
+                  </Typography>
+                </Stack>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  sx={{
+                    color: netTotal >= 0 ? "#64b5f6" : "#ff5e62",
+                    fontSize: { xs: "0.95rem", sm: "1.25rem" },
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {filteredTransactions.length === 0 ? "-" : new Intl.NumberFormat().format(netTotal)}
+                </Typography>
+              </Paper>
             </Stack>
           </Grid>
         </Grid>
       </Box>
 
+      {/* Interactive Filters */}
+      <Paper
+        sx={{
+          mb: { xs: 2, sm: 3 },
+          p: { xs: 1.5, sm: 2 },
+          border: "1px solid #23272f",
+          bgcolor: "background.default",
+          borderRadius: 2,
+          boxShadow: { xs: 0, sm: 4 },
+        }}
+      >
+        <Stack spacing={{ xs: 1.5, sm: 2 }}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={{ xs: 1.25, sm: 1.5, md: 2 }}
+            alignItems={{ xs: "stretch", md: "center" }}
+          >
+            <TextField
+              placeholder="Search by category or note"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
+              size={isMobile ? "small" : "medium"}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                flex: 1,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                },
+              }}
+            />
+
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={{ xs: 1, sm: 1.25 }}
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Tooltip title="Filter by type">
+                <ToggleButtonGroup
+                  value={typeFilter}
+                  exclusive
+                  onChange={(e, val) => val && setTypeFilter(val)}
+                  size={isMobile ? "small" : "medium"}
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    border: "1px solid #23272f",
+                    overflow: "hidden",
+                  }}
+                >
+                  <ToggleButton value="all" sx={{ px: 1.5 }}>All</ToggleButton>
+                  <ToggleButton value="income" sx={{ px: 1.5 }}>Income</ToggleButton>
+                  <ToggleButton value="expense" sx={{ px: 1.5 }}>Expense</ToggleButton>
+                </ToggleButtonGroup>
+              </Tooltip>
+
+              <Tooltip title="Filter by account">
+                <ToggleButtonGroup
+                  value={accountFilter}
+                  exclusive
+                  onChange={(e, val) => val && setAccountFilter(val)}
+                  size={isMobile ? "small" : "medium"}
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    border: "1px solid #23272f",
+                    overflow: "hidden",
+                  }}
+                >
+                  <ToggleButton value="all" sx={{ px: 1.5 }}>All Accounts</ToggleButton>
+                  <ToggleButton value="cash" sx={{ px: 1.5 }}>Cash</ToggleButton>
+                  <ToggleButton value="online" sx={{ px: 1.5 }}>Online</ToggleButton>
+                </ToggleButtonGroup>
+              </Tooltip>
+
+              <Stack direction="row" spacing={{ xs: 1, sm: 1.25 }} alignItems="center">
+                <Tooltip title="Sort field">
+                  <ToggleButtonGroup
+                    value={sortBy}
+                    exclusive
+                    onChange={(e, val) => val && setSortBy(val)}
+                    size={isMobile ? "small" : "medium"}
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 2,
+                      border: "1px solid #23272f",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <ToggleButton value="date" sx={{ px: 1.5 }}>Date</ToggleButton>
+                    <ToggleButton value="amount" sx={{ px: 1.5 }}>Amount</ToggleButton>
+                  </ToggleButtonGroup>
+                </Tooltip>
+                <Tooltip title={`Sort ${sortDir === "desc" ? "descending" : "ascending"}`}>
+                  <IconButton
+                    onClick={() => setSortDir((prev) => (prev === "desc" ? "asc" : "desc"))}
+                    sx={{
+                      border: "1px solid #23272f",
+                      bgcolor: "background.paper",
+                      borderRadius: 2,
+                    }}
+                  >
+                    <SortIcon />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Stack>
+          </Stack>
+
+          {(typeFilter !== "all" || accountFilter !== "all" || searchTerm) && (
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Chip
+                icon={<TuneIcon />}
+                label="Filters applied"
+                sx={{ bgcolor: "rgba(255,255,255,0.05)", border: "1px solid #23272f" }}
+              />
+              {typeFilter !== "all" && (
+                <Chip
+                  label={`Type: ${typeFilter}`}
+                  onDelete={() => setTypeFilter("all")}
+                  sx={{ border: "1px solid #23272f" }}
+                />
+              )}
+              {accountFilter !== "all" && (
+                <Chip
+                  label={`Account: ${accountFilter}`}
+                  onDelete={() => setAccountFilter("all")}
+                  sx={{ border: "1px solid #23272f" }}
+                />
+              )}
+              {searchTerm && (
+                <Chip
+                  label={`Search: ${searchTerm}`}
+                  onDelete={() => setSearchTerm("")}
+                  sx={{ border: "1px solid #23272f" }}
+                />
+              )}
+            </Stack>
+          )}
+        </Stack>
+      </Paper>
+
       {/* Transactions List */}
-      {transactionDetails?.data?.length === 0 ? (
+      {filteredTransactions.length === 0 ? (
         <Box
           sx={{
             display: "flex",
@@ -556,12 +807,14 @@ const TransactionView = () => {
               px: { xs: 2, sm: 0 },
             }}
           >
-            No transactions recorded for {currentMonth} {currentYear}
+            {searchTerm || typeFilter !== "all" || accountFilter !== "all"
+              ? "No transactions match the current filters. Try adjusting filters or clearing search."
+              : `No transactions recorded for ${currentMonth} ${currentYear}`}
           </Typography>
         </Box>
       ) : (
         <Stack spacing={{ xs: 2, sm: 3 }}>
-          {groupByDay(transactionDetails?.data || []).map((group) => {
+          {groupedTransactions.map((group) => {
             const groupTotals = getTotals(group.transactions);
             const incomeVal =
               groupTotals.income === "-" ? 0 : Number(groupTotals.income);
@@ -687,6 +940,8 @@ const TransactionView = () => {
                         p: { xs: 1.5, sm: 2 },
                         borderRadius: 2,
                         bgcolor: "background.paper",
+                        backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+                        backdropFilter: "blur(6px)",
                         border: `1px solid ${tx.type === "Income" ? "rgba(67, 160, 71, 0.3)" : "rgba(239, 83, 80, 0.3)"}`,
                         display: "flex",
                         flexDirection: { xs: "column", sm: "row" },
@@ -774,6 +1029,16 @@ const TransactionView = () => {
                               {tx.note}
                             </Typography>
                           )}
+                          <Chip
+                            label={formatDateTime(tx.date)}
+                            size="small"
+                            sx={{
+                              mt: 0.5,
+                              bgcolor: "rgba(255,255,255,0.04)",
+                              border: "1px solid #23272f",
+                              fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                            }}
+                          />
                         </Box>
                       </Stack>
 

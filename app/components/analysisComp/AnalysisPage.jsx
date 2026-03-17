@@ -5,6 +5,13 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Paper,
+  Typography,
+  Stack,
+  Chip,
+  Divider,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import TitleHeader from "../header/TitleHeader";
 import React, { useEffect } from "react";
@@ -32,6 +39,12 @@ const Months = [
 const Years = Array.from({ length: 10 }, (_, i) => 2029 - i);
 
 const AnalysisPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const chartHeight = isMobile ? 240 : 320;
+  const netChartHeight = isMobile ? 260 : 340;
+  const columnChartHeight = isMobile ? 280 : 320;
+  const barCategoryHeight = isMobile ? 280 : 320;
   const now = dayjs();
   const [currentYear, setCurrentYear] = React.useState(now.year());
   const [currentMonth, setCurrentMonth] = React.useState(now.format("MMMM"));
@@ -174,10 +187,35 @@ const AnalysisPage = () => {
     [pieDataIncome]
   );
 
+  const topExpenseCategories = React.useMemo(
+    () => pieDataExpense.slice(0, 10).map((d) => ({ name: d.label, value: d.value })),
+    [pieDataExpense]
+  );
+
+  const topIncomeCategories = React.useMemo(
+    () => pieDataIncome.slice(0, 10).map((d) => ({ name: d.label, value: d.value })),
+    [pieDataIncome]
+  );
+
   const currencyFmt = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: "THB",
     maximumFractionDigits: 0,
+  });
+
+  const yearlyIncomeArray =
+    (testTransactionDetails?.data?.IncomeArray ?? testTransactionDetails?.data?.IncomeArray) || [];
+  const yearlyExpenseArray =
+    (testTransactionDetails?.data?.ExpensesArray ?? testTransactionDetails?.data?.ExpensesArray) || [];
+
+  const yearlyIncomeTotal = yearlyIncomeArray.reduce((sum, v) => sum + Number(v || 0), 0);
+  const yearlyExpenseTotal = yearlyExpenseArray.reduce((sum, v) => sum + Number(v || 0), 0);
+  const yearlyNetTotal = yearlyIncomeTotal - yearlyExpenseTotal;
+
+  const netSeries = Months.map((m, idx) => {
+    const income = Number(yearlyIncomeArray[idx] || 0);
+    const expense = Number(yearlyExpenseArray[idx] || 0);
+    return income - expense;
   });
 
   const barChartData = React.useMemo(() => {
@@ -228,88 +266,140 @@ const AnalysisPage = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       <TitleHeader text="Data Visualization" />
 
+      {/* Overview stats */}
+      <Paper
+        sx={{
+          width: "100%",
+          mb: { xs: 2, sm: 3 },
+          p: { xs: 2, sm: 3 },
+          borderRadius: 3,
+          border: "1px solid #23272f",
+          background: "linear-gradient(135deg, rgba(255,153,102,0.08), rgba(255,94,98,0.04))",
+        }}
+      >
+        <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 3 }} alignItems="stretch">
+          <Stack spacing={1} flex={1}>
+            <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
+              Current View
+            </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Chip label={`${viewMode === "monthly" ? currentMonth : "All Months"}`} size="small" sx={{ border: "1px solid #23272f" }} />
+              <Chip label={`${currentYear}`} size="small" sx={{ border: "1px solid #23272f" }} />
+            </Stack>
+          </Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 1.5, sm: 2 }} flex={2}>
+            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid #23272f" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Income</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: "#43a047", mt: 0.5 }}>
+                {currencyFmt.format(pieIncomeTotal)}
+              </Typography>
+            </Paper>
+            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid #23272f" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Expense</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: "#ef5350", mt: 0.5 }}>
+                {currencyFmt.format(pieTotalExpense)}
+              </Typography>
+            </Paper>
+            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid #23272f" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Net</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "#90caf9" : "#ff8a80", mt: 0.5 }}>
+                {currencyFmt.format(pieIncomeTotal - pieTotalExpense)}
+              </Typography>
+            </Paper>
+          </Stack>
+        </Stack>
+      </Paper>
+
       <Box sx={{ width: "100%", mb: { xs: 2, sm: 3 } }}>
-        <Box
+        <Paper
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            gap: 2,
-            alignItems: "center",
-            justifyContent: "center",
-            mt: { xs: 1, sm: 2 },
-            mb: { xs: 1, sm: 2 },
+            p: { xs: 2, sm: 3 },
+            borderRadius: 3,
+            border: "1px solid #23272f",
+            background: "rgba(255,255,255,0.02)",
+            mb: { xs: 2, sm: 3 },
           }}
         >
-          <Select
-            labelId="year-select-label"
-            id="year-select"
-            value={currentYear}
-            onChange={(e) => setCurrentYear(e.target.value)}
-            disabled={viewMode === "all"}
-            sx={{
-              fontSize: { xs: "0.95rem", sm: "1.05rem" },
-              minWidth: 90,
-              bgcolor: "background.default",
-              borderRadius: 2,
-              boxShadow: 1,
-            }}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            alignItems="center"
+            justifyContent="center"
           >
-            {Years.map((year, index) => (
-              <MenuItem
-                key={index}
-                value={year}
-                sx={{ fontSize: { xs: "0.95rem", sm: "1.05rem" } }}
-              >
-                {year}
-              </MenuItem>
-            ))}
-          </Select>
-          <Select
-            labelId="view-mode-select-label"
-            id="view-mode-select"
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value)}
-            sx={{
-              fontSize: { xs: "0.95rem", sm: "1.05rem" },
-              minWidth: 110,
-              bgcolor: "background.default",
-              borderRadius: 2,
-              boxShadow: 1,
-            }}
-          >
-            <MenuItem value="monthly">Monthly</MenuItem>
-            <MenuItem value="yearly">Yearly</MenuItem>
-            <MenuItem value="all">View All</MenuItem>
-          </Select>
-          <Select
-            labelId="month-select-label"
-            id="month-select"
-            value={currentMonth}
-            onChange={(e) => setCurrentMonth(e.target.value)}
-            disabled={viewMode === "yearly" || viewMode === "all"}
-            sx={{
-              fontSize: { xs: "0.95rem", sm: "1.05rem" },
-              minWidth: 110,
-              bgcolor: "background.default",
-              borderRadius: 2,
-              boxShadow: 1,
-            }}
-          >
-            {Months.map((month, index) => (
-              <MenuItem
-                key={index}
-                value={month}
-                sx={{ fontSize: { xs: "0.95rem", sm: "1.05rem" } }}
-              >
-                {month}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box>
+            <Select
+              labelId="year-select-label"
+              id="year-select"
+              value={currentYear}
+              onChange={(e) => setCurrentYear(e.target.value)}
+              disabled={viewMode === "all"}
+              sx={{
+                fontSize: { xs: "0.95rem", sm: "1.05rem" },
+                minWidth: 90,
+                bgcolor: "background.default",
+                borderRadius: 2,
+                boxShadow: 1,
+              }}
+            >
+              {Years.map((year, index) => (
+                <MenuItem
+                  key={index}
+                  value={year}
+                  sx={{ fontSize: { xs: "0.95rem", sm: "1.05rem" } }}
+                >
+                  {year}
+                </MenuItem>
+              ))}
+            </Select>
+            <Select
+              labelId="view-mode-select-label"
+              id="view-mode-select"
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value)}
+              sx={{
+                fontSize: { xs: "0.95rem", sm: "1.05rem" },
+                minWidth: 110,
+                bgcolor: "background.default",
+                borderRadius: 2,
+                boxShadow: 1,
+              }}
+            >
+              <MenuItem value="monthly">Monthly</MenuItem>
+              <MenuItem value="yearly">Yearly</MenuItem>
+              <MenuItem value="all">View All</MenuItem>
+            </Select>
+            <Select
+              labelId="month-select-label"
+              id="month-select"
+              value={currentMonth}
+              onChange={(e) => setCurrentMonth(e.target.value)}
+              disabled={viewMode === "yearly" || viewMode === "all"}
+              sx={{
+                fontSize: { xs: "0.95rem", sm: "1.05rem" },
+                minWidth: 110,
+                bgcolor: "background.default",
+                borderRadius: 2,
+                boxShadow: 1,
+              }}
+            >
+              {Months.map((month, index) => (
+                <MenuItem
+                  key={index}
+                  value={month}
+                  sx={{ fontSize: { xs: "0.95rem", sm: "1.05rem" } }}
+                >
+                  {month}
+                </MenuItem>
+              ))}
+            </Select>
+          </Stack>
+        </Paper>
+
         <Box
           sx={{
             width: "100%",
@@ -346,7 +436,7 @@ const AnalysisPage = () => {
                       options={{
                         chart: {
                           type: "pie",
-                          height: "300",
+                          height: chartHeight,
                           backgroundColor: "transparent",
                           marginTop: 0,
                           marginBottom: 0,
@@ -438,7 +528,7 @@ const AnalysisPage = () => {
                       options={{
                         chart: {
                           type: "pie",
-                          height: "300",
+                          height: chartHeight,
                           backgroundColor: "transparent",
                           marginTop: 0,
                           marginBottom: 0,
@@ -519,9 +609,101 @@ const AnalysisPage = () => {
             </span>
           </Box>
         )}
+
+        {/* Top Categories under pies */}
+        <GridLikeTopCategories
+          title="Top Expense Categories"
+          seriesName="Expense"
+          data={topExpenseCategories}
+          color="#ef5350"
+          height={barCategoryHeight}
+        />
+        <GridLikeTopCategories
+          title="Top Income Categories"
+          seriesName="Income"
+          data={topIncomeCategories}
+          color="#43a047"
+          height={barCategoryHeight}
+          sx={{ mt: 3 }}
+        />
       </Box>
 
       <Box sx={{ width: "100%", mt: { xs: 2, sm: 4 } }}>
+        <Paper
+          sx={{
+            p: { xs: 2, sm: 3 },
+            borderRadius: 3,
+            border: "1px solid #23272f",
+            background: "rgba(255,255,255,0.02)",
+            mb: { xs: 2, sm: 3 },
+          }}
+        >
+          <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+            Net Trend (Income - Expense)
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            Track monthly momentum and overall net for the selected year.
+          </Typography>
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={{
+              chart: {
+                type: "areaspline",
+                backgroundColor: "transparent",
+                height: netChartHeight,
+              },
+              title: { text: "" },
+              xAxis: {
+                categories: Months,
+                labels: { style: { color: "#e0e0e0" } },
+                lineColor: "rgba(255,255,255,0.2)",
+                tickColor: "rgba(255,255,255,0.2)",
+              },
+              yAxis: {
+                title: { text: "Amount (THB)", style: { color: "#e0e0e0" } },
+                labels: { style: { color: "#e0e0e0" } },
+                gridLineColor: "rgba(255,255,255,0.08)",
+              },
+              tooltip: {
+                shared: true,
+                backgroundColor: "rgba(17,20,24,0.9)",
+                borderWidth: 0,
+                style: { color: "#fff" },
+                pointFormat:
+                  '<span style="color:{point.color}">●</span> Net: <b>฿{point.y:,.0f}</b><br/>',
+              },
+              legend: { enabled: false },
+              credits: { enabled: false },
+              plotOptions: {
+                areaspline: {
+                  fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+                      [0, "rgba(144,202,249,0.35)"],
+                      [1, "rgba(144,202,249,0.05)"],
+                    ],
+                  },
+                  lineColor: "#90caf9",
+                  lineWidth: 2.5,
+                  marker: {
+                    enabled: true,
+                    radius: 3,
+                    fillColor: "#90caf9",
+                    lineColor: "#0f1115",
+                    lineWidth: 1,
+                  },
+                },
+              },
+              series: [
+                {
+                  name: "Net",
+                  data: netSeries,
+                },
+              ],
+            }}
+          />
+        </Paper>
+
         <Box
           sx={{
             display: "flex",
@@ -594,11 +776,7 @@ const AnalysisPage = () => {
                   color: "#ef5350",
                 }}
               >
-                {currencyFmt.format(
-                  ((testTransactionDetails?.data?.ExpensesArray ??
-                    testTransactionDetails?.data?.ExpensesArray) || [])
-                    .reduce((sum, v) => sum + Number(v || 0), 0)
-                )}
+                {currencyFmt.format(yearlyExpenseTotal)}
               </Box>
             </Box>
             <Box sx={{ textAlign: "center" }}>
@@ -619,11 +797,28 @@ const AnalysisPage = () => {
                   color: "#43a047",
                 }}
               >
-                {currencyFmt.format(
-                  ((testTransactionDetails?.data?.IncomeArray ??
-                    testTransactionDetails?.data?.IncomeArray) || [])
-                    .reduce((sum, v) => sum + Number(v || 0), 0)
-                )}
+                {currencyFmt.format(yearlyIncomeTotal)}
+              </Box>
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Box
+                sx={{
+                  fontSize: "0.9rem",
+                  color: "text.secondary",
+                  mb: 0.5,
+                  fontWeight: 500,
+                }}
+              >
+                Net (Income - Expense)
+              </Box>
+              <Box
+                sx={{
+                  fontSize: "1.2rem",
+                  fontWeight: 600,
+                  color: yearlyNetTotal >= 0 ? "#90caf9" : "#ff8a80",
+                }}
+              >
+                {currencyFmt.format(yearlyNetTotal)}
               </Box>
             </Box>
           </Box>
@@ -663,7 +858,7 @@ const AnalysisPage = () => {
                   chart: {
                     type: "column",
                     backgroundColor: "transparent",
-                    height: 300,
+                    height: columnChartHeight,
                     style: {
                       fontFamily:
                         "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif",
@@ -736,16 +931,12 @@ const AnalysisPage = () => {
                   series: [
                     {
                       name: "Income",
-                      data:
-                        (testTransactionDetails?.data?.IncomeArray ??
-                          testTransactionDetails?.data?.IncomeArray) || [],
+                      data: yearlyIncomeArray,
                       color: "#43a047",
                     },
                     {
                       name: "Expense",
-                      data:
-                        (testTransactionDetails?.data?.ExpensesArray ??
-                          testTransactionDetails?.data?.ExpensesArray) || [],
+                      data: yearlyExpenseArray,
                       color: "#ef5350",
                     },
                   ],
@@ -756,6 +947,77 @@ const AnalysisPage = () => {
         </Box>
       </Box>
     </Box>
+  );
+};
+
+const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 320 }) => {
+  if (!data || data.length === 0) return null;
+
+  return (
+    <Paper
+      sx={{
+        p: { xs: 2, sm: 3 },
+        borderRadius: 3,
+        border: "1px solid #23272f",
+        background: "rgba(255,255,255,0.02)",
+        mt: { xs: 2, sm: 3 },
+        width: "100%",
+        ...sx,
+      }}
+    >
+      <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+        {title}
+      </Typography>
+      <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+        Top categories by total amount.
+      </Typography>
+      <HighchartsReact
+        highcharts={Highcharts}
+        options={{
+          chart: { type: "bar", backgroundColor: "transparent", height },
+          title: { text: "" },
+          xAxis: {
+            categories: data.map((d) => d.name),
+            labels: { style: { color: "#e0e0e0" } },
+            lineColor: "rgba(255,255,255,0.2)",
+            tickColor: "rgba(255,255,255,0.2)",
+          },
+          yAxis: {
+            title: { text: "Amount (THB)", style: { color: "#e0e0e0" } },
+            labels: { style: { color: "#e0e0e0" } },
+            gridLineColor: "rgba(255,255,255,0.08)",
+          },
+          legend: { enabled: false },
+          credits: { enabled: false },
+          tooltip: {
+            backgroundColor: "rgba(17,20,24,0.9)",
+            borderWidth: 0,
+            style: { color: "#fff" },
+            pointFormat:
+              `<span style="color:${color}">●</span> ${seriesName}: <b>฿{point.y:,.0f}</b><br/>`,
+          },
+          plotOptions: {
+            bar: {
+              borderRadius: 4,
+              dataLabels: {
+                enabled: true,
+                formatter: function () {
+                  return `฿${Highcharts.numberFormat(this.y, 0)}`;
+                },
+                style: { color: "#e0e0e0" },
+              },
+            },
+          },
+          series: [
+            {
+              name: seriesName,
+              data: data.map((d) => d.value),
+              color,
+            },
+          ],
+        }}
+      />
+    </Paper>
   );
 };
 

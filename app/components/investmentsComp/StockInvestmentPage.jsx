@@ -21,6 +21,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Stack,
+  Chip,
 } from "@mui/material";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import AddIcon from "@mui/icons-material/Add";
@@ -37,6 +39,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  AreaChart,
+  Area,
+  LineChart,
+  Line,
 } from "recharts";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK_CAPITAL;
@@ -211,6 +217,27 @@ const StockInvestmentPage = () => {
   };
 
   const chartData = getYearlyInvestments();
+
+  const monthlyTimeline = () => {
+    if (!stockInvestments || stockInvestments.length === 0) return [];
+    const map = new Map();
+    stockInvestments.forEach((inv) => {
+      const d = new Date(inv.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+      const prev = map.get(key) || { label, month: key, invested: 0 };
+      prev.invested += inv.amount;
+      map.set(key, prev);
+    });
+    const arr = Array.from(map.values()).sort((a, b) => (a.month > b.month ? 1 : -1));
+    let running = 0;
+    return arr.map((entry) => {
+      running += entry.invested;
+      return { ...entry, cumulative: running };
+    });
+  };
+
+  const timelineData = monthlyTimeline();
   
   if (isLoading) {
     return (
@@ -259,9 +286,6 @@ const StockInvestmentPage = () => {
     return null;
   };
 
-  const totalInvestment = apiResponse?.totalAmount || stockInvestments.reduce((sum, inv) => sum + inv.amount, 0);
-  const averageInvestment = stockInvestments.length > 0 ? totalInvestment / stockInvestments.length : 0;
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -269,6 +293,12 @@ const StockInvestmentPage = () => {
       day: "numeric",
     });
   };
+
+  const totalInvestment = apiResponse?.totalAmount || stockInvestments.reduce((sum, inv) => sum + inv.amount, 0);
+  const averageInvestment = stockInvestments.length > 0 ? totalInvestment / stockInvestments.length : 0;
+  const lastInvestmentDate = stockInvestments.length
+    ? formatDate(stockInvestments[stockInvestments.length - 1].date)
+    : "-";
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -670,7 +700,7 @@ const StockInvestmentPage = () => {
       </Dialog>
 
       {/* Statistics Cards with Add Investment Button */}
-      <Grid container spacing={3} sx={{ mb: 3, alignItems: "center" }}>
+      <Grid container spacing={3} sx={{ mb: 3, alignItems: "stretch" }}>
         <Grid item xs={12} md={3}>
           <Paper
             sx={{
@@ -678,7 +708,7 @@ const StockInvestmentPage = () => {
               borderRadius: 3,
               bgcolor: "background.paper",
               border: "1px solid #23272f",
-              textAlign: "center",
+              height: "100%",
             }}
           >
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
@@ -687,6 +717,7 @@ const StockInvestmentPage = () => {
             <Typography variant="h4" fontWeight="bold" sx={{ color: "#ff9966", mt: 1 }}>
               {formatCurrency(totalInvestment)}
             </Typography>
+            <Chip label="All time" size="small" sx={{ mt: 1, border: "1px solid #23272f" }} />
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
@@ -696,40 +727,85 @@ const StockInvestmentPage = () => {
               borderRadius: 3,
               bgcolor: "background.paper",
               border: "1px solid #23272f",
-              textAlign: "center",
+              height: "100%",
             }}
           >
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
-              TOTAL ENTRIES
+              AVERAGE PER ENTRY
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#f48fb1", mt: 1 }}>
-              {stockInvestments.length}
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "#90caf9", mt: 1 }}>
+              {formatCurrency(averageInvestment)}
             </Typography>
+            <Chip label={`${stockInvestments.length} entries`} size="small" sx={{ mt: 1, border: "1px solid #23272f" }} />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenAddDialog}
+        <Grid item xs={12} md={3}>
+          <Paper
             sx={{
-              background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: 3,
-              py: 1.5,
-              boxShadow: "0 4px 12px rgba(255, 153, 102, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
-                transform: "translateY(-2px)",
-                boxShadow: "0 6px 16px rgba(255, 153, 102, 0.4)",
-              },
-              transition: "all 0.3s ease",
+              p: 3,
+              borderRadius: 3,
+              bgcolor: "background.paper",
+              border: "1px solid #23272f",
+              height: "100%",
             }}
           >
-            Add Investment
-          </Button>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+              LAST INVESTMENT
+            </Typography>
+            <Typography variant="h6" fontWeight="bold" sx={{ color: "text.primary", mt: 1 }}>
+              {lastInvestmentDate}
+            </Typography>
+            <Chip label="Most recent" size="small" sx={{ mt: 1, border: "1px solid #23272f" }} />
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={3} sx={{ display: "flex", alignItems: "stretch" }}>
+          <Paper
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              bgcolor: "linear-gradient(135deg, rgba(255,153,102,0.12), rgba(255,94,98,0.12))",
+              border: "1px solid rgba(255, 153, 102, 0.3)",
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                QUICK ACTION
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" sx={{ color: "text.primary", mt: 1 }}>
+                Add a new investment
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                Capture your latest capital with one click.
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAddDialog}
+              sx={{
+                mt: 2,
+                background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+                color: "#fff",
+                fontWeight: 700,
+                borderRadius: "12px",
+                px: 2,
+                py: 1.25,
+                boxShadow: "0 6px 18px rgba(255, 153, 102, 0.35)",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 8px 22px rgba(255, 153, 102, 0.45)",
+                },
+                transition: "all 0.3s ease",
+              }}
+            >
+              Add Investment
+            </Button>
+          </Paper>
         </Grid>
       </Grid>
 
@@ -833,6 +909,91 @@ const StockInvestmentPage = () => {
           <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Start by adding your first stock capital investment using the button above.
           </Typography>
+        </Paper>
+      )}
+
+      {/* Transaction List */}
+      {timelineData.length > 0 && (
+        <Paper
+          sx={{
+            p: 4,
+            borderRadius: 3,
+            bgcolor: "background.paper",
+            border: "1px solid #23272f",
+            mb: 3,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+            <Box
+              sx={{
+                background: "linear-gradient(135deg, #66bb6a 0%, #43a047 100%)",
+                borderRadius: 2,
+                p: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <ShowChartIcon sx={{ fontSize: 32, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>
+                Investment Momentum
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                Monthly contributions with cumulative growth trend
+              </Typography>
+            </Box>
+          </Box>
+
+          <ResponsiveContainer width="100%" height={380}>
+            <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+              <defs>
+                <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#66bb6a" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#43a047" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="4 4" stroke="#23272f" />
+              <XAxis dataKey="label" stroke="#b0b8c1" style={{ fontSize: "13px" }} />
+              <YAxis
+                stroke="#b0b8c1"
+                style={{ fontSize: "13px" }}
+                tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
+              />
+              <Tooltip
+                contentStyle={{ background: "#0f1115", border: "1px solid #23272f", borderRadius: 8 }}
+                labelStyle={{ color: "#fff", fontWeight: 700 }}
+                formatter={(value, name) => [formatCurrency(value), name === "cumulative" ? "Cumulative" : "Monthly"]}
+              />
+              <Legend
+                wrapperStyle={{ paddingTop: 12 }}
+                iconType="circle"
+                formatter={(value) => (
+                  <span style={{ color: "#f5f6fa", fontSize: "13px", fontWeight: 600 }}>
+                    {value === "cumulative" ? "Cumulative" : "Monthly"}
+                  </span>
+                )}
+              />
+              <Area
+                type="monotone"
+                dataKey="invested"
+                name="Monthly"
+                stroke="#66bb6a"
+                fill="url(#areaFill)"
+                strokeWidth={2.5}
+                dot={{ r: 3, stroke: "#0f1115", fill: "#66bb6a" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="cumulative"
+                name="Cumulative"
+                stroke="#ffca28"
+                strokeWidth={2.5}
+                dot={{ r: 3, stroke: "#0f1115", fill: "#ffca28" }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </Paper>
       )}
 
