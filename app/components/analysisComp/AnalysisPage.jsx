@@ -45,6 +45,20 @@ const AnalysisPage = () => {
   const netChartHeight = isMobile ? 260 : 340;
   const columnChartHeight = isMobile ? 280 : 320;
   const barCategoryHeight = isMobile ? 280 : 320;
+  const pieColors = [
+    "#ff8a65",
+    "#ffa726",
+    "#ffd54f",
+    "#4db6ac",
+    "#64b5f6",
+    "#ba68c8",
+    "#f06292",
+    "#7986cb",
+    "#aed581",
+    "#90a4ae",
+  ];
+  const pieDataLabelDist = isMobile ? 12 : 20;
+  const pieInnerSize = isMobile ? "55%" : "60%";
   const now = dayjs();
   const [currentYear, setCurrentYear] = React.useState(now.year());
   const [currentMonth, setCurrentMonth] = React.useState(now.format("MMMM"));
@@ -177,6 +191,15 @@ const AnalysisPage = () => {
         label: category,
       }));
   }, [analysisData]);
+
+  const formatPieSeriesData = React.useCallback((dataset) =>
+    (dataset || [])
+      .map((item) => ({
+        name: item.label ?? "Unknown",
+        y: Number(item.value) || 0,
+      }))
+      .filter((item) => item.y > 0),
+  []);
 
   const pieTotalExpense = React.useMemo(
     () => pieDataExpense.reduce((s, d) => s + Number(d.value || 0), 0),
@@ -446,38 +469,71 @@ const AnalysisPage = () => {
                         title: {
                           text: "",
                         },
+                        colors: pieColors,
                         plotOptions: {
                           pie: {
-                            innerSize: "50%",
+                            innerSize: pieInnerSize,
+                            borderWidth: 2,
+                            borderColor: "#0f1115",
+                            size: "90%",
+                            startAngle: 0,
+                            endAngle: 360,
+                            center: ["50%", "50%"],
+                            minSize: 180,
+                            shadow: false,
                             dataLabels: {
                               enabled: true,
-                              format: "{point.name}: ฿{point.y:,.0f}",
+                              distance: pieDataLabelDist,
+                              format: "{point.name}: <b>฿{point.y:,.0f}</b>",
                               style: {
-                                color: "white",
+                                color: "#f5f5f5",
                                 textOutline: "none",
+                                fontWeight: 600,
+                                fontSize: isMobile ? "11px" : "12px",
                               },
                               backgroundColor: "none",
                               borderWidth: 0,
                               shadow: false,
                               padding: 0,
-                              distance: 20,
+                              allowOverlap: false,
+                              softConnector: true,
+                              connectorShape: "crookedLine",
                               connectorWidth: 1,
-                              connectorColor: "#888",
+                              connectorColor: "rgba(255,255,255,0.4)",
+                              filter: {
+                                property: "percentage",
+                                operator: ">=",
+                                value: 2,
+                              },
                             },
+                            showInLegend: false,
                           },
                         },
                         credits: {
                           enabled: false,
                         },
+                        tooltip: {
+                          useHTML: true,
+                          borderWidth: 0,
+                          backgroundColor: "rgba(17,20,24,0.9)",
+                          style: { color: "#fff", borderRadius: 12 },
+                          formatter: function () {
+                            return `<div style="padding:6px 8px;">` +
+                              `<div style="font-weight:700;color:${this.color}">${this.point.name}</div>` +
+                              `<div style="color:#fff">฿${Highcharts.numberFormat(this.y,0)}</div>` +
+                              `</div>`;
+                          },
+                        },
+                        subtitle: {
+                          text: "Expense Split",
+                          verticalAlign: "middle",
+                          floating: true,
+                          style: { color: "#cfd8dc", fontWeight: 600, fontSize: "13px" },
+                        },
                         series: [
                           {
                             name: "Expense",
-                            data: pieDataExpense?.length
-                              ? pieDataExpense.map((item) => ({
-                                  name: item.label,
-                                  y: item.value,
-                                }))
-                              : [],
+                            data: formatPieSeriesData(pieDataExpense),
                           },
                         ],
                         noData: {
@@ -538,38 +594,71 @@ const AnalysisPage = () => {
                         title: {
                           text: "",
                         },
+                        colors: pieColors,
                         plotOptions: {
                           pie: {
-                            innerSize: "50%",
+                            innerSize: pieInnerSize,
+                            borderWidth: 2,
+                            borderColor: "#0f1115",
+                            size: "90%",
+                            startAngle: 0,
+                            endAngle: 360,
+                            center: ["50%", "50%"],
+                            minSize: 180,
+                            shadow: false,
                             dataLabels: {
                               enabled: true,
-                              format: "{point.name}: ฿{point.y:,.0f}",
+                              distance: pieDataLabelDist,
+                              format: "{point.name}: <b>฿{point.y:,.0f}</b>",
                               style: {
-                                color: "white",
+                                color: "#f5f5f5",
                                 textOutline: "none",
+                                fontWeight: 600,
+                                fontSize: isMobile ? "11px" : "12px",
                               },
                               backgroundColor: "none",
                               borderWidth: 0,
                               shadow: false,
                               padding: 0,
-                              distance: 20,
+                              allowOverlap: false,
+                              softConnector: true,
+                              connectorShape: "crookedLine",
                               connectorWidth: 1,
-                              connectorColor: "#888",
+                              connectorColor: "rgba(255,255,255,0.4)",
+                              filter: {
+                                property: "percentage",
+                                operator: ">=",
+                                value: 2,
+                              },
                             },
+                            showInLegend: false,
                           },
                         },
                         credits: {
                           enabled: false,
                         },
+                        tooltip: {
+                          useHTML: true,
+                          borderWidth: 0,
+                          backgroundColor: "rgba(17,20,24,0.9)",
+                          style: { color: "#fff", borderRadius: 12 },
+                          formatter: function () {
+                            return `<div style="padding:6px 8px;">` +
+                              `<div style="font-weight:700;color:${this.color}">${this.point.name}</div>` +
+                              `<div style="color:#fff">฿${Highcharts.numberFormat(this.y,0)}</div>` +
+                              `</div>`;
+                          },
+                        },
+                        subtitle: {
+                          text: "Income Split",
+                          verticalAlign: "middle",
+                          floating: true,
+                          style: { color: "#cfd8dc", fontWeight: 600, fontSize: "13px" },
+                        },
                         series: [
                           {
                             name: "Income",
-                            data: pieDataIncome?.length
-                              ? pieDataIncome.map((item) => ({
-                                  name: item.label,
-                                  y: item.value,
-                                }))
-                              : [],
+                            data: formatPieSeriesData(pieDataIncome),
                           },
                         ],
                         noData: {
@@ -628,81 +717,8 @@ const AnalysisPage = () => {
         />
       </Box>
 
-      <Box sx={{ width: "100%", mt: { xs: 2, sm: 4 } }}>
-        <Paper
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            border: "1px solid #23272f",
-            background: "rgba(255,255,255,0.02)",
-            mb: { xs: 2, sm: 3 },
-          }}
-        >
-          <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
-            Net Trend (Income - Expense)
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-            Track monthly momentum and overall net for the selected year.
-          </Typography>
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={{
-              chart: {
-                type: "areaspline",
-                backgroundColor: "transparent",
-                height: netChartHeight,
-              },
-              title: { text: "" },
-              xAxis: {
-                categories: Months,
-                labels: { style: { color: "#e0e0e0" } },
-                lineColor: "rgba(255,255,255,0.2)",
-                tickColor: "rgba(255,255,255,0.2)",
-              },
-              yAxis: {
-                title: { text: "Amount (THB)", style: { color: "#e0e0e0" } },
-                labels: { style: { color: "#e0e0e0" } },
-                gridLineColor: "rgba(255,255,255,0.08)",
-              },
-              tooltip: {
-                shared: true,
-                backgroundColor: "rgba(17,20,24,0.9)",
-                borderWidth: 0,
-                style: { color: "#fff" },
-                pointFormat:
-                  '<span style="color:{point.color}">●</span> Net: <b>฿{point.y:,.0f}</b><br/>',
-              },
-              legend: { enabled: false },
-              credits: { enabled: false },
-              plotOptions: {
-                areaspline: {
-                  fillColor: {
-                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-                    stops: [
-                      [0, "rgba(144,202,249,0.35)"],
-                      [1, "rgba(144,202,249,0.05)"],
-                    ],
-                  },
-                  lineColor: "#90caf9",
-                  lineWidth: 2.5,
-                  marker: {
-                    enabled: true,
-                    radius: 3,
-                    fillColor: "#90caf9",
-                    lineColor: "#0f1115",
-                    lineWidth: 1,
-                  },
-                },
-              },
-              series: [
-                {
-                  name: "Net",
-                  data: netSeries,
-                },
-              ],
-            }}
-          />
-        </Paper>
+      <Box sx={{ width: "100%" }}>
+       
 
         <Box
           sx={{
@@ -840,7 +856,7 @@ const AnalysisPage = () => {
             <Box
               sx={{
                 width: "100%",
-                maxWidth: "800px",
+                // maxWidth: "800px",
                 minHeight: 300,
                 borderRadius: 3,
                 boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
@@ -887,6 +903,11 @@ const AnalysisPage = () => {
                     },
                     lineColor: "rgba(255, 255, 255, 0.3)",
                     tickColor: "rgba(255, 255, 255, 0.3)",
+                    crosshair: {
+                      color: "rgba(255,255,255,0.2)",
+                      width: 1,
+                      dashStyle: "ShortDot",
+                    },
                   },
                   yAxis: {
                     title: {
@@ -901,6 +922,7 @@ const AnalysisPage = () => {
                       },
                     },
                     gridLineColor: "rgba(255, 255, 255, 0.1)",
+                    tickAmount: isMobile ? 4 : 6,
                   },
                   tooltip: {
                     headerFormat:
@@ -910,19 +932,33 @@ const AnalysisPage = () => {
                     backgroundColor: "rgba(255, 255, 255, 0.95)",
                     borderWidth: 0,
                     shadow: true,
+                    shared: true,
+                    useHTML: true,
+                    style: { color: "#0f1115", fontWeight: 600 },
                   },
                   legend: {
-                    enabled: false, // Removes the legend completely
+                    enabled: true,
+                    itemStyle: { color: "#e0e0e0", fontWeight: 600 },
+                    itemHoverStyle: { color: "#fff" },
                   },
                   plotOptions: {
                     column: {
-                      borderRadius: 3,
+                      borderRadius: 6,
+                      pointPadding: 0.1,
+                      groupPadding: 0.18,
                       states: {
                         hover: {
                           brightness: -0.1,
                         },
                       },
-                      showInLegend: false, // Ensures series doesn't show in legend
+                      dataLabels: {
+                        enabled: !isMobile,
+                        style: { color: "#e0e0e0", textOutline: "none", fontWeight: 600 },
+                        formatter: function () {
+                          return `฿${Highcharts.numberFormat(this.y, 0)}`;
+                        },
+                        filter: { property: "y", operator: ">=", value: 0 },
+                      },
                     },
                   },
                   credits: {
@@ -932,12 +968,24 @@ const AnalysisPage = () => {
                     {
                       name: "Income",
                       data: yearlyIncomeArray,
-                      color: "#43a047",
+                      color: {
+                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                        stops: [
+                          [0, "#66bb6a"],
+                          [1, "#2e7d32"],
+                        ],
+                      },
                     },
                     {
                       name: "Expense",
                       data: yearlyExpenseArray,
-                      color: "#ef5350",
+                      color: {
+                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                        stops: [
+                          [0, "#ff867c"],
+                          [1, "#c62828"],
+                        ],
+                      },
                     },
                   ],
                 }}
@@ -945,6 +993,82 @@ const AnalysisPage = () => {
             </Box>
           )}
         </Box>
+
+         <Paper
+          sx={{
+            p: { xs: 2, sm: 3 },
+            borderRadius: 3,
+            border: "1px solid #23272f",
+            background: "rgba(255,255,255,0.02)",
+            mb: { xs: 2, sm: 3 },
+             mt: { xs: 2, sm: 4 }
+          }}
+        >
+          <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+            Net Trend (Income - Expense)
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            Track monthly momentum and overall net for the selected year.
+          </Typography>
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={{
+              chart: {
+                type: "areaspline",
+                backgroundColor: "transparent",
+                height: netChartHeight,
+              },
+              title: { text: "" },
+              xAxis: {
+                categories: Months,
+                labels: { style: { color: "#e0e0e0" } },
+                lineColor: "rgba(255,255,255,0.2)",
+                tickColor: "rgba(255,255,255,0.2)",
+              },
+              yAxis: {
+                title: { text: "Amount (THB)", style: { color: "#e0e0e0" } },
+                labels: { style: { color: "#e0e0e0" } },
+                gridLineColor: "rgba(255,255,255,0.08)",
+              },
+              tooltip: {
+                shared: true,
+                backgroundColor: "rgba(17,20,24,0.9)",
+                borderWidth: 0,
+                style: { color: "#fff" },
+                pointFormat:
+                  '<span style="color:{point.color}">●</span> Net: <b>฿{point.y:,.0f}</b><br/>',
+              },
+              legend: { enabled: false },
+              credits: { enabled: false },
+              plotOptions: {
+                areaspline: {
+                  fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+                      [0, "rgba(144,202,249,0.35)"],
+                      [1, "rgba(144,202,249,0.05)"],
+                    ],
+                  },
+                  lineColor: "#90caf9",
+                  lineWidth: 2.5,
+                  marker: {
+                    enabled: true,
+                    radius: 3,
+                    fillColor: "#90caf9",
+                    lineColor: "#0f1115",
+                    lineWidth: 1,
+                  },
+                },
+              },
+              series: [
+                {
+                  name: "Net",
+                  data: netSeries,
+                },
+              ],
+            }}
+          />
+        </Paper>
       </Box>
     </Box>
   );
@@ -952,6 +1076,11 @@ const AnalysisPage = () => {
 
 const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 320 }) => {
   if (!data || data.length === 0) return null;
+
+  const shades = data.map((_, idx) => {
+    const factor = (idx / Math.max(data.length - 1, 1)) * 0.4 - 0.2; // range approx -0.2..0.2
+    return Highcharts.color(color).brighten(factor).get();
+  });
 
   return (
     <Paper
@@ -993,18 +1122,27 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
             backgroundColor: "rgba(17,20,24,0.9)",
             borderWidth: 0,
             style: { color: "#fff" },
-            pointFormat:
-              `<span style="color:${color}">●</span> ${seriesName}: <b>฿{point.y:,.0f}</b><br/>`,
+            useHTML: true,
+            formatter: function () {
+              const rank = (this.point?.index ?? this.point?.x ?? 0) + 1;
+              return (
+                `<span style="color:${color}">●</span> ${seriesName}: <b>฿${Highcharts.numberFormat(this.y, 0)}</b><br/>` +
+                `<span style="color:#b0bec5">Rank #${rank}</span>`
+              );
+            },
           },
           plotOptions: {
             bar: {
               borderRadius: 4,
+              colorByPoint: true,
               dataLabels: {
                 enabled: true,
                 formatter: function () {
                   return `฿${Highcharts.numberFormat(this.y, 0)}`;
                 },
-                style: { color: "#e0e0e0" },
+                style: { color: "#e0e0e0", textOutline: "none", fontWeight: 600 },
+                crop: false,
+                overflow: "allow",
               },
             },
           },
@@ -1012,6 +1150,7 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
             {
               name: seriesName,
               data: data.map((d) => d.value),
+              colors: shades,
               color,
             },
           ],
