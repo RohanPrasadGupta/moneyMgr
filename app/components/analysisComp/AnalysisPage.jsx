@@ -2,16 +2,14 @@ import {
   Box,
   Select,
   MenuItem,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   Paper,
   Typography,
   Stack,
   Chip,
-  Divider,
   useTheme,
   useMediaQuery,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import TitleHeader from "../header/TitleHeader";
 import React, { useEffect } from "react";
@@ -59,6 +57,24 @@ const AnalysisPage = () => {
   ];
   const pieDataLabelDist = isMobile ? 12 : 20;
   const pieInnerSize = isMobile ? "55%" : "60%";
+  const chartAxisColor = theme.palette.mode === "dark" ? "#cfd8dc" : "#546e7a";
+  const chartGridColor =
+    theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)";
+  const pieSliceBorder = theme.palette.mode === "dark" ? "#0f1115" : "#eceff1";
+  const pieDataLabelColor = theme.palette.mode === "dark" ? "#eceff1" : "#37474f";
+  const pieConnectorColor =
+    theme.palette.mode === "dark" ? "rgba(255,255,255,0.4)" : "rgba(55,71,79,0.35)";
+  const sectionPaperSx = {
+    p: { xs: 2, sm: 3 },
+    borderRadius: 3,
+    border: "1px solid",
+    borderColor: "divider",
+    bgcolor: "background.paper",
+    backgroundImage:
+      theme.palette.mode === "dark"
+        ? "linear-gradient(135deg, rgba(255,153,102,0.06), rgba(100,181,246,0.04))"
+        : "linear-gradient(135deg, rgba(255,153,102,0.07), rgba(100,181,246,0.05))",
+  };
   const now = dayjs();
   const [currentYear, setCurrentYear] = React.useState(now.year());
   const [currentMonth, setCurrentMonth] = React.useState(now.format("MMMM"));
@@ -99,14 +115,6 @@ const AnalysisPage = () => {
     staleTime: 0,
   });
 
-
-  // useEffect(()=>{
-  //   console.log("testLoading",testLoading)
-  //   console.log("testTransactionDetails",testTransactionDetails)
-  //   console.log("testError",testError)
-
-  // },[testLoading,testTransactionDetails,testError])
-
   // Get categories from backend API
   const { isPending: isPendingCategories, data: categoryData } =
     useCategoryQuery();
@@ -142,12 +150,6 @@ const AnalysisPage = () => {
     refetchOnReconnect: true,
     staleTime: 0,
   });
-    useEffect(()=>{
-    console.log("isPendingAnalysis",isPendingAnalysis)
-    console.log("analysisData",analysisData)
-    console.log("isErrorAnalysis",isErrorAnalysis)
-
-  },[isPendingAnalysis,analysisData,isErrorAnalysis])
 
   const { isPending: isPendingAllData, data: allTransactionData } = useQuery({
     queryKey: ["getAllTransactionData"],
@@ -241,6 +243,14 @@ const AnalysisPage = () => {
     return income - expense;
   });
 
+  const cumulativeNetSeries = React.useMemo(() => {
+    let acc = 0;
+    return netSeries.map((n) => {
+      acc += n;
+      return acc;
+    });
+  }, [netSeries]);
+
   const barChartData = React.useMemo(() => {
     // if (!allTransactionData?.data || !barYear || !barType) return [];
     if (!allTransactionData?.data || !barYear) return [];
@@ -293,7 +303,15 @@ const AnalysisPage = () => {
         overflow: "hidden",
       }}
     >
-      <TitleHeader text="Data Visualization" />
+      <TitleHeader text="Spending analysis" />
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 2, textAlign: "center", maxWidth: 720, px: 1 }}
+      >
+        Compare income and expenses by period, spot your largest categories, and follow net flow through the
+        year.
+      </Typography>
 
       {/* Overview stats */}
       <Paper
@@ -302,8 +320,12 @@ const AnalysisPage = () => {
           mb: { xs: 2, sm: 3 },
           p: { xs: 2, sm: 3 },
           borderRadius: 3,
-          border: "1px solid #23272f",
-          background: "linear-gradient(135deg, rgba(255,153,102,0.08), rgba(255,94,98,0.04))",
+          border: "1px solid",
+          borderColor: "divider",
+          backgroundImage:
+            theme.palette.mode === "dark"
+              ? "linear-gradient(135deg, rgba(255,153,102,0.1), rgba(255,94,98,0.05))"
+              : "linear-gradient(135deg, rgba(255,153,102,0.12), rgba(100,181,246,0.06))",
         }}
       >
         <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2, md: 3 }} alignItems="stretch">
@@ -312,24 +334,29 @@ const AnalysisPage = () => {
               Current View
             </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Chip label={`${viewMode === "monthly" ? currentMonth : "All Months"}`} size="small" sx={{ border: "1px solid #23272f" }} />
-              <Chip label={`${currentYear}`} size="small" sx={{ border: "1px solid #23272f" }} />
+              <Chip
+                label={`${viewMode === "monthly" ? currentMonth : viewMode === "yearly" ? "Full year" : "All time"}`}
+                size="small"
+                sx={{ border: "1px solid", borderColor: "divider" }}
+              />
+              <Chip label={`${currentYear}`} size="small" sx={{ border: "1px solid", borderColor: "divider" }} />
+              <Chip label={viewMode} size="small" variant="outlined" sx={{ borderColor: "divider" }} />
             </Stack>
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 1.5, sm: 2 }} flex={2}>
-            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid #23272f" }}>
+            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid", borderColor: "divider" }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Income</Typography>
               <Typography variant="h6" fontWeight={800} sx={{ color: "#43a047", mt: 0.5 }}>
                 {currencyFmt.format(pieIncomeTotal)}
               </Typography>
             </Paper>
-            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid #23272f" }}>
+            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid", borderColor: "divider" }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Expense</Typography>
               <Typography variant="h6" fontWeight={800} sx={{ color: "#ef5350", mt: 0.5 }}>
                 {currencyFmt.format(pieTotalExpense)}
               </Typography>
             </Paper>
-            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid #23272f" }}>
+            <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid", borderColor: "divider" }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Net</Typography>
               <Typography variant="h6" fontWeight={800} sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "#90caf9" : "#ff8a80", mt: 0.5 }}>
                 {currencyFmt.format(pieIncomeTotal - pieTotalExpense)}
@@ -342,10 +369,7 @@ const AnalysisPage = () => {
       <Box sx={{ width: "100%", mb: { xs: 2, sm: 3 } }}>
         <Paper
           sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            border: "1px solid #23272f",
-            background: "rgba(255,255,255,0.02)",
+            ...sectionPaperSx,
             mb: { xs: 2, sm: 3 },
           }}
         >
@@ -423,6 +447,13 @@ const AnalysisPage = () => {
           </Stack>
         </Paper>
 
+        <Paper sx={{ ...sectionPaperSx, width: "100%" }}>
+          <Typography variant="h6" fontWeight={800} sx={{ mb: 0.5 }}>
+            Category split
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Donut charts show where money came from and where it went for the selected view.
+          </Typography>
         <Box
           sx={{
             width: "100%",
@@ -442,15 +473,15 @@ const AnalysisPage = () => {
             }}
           >
             {isPendingAnalysis ? (
-              <span style={{ color: "#ef5350", fontWeight: 600 }}>
-                Loading chart...
-              </span>
+              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: chartHeight, width: "100%" }}>
+                <CircularProgress size={36} sx={{ color: "primary.main" }} />
+              </Box>
             ) : (
               <>
                 {pieDataExpense.length === 0 ? (
-                  <span style={{ color: "#ef5350", fontWeight: 600 }}>
-                    No data found
-                  </span>
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
+                    No expense categories for this view.
+                  </Typography>
                 ) : (
                   <>
                     <HighchartsReact
@@ -474,7 +505,7 @@ const AnalysisPage = () => {
                           pie: {
                             innerSize: pieInnerSize,
                             borderWidth: 2,
-                            borderColor: "#0f1115",
+                            borderColor: pieSliceBorder,
                             size: "90%",
                             startAngle: 0,
                             endAngle: 360,
@@ -486,7 +517,7 @@ const AnalysisPage = () => {
                               distance: pieDataLabelDist,
                               format: "{point.name}: <b>฿{point.y:,.0f}</b>",
                               style: {
-                                color: "#f5f5f5",
+                                color: pieDataLabelColor,
                                 textOutline: "none",
                                 fontWeight: 600,
                                 fontSize: isMobile ? "11px" : "12px",
@@ -499,7 +530,7 @@ const AnalysisPage = () => {
                               softConnector: true,
                               connectorShape: "crookedLine",
                               connectorWidth: 1,
-                              connectorColor: "rgba(255,255,255,0.4)",
+                              connectorColor: pieConnectorColor,
                               filter: {
                                 property: "percentage",
                                 operator: ">=",
@@ -528,7 +559,7 @@ const AnalysisPage = () => {
                           text: "Expense Split",
                           verticalAlign: "middle",
                           floating: true,
-                          style: { color: "#cfd8dc", fontWeight: 600, fontSize: "13px" },
+                          style: { color: chartAxisColor, fontWeight: 600, fontSize: "13px" },
                         },
                         series: [
                           {
@@ -546,12 +577,12 @@ const AnalysisPage = () => {
                       }}
                     />
                     <Box sx={{ mt: 1 }}>
-                      <div style={{ fontWeight: 700, color: "#ef5350" }}>
-                        Expense
-                      </div>
-                      <div style={{ color: "text.secondary" }}>
+                      <Typography variant="subtitle2" fontWeight={800} color="error.main">
+                        Expense total
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
                         {currencyFmt.format(pieTotalExpense)}
-                      </div>
+                      </Typography>
                     </Box>
                   </>
                 )}
@@ -567,15 +598,15 @@ const AnalysisPage = () => {
             }}
           >
             {isPendingAnalysis ? (
-              <span style={{ color: "#ef5350", fontWeight: 600 }}>
-                Loading chart...
-              </span>
+              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: chartHeight, width: "100%" }}>
+                <CircularProgress size={36} sx={{ color: "primary.main" }} />
+              </Box>
             ) : (
               <>
                 {pieDataIncome.length === 0 ? (
-                  <span style={{ color: "#ef5350", fontWeight: 600 }}>
-                    No data available
-                  </span>
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
+                    No income categories for this view.
+                  </Typography>
                 ) : (
                   <>
                     <HighchartsReact
@@ -599,7 +630,7 @@ const AnalysisPage = () => {
                           pie: {
                             innerSize: pieInnerSize,
                             borderWidth: 2,
-                            borderColor: "#0f1115",
+                            borderColor: pieSliceBorder,
                             size: "90%",
                             startAngle: 0,
                             endAngle: 360,
@@ -611,7 +642,7 @@ const AnalysisPage = () => {
                               distance: pieDataLabelDist,
                               format: "{point.name}: <b>฿{point.y:,.0f}</b>",
                               style: {
-                                color: "#f5f5f5",
+                                color: pieDataLabelColor,
                                 textOutline: "none",
                                 fontWeight: 600,
                                 fontSize: isMobile ? "11px" : "12px",
@@ -624,7 +655,7 @@ const AnalysisPage = () => {
                               softConnector: true,
                               connectorShape: "crookedLine",
                               connectorWidth: 1,
-                              connectorColor: "rgba(255,255,255,0.4)",
+                              connectorColor: pieConnectorColor,
                               filter: {
                                 property: "percentage",
                                 operator: ">=",
@@ -653,7 +684,7 @@ const AnalysisPage = () => {
                           text: "Income Split",
                           verticalAlign: "middle",
                           floating: true,
-                          style: { color: "#cfd8dc", fontWeight: 600, fontSize: "13px" },
+                          style: { color: chartAxisColor, fontWeight: 600, fontSize: "13px" },
                         },
                         series: [
                           {
@@ -671,12 +702,12 @@ const AnalysisPage = () => {
                       }}
                     />
                     <Box sx={{ mt: 1 }}>
-                      <div style={{ fontWeight: 700, color: "#43a047" }}>
-                        Income
-                      </div>
-                      <div style={{ color: "text.secondary" }}>
+                      <Typography variant="subtitle2" fontWeight={800} color="success.main">
+                        Income total
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
                         {currencyFmt.format(pieIncomeTotal)}
-                      </div>
+                      </Typography>
                     </Box>
                   </>
                 )}
@@ -684,20 +715,12 @@ const AnalysisPage = () => {
             )}
           </Box>
         </Box>
-        {isPendingAnalysis && (
-          <Box sx={{ mt: 2, textAlign: "center", width: "100%" }}>
-            <span style={{ color: "#ef5350", fontWeight: 600 }}>
-              Loading data...
-            </span>
-          </Box>
-        )}
         {isErrorAnalysis && (
-          <Box sx={{ mt: 2, textAlign: "center", width: "100%" }}>
-            <span style={{ color: "#ef5350", fontWeight: 600 }}>
-              Error loading data.
-            </span>
-          </Box>
+          <Alert severity="error" sx={{ mt: 2 }}>
+            Could not load analysis for this period. Try another month or refresh the page.
+          </Alert>
         )}
+        </Paper>
 
         {/* Top Categories under pies */}
         <GridLikeTopCategories
@@ -718,7 +741,14 @@ const AnalysisPage = () => {
       </Box>
 
       <Box sx={{ width: "100%" }}>
-       
+        <Paper sx={{ ...sectionPaperSx, mb: { xs: 2, sm: 3 } }}>
+          <Typography variant="h6" fontWeight={800} sx={{ mb: 0.5 }}>
+            Year-at-a-glance
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Pick a year to compare income and expenses month by month, then see how net results add up over
+            time.
+          </Typography>
 
         <Box
           sx={{
@@ -726,7 +756,7 @@ const AnalysisPage = () => {
             flexDirection: "column",
             alignItems: "center",
             gap: 3,
-            mb: { xs: 2, sm: 3 },
+            mb: { xs: 2, sm: 2 },
           }}
         >
           <Box
@@ -771,7 +801,7 @@ const AnalysisPage = () => {
               width: "100%",
               p: 2,
               borderRadius: 2,
-              bgcolor: "rgba(0,0,0,0.02)",
+              bgcolor: "action.hover",
             }}
           >
             <Box sx={{ textAlign: "center" }}>
@@ -849,25 +879,11 @@ const AnalysisPage = () => {
           }}
         >
           {testLoading ? (
-            <span style={{ color: "#ef5350", fontWeight: 600 }}>
-              Loading chart...
-            </span>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 6, width: "100%" }}>
+              <CircularProgress size={40} sx={{ color: "primary.main" }} />
+            </Box>
           ) : (
-            <Box
-              sx={{
-                width: "100%",
-                // maxWidth: "800px",
-                minHeight: 300,
-                borderRadius: 3,
-                boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
-                p: 2,
-                transition:
-                  "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease",
-                opacity: 1,
-                transform: "translateZ(0)",
-                willChange: "transform, opacity",
-              }}
-            >
+            <Box sx={{ width: "100%", minHeight: 300, borderRadius: 2, p: { xs: 0, sm: 1 } }}>
               <HighchartsReact
                 highcharts={Highcharts}
                 options={{
@@ -881,11 +897,11 @@ const AnalysisPage = () => {
                     },
                   },
                   title: {
-                    text: "Monthly Income vs Expense",
+                    text: "Monthly income vs expense",
                     style: {
-                      color: "white",
+                      color: theme.palette.text.primary,
                       fontSize: "16px",
-                      fontWeight: "500",
+                      fontWeight: 600,
                     },
                   },
                   xAxis: {
@@ -893,18 +909,24 @@ const AnalysisPage = () => {
                     title: {
                       text: "Month",
                       style: {
-                        color: "white",
+                        color: chartAxisColor,
                       },
                     },
                     labels: {
                       style: {
-                        color: "white",
+                        color: chartAxisColor,
                       },
                     },
-                    lineColor: "rgba(255, 255, 255, 0.3)",
-                    tickColor: "rgba(255, 255, 255, 0.3)",
+                    lineColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 255, 255, 0.25)"
+                        : "rgba(0, 0, 0, 0.2)",
+                    tickColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 255, 255, 0.25)"
+                        : "rgba(0, 0, 0, 0.2)",
                     crosshair: {
-                      color: "rgba(255,255,255,0.2)",
+                      color: "rgba(100,181,246,0.35)",
                       width: 1,
                       dashStyle: "ShortDot",
                     },
@@ -913,15 +935,15 @@ const AnalysisPage = () => {
                     title: {
                       text: "Amount (THB)",
                       style: {
-                        color: "white",
+                        color: chartAxisColor,
                       },
                     },
                     labels: {
                       style: {
-                        color: "white",
+                        color: chartAxisColor,
                       },
                     },
-                    gridLineColor: "rgba(255, 255, 255, 0.1)",
+                    gridLineColor: chartGridColor,
                     tickAmount: isMobile ? 4 : 6,
                   },
                   tooltip: {
@@ -929,17 +951,23 @@ const AnalysisPage = () => {
                       '<span style="font-size:12px">{point.key}</span><br/>',
                     pointFormat:
                       '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>฿{point.y:,.0f}</b>',
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(17, 20, 24, 0.92)"
+                        : "rgba(255, 255, 255, 0.97)",
                     borderWidth: 0,
                     shadow: true,
                     shared: true,
                     useHTML: true,
-                    style: { color: "#0f1115", fontWeight: 600 },
+                    style: {
+                      color: theme.palette.mode === "dark" ? "#fff" : "#0f1115",
+                      fontWeight: 600,
+                    },
                   },
                   legend: {
                     enabled: true,
-                    itemStyle: { color: "#e0e0e0", fontWeight: 600 },
-                    itemHoverStyle: { color: "#fff" },
+                    itemStyle: { color: chartAxisColor, fontWeight: 600 },
+                    itemHoverStyle: { color: theme.palette.text.primary },
                   },
                   plotOptions: {
                     column: {
@@ -953,7 +981,11 @@ const AnalysisPage = () => {
                       },
                       dataLabels: {
                         enabled: !isMobile,
-                        style: { color: "#e0e0e0", textOutline: "none", fontWeight: 600 },
+                        style: {
+                          color: chartAxisColor,
+                          textOutline: "none",
+                          fontWeight: 600,
+                        },
                         formatter: function () {
                           return `฿${Highcharts.numberFormat(this.y, 0)}`;
                         },
@@ -993,22 +1025,14 @@ const AnalysisPage = () => {
             </Box>
           )}
         </Box>
+        </Paper>
 
-         <Paper
-          sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: 3,
-            border: "1px solid #23272f",
-            background: "rgba(255,255,255,0.02)",
-            mb: { xs: 2, sm: 3 },
-             mt: { xs: 2, sm: 4 }
-          }}
-        >
-          <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
-            Net Trend (Income - Expense)
+         <Paper sx={{ ...sectionPaperSx, mb: { xs: 2, sm: 3 }, mt: { xs: 2, sm: 3 } }}>
+          <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
+            Monthly net (income − expense)
           </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-            Track monthly momentum and overall net for the selected year.
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Positive months build surplus; negative months draw it down.
           </Typography>
           <HighchartsReact
             highcharts={Highcharts}
@@ -1021,20 +1045,37 @@ const AnalysisPage = () => {
               title: { text: "" },
               xAxis: {
                 categories: Months,
-                labels: { style: { color: "#e0e0e0" } },
-                lineColor: "rgba(255,255,255,0.2)",
-                tickColor: "rgba(255,255,255,0.2)",
+                labels: { style: { color: chartAxisColor } },
+                lineColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.2)"
+                    : "rgba(0,0,0,0.15)",
+                tickColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.2)"
+                    : "rgba(0,0,0,0.15)",
               },
               yAxis: {
-                title: { text: "Amount (THB)", style: { color: "#e0e0e0" } },
-                labels: { style: { color: "#e0e0e0" } },
-                gridLineColor: "rgba(255,255,255,0.08)",
+                title: { text: "Amount (THB)", style: { color: chartAxisColor } },
+                labels: { style: { color: chartAxisColor } },
+                gridLineColor: chartGridColor,
+                plotLines: [
+                  {
+                    value: 0,
+                    color: theme.palette.mode === "dark" ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.25)",
+                    width: 1,
+                    zIndex: 4,
+                  },
+                ],
               },
               tooltip: {
                 shared: true,
-                backgroundColor: "rgba(17,20,24,0.9)",
+                backgroundColor:
+                  theme.palette.mode === "dark" ? "rgba(17,20,24,0.9)" : "rgba(255,255,255,0.97)",
                 borderWidth: 0,
-                style: { color: "#fff" },
+                style: {
+                  color: theme.palette.mode === "dark" ? "#fff" : "#0f1115",
+                },
                 pointFormat:
                   '<span style="color:{point.color}">●</span> Net: <b>฿{point.y:,.0f}</b><br/>',
               },
@@ -1055,7 +1096,7 @@ const AnalysisPage = () => {
                     enabled: true,
                     radius: 3,
                     fillColor: "#90caf9",
-                    lineColor: "#0f1115",
+                    lineColor: theme.palette.mode === "dark" ? "#0f1115" : "#fff",
                     lineWidth: 1,
                   },
                 },
@@ -1069,12 +1110,100 @@ const AnalysisPage = () => {
             }}
           />
         </Paper>
+
+        <Paper sx={{ ...sectionPaperSx, mb: { xs: 2, sm: 3 } }}>
+          <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
+            Cumulative net (year to date)
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Running total of monthly net through {barYear}—shows whether you are building or eroding surplus
+            across the year.
+          </Typography>
+          <HighchartsReact
+            highcharts={Highcharts}
+            options={{
+              chart: {
+                type: "areaspline",
+                backgroundColor: "transparent",
+                height: netChartHeight,
+              },
+              title: { text: "" },
+              xAxis: {
+                categories: Months,
+                labels: { style: { color: chartAxisColor } },
+                lineColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.2)"
+                    : "rgba(0,0,0,0.15)",
+                tickColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.2)"
+                    : "rgba(0,0,0,0.15)",
+              },
+              yAxis: {
+                title: {
+                  text: "Cumulative net (THB)",
+                  style: { color: chartAxisColor },
+                },
+                labels: { style: { color: chartAxisColor } },
+                gridLineColor: chartGridColor,
+                plotLines: [
+                  {
+                    value: 0,
+                    color: theme.palette.mode === "dark" ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.25)",
+                    width: 1,
+                    zIndex: 4,
+                  },
+                ],
+              },
+              tooltip: {
+                backgroundColor:
+                  theme.palette.mode === "dark" ? "rgba(17,20,24,0.9)" : "rgba(255,255,255,0.97)",
+                borderWidth: 0,
+                style: {
+                  color: theme.palette.mode === "dark" ? "#fff" : "#0f1115",
+                },
+                pointFormat:
+                  '<span style="color:{point.color}">●</span> Cumulative net: <b>฿{point.y:,.0f}</b><br/>',
+              },
+              legend: { enabled: false },
+              credits: { enabled: false },
+              plotOptions: {
+                areaspline: {
+                  lineWidth: 2.5,
+                  lineColor: "#ffb74d",
+                  fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [
+                      [0, "rgba(255, 183, 77, 0.4)"],
+                      [1, "rgba(255, 183, 77, 0.06)"],
+                    ],
+                  },
+                  marker: {
+                    enabled: true,
+                    radius: 3,
+                    fillColor: "#ffb74d",
+                    lineColor: theme.palette.mode === "dark" ? "#0f1115" : "#fff",
+                    lineWidth: 1,
+                  },
+                },
+              },
+              series: [
+                {
+                  name: "Cumulative net",
+                  data: cumulativeNetSeries,
+                },
+              ],
+            }}
+          />
+        </Paper>
       </Box>
     </Box>
   );
 };
 
 const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 320 }) => {
+  const theme = useTheme();
   if (!data || data.length === 0) return null;
 
   const shades = data.map((_, idx) => {
@@ -1082,13 +1211,22 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
     return Highcharts.color(color).brighten(factor).get();
   });
 
+  const chartAxisColor = theme.palette.mode === "dark" ? "#cfd8dc" : "#546e7a";
+  const chartGridColor =
+    theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)";
+
   return (
     <Paper
       sx={{
         p: { xs: 2, sm: 3 },
         borderRadius: 3,
-        border: "1px solid #23272f",
-        background: "rgba(255,255,255,0.02)",
+        border: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.paper",
+        backgroundImage:
+          theme.palette.mode === "dark"
+            ? "linear-gradient(135deg, rgba(255,153,102,0.06), rgba(100,181,246,0.04))"
+            : "linear-gradient(135deg, rgba(255,153,102,0.07), rgba(100,181,246,0.05))",
         mt: { xs: 2, sm: 3 },
         width: "100%",
         ...sx,
@@ -1098,7 +1236,7 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
         {title}
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-        Top categories by total amount.
+        Ranked by total amount for the selected analysis period.
       </Typography>
       <HighchartsReact
         highcharts={Highcharts}
@@ -1107,14 +1245,20 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
           title: { text: "" },
           xAxis: {
             categories: data.map((d) => d.name),
-            labels: { style: { color: "#e0e0e0" } },
-            lineColor: "rgba(255,255,255,0.2)",
-            tickColor: "rgba(255,255,255,0.2)",
+            labels: { style: { color: chartAxisColor } },
+            lineColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.2)"
+                : "rgba(0,0,0,0.15)",
+            tickColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.2)"
+                : "rgba(0,0,0,0.15)",
           },
           yAxis: {
-            title: { text: "Amount (THB)", style: { color: "#e0e0e0" } },
-            labels: { style: { color: "#e0e0e0" } },
-            gridLineColor: "rgba(255,255,255,0.08)",
+            title: { text: "Amount (THB)", style: { color: chartAxisColor } },
+            labels: { style: { color: chartAxisColor } },
+            gridLineColor: chartGridColor,
           },
           legend: { enabled: false },
           credits: { enabled: false },
@@ -1140,7 +1284,7 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
                 formatter: function () {
                   return `฿${Highcharts.numberFormat(this.y, 0)}`;
                 },
-                style: { color: "#e0e0e0", textOutline: "none", fontWeight: 600 },
+                style: { color: chartAxisColor, textOutline: "none", fontWeight: 600 },
                 crop: false,
                 overflow: "allow",
               },

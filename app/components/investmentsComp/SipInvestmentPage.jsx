@@ -177,6 +177,17 @@ const SipInvestmentPage = () => {
       minimumFractionDigits: 0,
     }).format(amount);
 
+  const formatCompactCurrency = (amount) => {
+    const num = Number(amount);
+    if (!Number.isFinite(num)) return "-";
+    const sign = num < 0 ? "-" : "";
+    const abs = Math.abs(num);
+
+    if (abs >= 1e6) return `${sign}NPR ${(abs / 1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${sign}NPR ${(abs / 1e3).toFixed(1)}K`;
+    return `${sign}NPR ${abs.toFixed(0)}`;
+  };
+
   const formatDate = (dateString) =>
     new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -184,20 +195,24 @@ const SipInvestmentPage = () => {
       day: "numeric",
     });
 
-  // Group by year for chart
-  const getYearlyInvestments = () => {
+  // Group by year and SIP fund name for chart
+  const getYearlyByFundInvestments = () => {
     if (!sipInvestments.length) return [];
     const yearlyData = {};
     sipInvestments.forEach((inv) => {
       const year = new Date(inv.date).getFullYear();
-      yearlyData[year] = (yearlyData[year] || 0) + inv.amount;
+      if (!yearlyData[year]) {
+        yearlyData[year] = { year, totalInvestment: 0 };
+      }
+      yearlyData[year][inv.name] = (yearlyData[year][inv.name] || 0) + inv.amount;
+      yearlyData[year].totalInvestment += inv.amount;
     });
     return Object.keys(yearlyData)
       .sort()
-      .map((year) => ({ year, totalInvestment: yearlyData[year] }));
+      .map((year) => yearlyData[year]);
   };
 
-  const chartData = getYearlyInvestments();
+  const chartData = getYearlyByFundInvestments();
 
   // Group by name for pie chart
   const getNameWiseData = () => {
@@ -206,29 +221,90 @@ const SipInvestmentPage = () => {
     sipInvestments.forEach((inv) => {
       nameData[inv.name] = (nameData[inv.name] || 0) + inv.amount;
     });
-    return Object.entries(nameData).map(([name, value]) => ({ name, y: value }));
+    return Object.entries(nameData)
+      .map(([name, value]) => ({ name, y: value }))
+      .sort((a, b) => b.y - a.y);
   };
 
   const pieData = getNameWiseData();
+  const fundNames = pieData.map((entry) => entry.name);
   const totalInvestment =
     apiResponse?.totalAmount ||
     sipInvestments.reduce((sum, inv) => sum + inv.amount, 0);
 
-  const PIE_COLORS = [
-    "#66bb6a", "#388e3c", "#a5d6a7", "#1b5e20", "#81c784",
-    "#2e7d32", "#c8e6c9", "#43a047", "#00e676", "#1de9b6",
+  const FALLBACK_COLORS = [
+    "#66bb6a",
+    "#42a5f5",
+    "#ab47bc",
+    "#ff7043",
+    "#26c6da",
+    "#ffd54f",
+    "#ec407a",
+    "#8d6e63",
+    "#7e57c2",
+    "#29b6f6",
   ];
+
+  const getFundBrand = (fundName) => {
+    const normalized = String(fundName || "").toLowerCase();
+
+    // Use logo-inspired colors for clearer mapping.
+    if (normalized.includes("nabil")) {
+      return {
+        primaryColor: "#00a651",
+        gradient: "linear-gradient(135deg, #00a651 0%, #e53935 100%)",
+      };
+    }
+
+    if (normalized.includes("nic")) {
+      return {
+        primaryColor: "#e53935",
+        gradient: "linear-gradient(135deg, #e53935 0%, #b71c1c 100%)",
+      };
+    }
+
+    // Fallback: deterministic color per fund name.
+    const idx = fundNames.indexOf(fundName);
+    const color = FALLBACK_COLORS[idx % FALLBACK_COLORS.length] || FALLBACK_COLORS[0];
+    return {
+      primaryColor: color,
+      gradient: color,
+    };
+  };
+
+  const pieColors = pieData.map((entry) => getFundBrand(entry.name).primaryColor);
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
+      const row = payload?.[0]?.payload;
+      const year = row?.year;
+      const totalForYear = row?.totalInvestment ?? 0;
+
       return (
         <Paper sx={{ p: 2, bgcolor: "background.paper", border: "1px solid #23272f", borderRadius: 2 }}>
           <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-            Year: {payload[0].payload.year}
+            Year: {year}
           </Typography>
-          <Typography variant="body2" sx={{ color: "#66bb6a", fontWeight: 600 }}>
-            Investment: {formatCurrency(payload[0].value)}
+
+          <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 700, mt: 0.5 }}>
+            Year total: {formatCurrency(totalForYear)}
           </Typography>
+
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
+            {fundNames.map((fund) => {
+              const value = row?.[fund] ?? 0;
+              if (!value) return null;
+              const { primaryColor } = getFundBrand(fund);
+              return (
+                <Box key={fund} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: primaryColor }} />
+                  <Typography variant="body2" sx={{ color: primaryColor, fontWeight: 800 }}>
+                    {fund}: {formatCurrency(value)}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
         </Paper>
       );
     }
@@ -430,24 +506,51 @@ const SipInvestmentPage = () => {
               <SavingsIcon sx={{ fontSize: 32, color: "#fff" }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>Yearly SIP Overview</Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>Total SIP amount invested per year</Typography>
+              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>SIP by Year & Fund</Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>Contributions split by SIP fund name</Typography>
             </Box>
           </Box>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#23272f" />
-              <XAxis dataKey="year" stroke="#b0b8c1" style={{ fontSize: "14px", fontWeight: 600 }} />
-              <YAxis stroke="#b0b8c1" style={{ fontSize: "14px" }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}K`} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(102, 187, 106, 0.1)" }} />
-              <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="circle" formatter={(value) => <span style={{ color: "#f5f6fa", fontSize: "14px", fontWeight: 600 }}>{value}</span>} />
-              <Bar dataKey="totalInvestment" fill="url(#sipGradient)" name="SIP Investment" radius={[8, 8, 0, 0]} />
-              <defs>
-                <linearGradient id="sipGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#66bb6a" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#388e3c" stopOpacity={0.8} />
-                </linearGradient>
-              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(35, 39, 47, 0.9)" />
+              <XAxis
+                dataKey="year"
+                stroke="rgba(176, 184, 193, 0.9)"
+                tick={{ fill: "#b0b8c1", fontSize: 13, fontWeight: 700 }}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                stroke="rgba(176, 184, 193, 0.9)"
+                tick={{ fill: "#b0b8c1", fontSize: 13 }}
+                tickFormatter={(v) => formatCompactCurrency(v)}
+                label={{
+                  value: "Amount (NPR)",
+                  angle: -90,
+                  position: "insideLeft",
+                  style: { fill: "#b0b8c1", fontSize: 12, fontWeight: 800 },
+                }}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(102, 187, 106, 0.12)" }} />
+              <Legend
+                wrapperStyle={{ paddingTop: 20 }}
+                iconType="circle"
+                formatter={(value) => (
+                  <span style={{ color: "#f5f6fa", fontSize: 14, fontWeight: 700 }}>{value}</span>
+                )}
+              />
+              {fundNames.map((fund, idx) => {
+                const { primaryColor } = getFundBrand(fund);
+                return (
+                  <Bar
+                    key={fund}
+                    dataKey={fund}
+                    name={fund}
+                    stackId="sipFundsByYear"
+                    fill={primaryColor}
+                    radius={idx === fundNames.length - 1 ? [8, 8, 0, 0] : [0, 0, 0, 0]}
+                  />
+                );
+              })}
             </BarChart>
           </ResponsiveContainer>
         </Paper>
@@ -473,7 +576,7 @@ const SipInvestmentPage = () => {
               <SavingsIcon sx={{ fontSize: 32, color: "#fff" }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>SIP Distribution by Name</Typography>
+              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>SIP Distribution by Fund</Typography>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>Total invested per SIP fund across all transactions</Typography>
             </Box>
           </Box>
@@ -493,13 +596,13 @@ const SipInvestmentPage = () => {
                   },
                   title: { text: "" },
                   credits: { enabled: false },
-                  colors: PIE_COLORS,
+                  colors: pieColors,
                   plotOptions: {
                     pie: {
                       innerSize: "50%",
                       dataLabels: {
                         enabled: true,
-                        format: "{point.name}: Rs {point.y:,.0f}",
+                        format: "{point.name}: NPR {point.y:,.0f}",
                         style: {
                           color: "white",
                           textOutline: "none",
@@ -517,7 +620,7 @@ const SipInvestmentPage = () => {
                   tooltip: {
                     formatter: function () {
                       const percent = ((this.y / totalInvestment) * 100).toFixed(1);
-                      return `<b>${this.point.name}</b><br/>Rs ${Highcharts.numberFormat(this.y, 0, ".", ",")}<br/>${percent}% of total`;
+                      return `<b>${this.point.name}</b><br/>NPR ${Highcharts.numberFormat(this.y, 0, ".", ",")}<br/>${percent}% of total`;
                     },
                   },
                   series: [
@@ -532,13 +635,21 @@ const SipInvestmentPage = () => {
             <Grid item xs={12} md={5}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {pieData.map((entry, index) => {
-                  const color = PIE_COLORS[index % PIE_COLORS.length];
+                  const { primaryColor, gradient } = getFundBrand(entry.name);
                   const percent = ((entry.y / totalInvestment) * 100).toFixed(1);
                   return (
                     <Box key={entry.name} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: "background.default", border: "1px solid #23272f" }}>
-                      <Box sx={{ width: 14, height: 14, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />
+                      <Box
+                        sx={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: "50%",
+                          background: gradient,
+                          flexShrink: 0,
+                        }}
+                      />
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={700} sx={{ color: color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <Typography variant="body2" fontWeight={700} sx={{ color: primaryColor, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {entry.name}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -582,7 +693,7 @@ const SipInvestmentPage = () => {
                     }}
                   >
                     <TableCell align="center">
-                      <Typography variant="body2" fontWeight="600" sx={{ color: "#66bb6a" }}>
+                      <Typography variant="body2" fontWeight="600" sx={{ color: getFundBrand(investment.name).primaryColor }}>
                         {investment.name}
                       </Typography>
                     </TableCell>

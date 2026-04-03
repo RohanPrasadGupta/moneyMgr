@@ -263,6 +263,17 @@ const StockInvestmentPage = () => {
     }).format(amount);
   };
 
+  const formatCompactCurrency = (amount) => {
+    const num = Number(amount);
+    if (!Number.isFinite(num)) return "-";
+    const sign = num < 0 ? "-" : "";
+    const abs = Math.abs(num);
+
+    if (abs >= 1e6) return `${sign}NPR ${(abs / 1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${sign}NPR ${(abs / 1e3).toFixed(1)}K`;
+    return `${sign}NPR ${abs.toFixed(0)}`;
+  };
+
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
@@ -286,6 +297,45 @@ const StockInvestmentPage = () => {
     return null;
   };
 
+  const MomentumTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+
+    const monthly = payload.find((p) => p.dataKey === "invested")?.value;
+    const cumulative = payload.find((p) => p.dataKey === "cumulative")?.value;
+    const monthLabel = label ?? payload?.[0]?.payload?.label ?? "-";
+
+    return (
+      <Paper
+        sx={{
+          p: 2,
+          bgcolor: "background.paper",
+          border: "1px solid #23272f",
+          borderRadius: 2,
+        }}
+      >
+        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 700 }}>
+          {monthLabel}
+        </Typography>
+
+        <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "#66bb6a" }} />
+            <Typography variant="body2" sx={{ color: "#66bb6a", fontWeight: 700 }}>
+              Monthly invested: {formatCurrency(monthly ?? 0)}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "#ffca28" }} />
+            <Typography variant="body2" sx={{ color: "#ffca28", fontWeight: 700 }}>
+              Cumulative total: {formatCurrency(cumulative ?? 0)}
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
+    );
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -296,9 +346,11 @@ const StockInvestmentPage = () => {
 
   const totalInvestment = apiResponse?.totalAmount || stockInvestments.reduce((sum, inv) => sum + inv.amount, 0);
   const averageInvestment = stockInvestments.length > 0 ? totalInvestment / stockInvestments.length : 0;
-  const lastInvestmentDate = stockInvestments.length
-    ? formatDate(stockInvestments[stockInvestments.length - 1].date)
-    : "-";
+  const lastInvestmentDate = (() => {
+    if (!stockInvestments.length) return "-";
+    const latestTs = Math.max(...stockInvestments.map((inv) => new Date(inv.date).getTime()));
+    return formatDate(new Date(latestTs).toISOString());
+  })();
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -941,7 +993,7 @@ const StockInvestmentPage = () => {
                 Investment Momentum
               </Typography>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Monthly contributions with cumulative growth trend
+                Monthly contributions and the running total over time
               </Typography>
             </Box>
           </Box>
@@ -954,46 +1006,65 @@ const StockInvestmentPage = () => {
                   <stop offset="95%" stopColor="#43a047" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="4 4" stroke="#23272f" />
-              <XAxis dataKey="label" stroke="#b0b8c1" style={{ fontSize: "13px" }} />
+              <CartesianGrid strokeDasharray="4 4" stroke="rgba(35, 39, 47, 0.85)" />
+              <XAxis
+                dataKey="label"
+                stroke="rgba(176, 184, 193, 0.9)"
+                tick={{ fill: "#b0b8c1", fontSize: 12, fontWeight: 600 }}
+                interval="preserveStartEnd"
+              />
               <YAxis
-                stroke="#b0b8c1"
-                style={{ fontSize: "13px" }}
-                tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
+                stroke="rgba(176, 184, 193, 0.9)"
+                tick={{ fill: "#b0b8c1", fontSize: 12 }}
+                tickFormatter={(value) => formatCompactCurrency(value)}
+                label={{
+                  value: "Amount (NPR)",
+                  angle: -90,
+                  position: "insideLeft",
+                  style: { fill: "#b0b8c1", fontSize: 12, fontWeight: 600 },
+                }}
               />
               <Tooltip
-                contentStyle={{ background: "#0f1115", border: "1px solid #23272f", borderRadius: 8 }}
-                labelStyle={{ color: "#fff", fontWeight: 700 }}
-                formatter={(value, name) => [formatCurrency(value), name === "cumulative" ? "Cumulative" : "Monthly"]}
+                content={<MomentumTooltip />}
+                cursor={{
+                  stroke: "rgba(102, 187, 106, 0.35)",
+                  strokeWidth: 2,
+                  fill: "rgba(102, 187, 106, 0.08)",
+                }}
               />
               <Legend
                 wrapperStyle={{ paddingTop: 12 }}
                 iconType="circle"
                 formatter={(value) => (
-                  <span style={{ color: "#f5f6fa", fontSize: "13px", fontWeight: 600 }}>
-                    {value === "cumulative" ? "Cumulative" : "Monthly"}
-                  </span>
+                  <span style={{ color: "#f5f6fa", fontSize: "13px", fontWeight: 600 }}>{value}</span>
                 )}
               />
               <Area
                 type="monotone"
                 dataKey="invested"
-                name="Monthly"
+                name="Monthly invested"
                 stroke="#66bb6a"
                 fill="url(#areaFill)"
                 strokeWidth={2.5}
-                dot={{ r: 3, stroke: "#0f1115", fill: "#66bb6a" }}
+                dot={false}
+                activeDot={{ r: 4, stroke: "#0f1115", fill: "#66bb6a", strokeWidth: 2 }}
               />
               <Line
                 type="monotone"
                 dataKey="cumulative"
-                name="Cumulative"
+                name="Cumulative total"
                 stroke="#ffca28"
                 strokeWidth={2.5}
-                dot={{ r: 3, stroke: "#0f1115", fill: "#ffca28" }}
+                strokeDasharray="6 4"
+                dot={false}
+                activeDot={{ r: 4, stroke: "#0f1115", fill: "#ffca28", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>
+
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 1.5, px: 2 }}>
+            Tip: hover over a month to see both the monthly invested amount and the cumulative total.
+          </Typography>
         </Paper>
       )}
 
