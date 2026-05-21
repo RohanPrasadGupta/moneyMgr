@@ -2,6 +2,7 @@ import {
   Box,
   Select,
   MenuItem,
+  Button,
   Paper,
   Typography,
   Stack,
@@ -81,6 +82,17 @@ const AnalysisPage = () => {
   const [viewMode, setViewMode] = React.useState("monthly");
   const [barYear, setBarYear] = React.useState(now.year());
   const [barType, setBarType] = React.useState("Expense");
+  const [selectedCurrency, setSelectedCurrency] = React.useState("THB");
+  const [selectedExchangeRange, setSelectedExchangeRange] = React.useState("3.9");
+
+  const exchangeRateOptions = React.useMemo(
+    () =>
+      Array.from({ length: 17 }, (_, i) => {
+        const value = (3.9 + i * 0.1).toFixed(1);
+        return { value, label: `${value} NPR` };
+      }),
+    []
+  );
 
   const {
     isPending,
@@ -194,14 +206,30 @@ const AnalysisPage = () => {
       }));
   }, [analysisData]);
 
-  const formatPieSeriesData = React.useCallback((dataset) =>
-    (dataset || [])
-      .map((item) => ({
-        name: item.label ?? "Unknown",
-        y: Number(item.value) || 0,
-      }))
-      .filter((item) => item.y > 0),
-  []);
+  const selectedExchangeRate = React.useMemo(
+    () => Number(selectedExchangeRange || 0) || 0,
+    [selectedExchangeRange]
+  );
+
+  const currencyCode = selectedCurrency === "NPR" ? "NPR" : "THB";
+  const currencySymbol = selectedCurrency === "NPR" ? "NPR " : "฿";
+  const conversionRate = selectedCurrency === "NPR" ? selectedExchangeRate : 1;
+
+  const convertAmount = React.useCallback(
+    (value) => Number(value || 0) * conversionRate,
+    [conversionRate]
+  );
+
+  const formatPieSeriesData = React.useCallback(
+    (dataset) =>
+      (dataset || [])
+        .map((item) => ({
+          name: item.label ?? "Unknown",
+          y: convertAmount(item.value),
+        }))
+        .filter((item) => item.y > 0),
+    [convertAmount]
+  );
 
   const pieTotalExpense = React.useMemo(
     () => pieDataExpense.reduce((s, d) => s + Number(d.value || 0), 0),
@@ -224,9 +252,13 @@ const AnalysisPage = () => {
 
   const currencyFmt = new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency: "THB",
+    currency: currencyCode,
     maximumFractionDigits: 0,
   });
+  const formatAmount = React.useCallback(
+    (value) => currencyFmt.format(convertAmount(value)),
+    [currencyFmt, convertAmount]
+  );
 
   const yearlyIncomeArray =
     (testTransactionDetails?.data?.IncomeArray ?? testTransactionDetails?.data?.IncomeArray) || [];
@@ -237,9 +269,18 @@ const AnalysisPage = () => {
   const yearlyExpenseTotal = yearlyExpenseArray.reduce((sum, v) => sum + Number(v || 0), 0);
   const yearlyNetTotal = yearlyIncomeTotal - yearlyExpenseTotal;
 
+  const displayedYearlyIncomeArray = React.useMemo(
+    () => yearlyIncomeArray.map((v) => convertAmount(v)),
+    [yearlyIncomeArray, convertAmount]
+  );
+  const displayedYearlyExpenseArray = React.useMemo(
+    () => yearlyExpenseArray.map((v) => convertAmount(v)),
+    [yearlyExpenseArray, convertAmount]
+  );
+
   const netSeries = Months.map((m, idx) => {
-    const income = Number(yearlyIncomeArray[idx] || 0);
-    const expense = Number(yearlyExpenseArray[idx] || 0);
+    const income = Number(displayedYearlyIncomeArray[idx] || 0);
+    const expense = Number(displayedYearlyExpenseArray[idx] || 0);
     return income - expense;
   });
 
@@ -347,19 +388,19 @@ const AnalysisPage = () => {
             <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid", borderColor: "divider" }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Income</Typography>
               <Typography variant="h6" fontWeight={800} sx={{ color: "#43a047", mt: 0.5 }}>
-                {currencyFmt.format(pieIncomeTotal)}
+                {formatAmount(pieIncomeTotal)}
               </Typography>
             </Paper>
             <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid", borderColor: "divider" }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Expense</Typography>
               <Typography variant="h6" fontWeight={800} sx={{ color: "#ef5350", mt: 0.5 }}>
-                {currencyFmt.format(pieTotalExpense)}
+                {formatAmount(pieTotalExpense)}
               </Typography>
             </Paper>
             <Paper sx={{ p: 2, borderRadius: 2, bgcolor: "background.default", flex: 1, border: "1px solid", borderColor: "divider" }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Net</Typography>
               <Typography variant="h6" fontWeight={800} sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "#90caf9" : "#ff8a80", mt: 0.5 }}>
-                {currencyFmt.format(pieIncomeTotal - pieTotalExpense)}
+                {formatAmount(pieIncomeTotal - pieTotalExpense)}
               </Typography>
             </Paper>
           </Stack>
@@ -379,6 +420,69 @@ const AnalysisPage = () => {
             alignItems="center"
             justifyContent="center"
           >
+            <Button
+              variant={selectedCurrency === "THB" ? "contained" : "outlined"}
+              onClick={() => setSelectedCurrency((prev) => (prev === "THB" ? "NPR" : "THB"))}
+              disableElevation
+              sx={{
+                borderRadius: 2.5,
+                minWidth: 150,
+                px: 2,
+                py: 1,
+                fontWeight: 700,
+                letterSpacing: 0.2,
+                textTransform: "none",
+                color: "#fff",
+                borderColor: selectedCurrency === "THB" ? "transparent" : "primary.main",
+                background:
+                  selectedCurrency === "THB"
+                    ? "linear-gradient(135deg, #7c4dff 0%, #00bcd4 100%)"
+                    : "linear-gradient(135deg, #ff8a65 0%, #ff7043 100%)",
+                boxShadow:
+                  selectedCurrency === "THB"
+                    ? "0 8px 20px rgba(124,77,255,0.35)"
+                    : "0 8px 20px rgba(255,112,67,0.35)",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease",
+                "&:hover": {
+                  background:
+                    selectedCurrency === "THB"
+                      ? "linear-gradient(135deg, #6f42f5 0%, #00acc1 100%)"
+                      : "linear-gradient(135deg, #ff7043 0%, #f4511e 100%)",
+                  boxShadow:
+                    selectedCurrency === "THB"
+                      ? "0 12px 24px rgba(124,77,255,0.45)"
+                      : "0 12px 24px rgba(255,112,67,0.45)",
+                  transform: "translateY(-1px)",
+                  filter: "brightness(1.03)",
+                },
+                "&:active": {
+                  transform: "translateY(1px) scale(0.99)",
+                  boxShadow: "0 5px 14px rgba(0,0,0,0.2)",
+                },
+              }}
+            >
+              {selectedCurrency === "THB" ? "Switch to NPR" : "Switch to THB"}
+            </Button>
+            <Select
+              labelId="exchange-range-select-label"
+              id="exchange-range-select"
+              value={selectedExchangeRange}
+              onChange={(e) => setSelectedExchangeRange(e.target.value)}
+              disabled={selectedCurrency !== "NPR"}
+              sx={{
+                fontSize: { xs: "0.95rem", sm: "1.05rem" },
+                minWidth: 170,
+                bgcolor: "background.default",
+                borderRadius: 2,
+                boxShadow: 1,
+              }}
+            >
+              {exchangeRateOptions.map((rate) => (
+                <MenuItem key={rate.value} value={rate.value}>
+                  1 THB = {rate.label}
+                </MenuItem>
+              ))}
+            </Select>
             <Select
               labelId="year-select-label"
               id="year-select"
@@ -454,6 +558,11 @@ const AnalysisPage = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Donut charts show where money came from and where it went for the selected view.
           </Typography>
+          {selectedCurrency === "NPR" && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+              Converted with 1 THB = {selectedExchangeRate.toFixed(2)} NPR
+            </Typography>
+          )}
         <Box
           sx={{
             width: "100%",
@@ -515,7 +624,7 @@ const AnalysisPage = () => {
                             dataLabels: {
                               enabled: true,
                               distance: pieDataLabelDist,
-                              format: "{point.name}: <b>฿{point.y:,.0f}</b>",
+                              format: `{point.name}: <b>${currencySymbol}{point.y:,.0f}</b>`,
                               style: {
                                 color: pieDataLabelColor,
                                 textOutline: "none",
@@ -551,7 +660,7 @@ const AnalysisPage = () => {
                           formatter: function () {
                             return `<div style="padding:6px 8px;">` +
                               `<div style="font-weight:700;color:${this.color}">${this.point.name}</div>` +
-                              `<div style="color:#fff">฿${Highcharts.numberFormat(this.y,0)}</div>` +
+                              `<div style="color:#fff">${currencySymbol}${Highcharts.numberFormat(this.y,0)}</div>` +
                               `</div>`;
                           },
                         },
@@ -581,7 +690,7 @@ const AnalysisPage = () => {
                         Expense total
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {currencyFmt.format(pieTotalExpense)}
+                        {formatAmount(pieTotalExpense)}
                       </Typography>
                     </Box>
                   </>
@@ -640,7 +749,7 @@ const AnalysisPage = () => {
                             dataLabels: {
                               enabled: true,
                               distance: pieDataLabelDist,
-                              format: "{point.name}: <b>฿{point.y:,.0f}</b>",
+                              format: `{point.name}: <b>${currencySymbol}{point.y:,.0f}</b>`,
                               style: {
                                 color: pieDataLabelColor,
                                 textOutline: "none",
@@ -676,7 +785,7 @@ const AnalysisPage = () => {
                           formatter: function () {
                             return `<div style="padding:6px 8px;">` +
                               `<div style="font-weight:700;color:${this.color}">${this.point.name}</div>` +
-                              `<div style="color:#fff">฿${Highcharts.numberFormat(this.y,0)}</div>` +
+                              `<div style="color:#fff">${currencySymbol}${Highcharts.numberFormat(this.y,0)}</div>` +
                               `</div>`;
                           },
                         },
@@ -706,7 +815,7 @@ const AnalysisPage = () => {
                         Income total
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {currencyFmt.format(pieIncomeTotal)}
+                        {formatAmount(pieIncomeTotal)}
                       </Typography>
                     </Box>
                   </>
@@ -729,6 +838,9 @@ const AnalysisPage = () => {
           data={topExpenseCategories}
           color="#ef5350"
           height={barCategoryHeight}
+          currencySymbol={currencySymbol}
+          currencyCode={currencyCode}
+          conversionRate={conversionRate}
         />
         <GridLikeTopCategories
           title="Top Income Categories"
@@ -737,6 +849,9 @@ const AnalysisPage = () => {
           color="#43a047"
           height={barCategoryHeight}
           sx={{ mt: 3 }}
+          currencySymbol={currencySymbol}
+          currencyCode={currencyCode}
+          conversionRate={conversionRate}
         />
       </Box>
 
@@ -822,7 +937,7 @@ const AnalysisPage = () => {
                   color: "#ef5350",
                 }}
               >
-                {currencyFmt.format(yearlyExpenseTotal)}
+                {formatAmount(yearlyExpenseTotal)}
               </Box>
             </Box>
             <Box sx={{ textAlign: "center" }}>
@@ -843,7 +958,7 @@ const AnalysisPage = () => {
                   color: "#43a047",
                 }}
               >
-                {currencyFmt.format(yearlyIncomeTotal)}
+                {formatAmount(yearlyIncomeTotal)}
               </Box>
             </Box>
             <Box sx={{ textAlign: "center" }}>
@@ -864,7 +979,7 @@ const AnalysisPage = () => {
                   color: yearlyNetTotal >= 0 ? "#90caf9" : "#ff8a80",
                 }}
               >
-                {currencyFmt.format(yearlyNetTotal)}
+                {formatAmount(yearlyNetTotal)}
               </Box>
             </Box>
           </Box>
@@ -933,7 +1048,7 @@ const AnalysisPage = () => {
                   },
                   yAxis: {
                     title: {
-                      text: "Amount (THB)",
+                      text: `Amount (${currencyCode})`,
                       style: {
                         color: chartAxisColor,
                       },
@@ -950,7 +1065,7 @@ const AnalysisPage = () => {
                     headerFormat:
                       '<span style="font-size:12px">{point.key}</span><br/>',
                     pointFormat:
-                      '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>฿{point.y:,.0f}</b>',
+                      `<span style="color:{point.color}">\u25CF</span> {series.name}: <b>${currencySymbol}{point.y:,.0f}</b>`,
                     backgroundColor:
                       theme.palette.mode === "dark"
                         ? "rgba(17, 20, 24, 0.92)"
@@ -987,7 +1102,7 @@ const AnalysisPage = () => {
                           fontWeight: 600,
                         },
                         formatter: function () {
-                          return `฿${Highcharts.numberFormat(this.y, 0)}`;
+                          return `${currencySymbol}${Highcharts.numberFormat(this.y, 0)}`;
                         },
                         filter: { property: "y", operator: ">=", value: 0 },
                       },
@@ -999,7 +1114,7 @@ const AnalysisPage = () => {
                   series: [
                     {
                       name: "Income",
-                      data: yearlyIncomeArray,
+                      data: displayedYearlyIncomeArray,
                       color: {
                         linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
                         stops: [
@@ -1010,7 +1125,7 @@ const AnalysisPage = () => {
                     },
                     {
                       name: "Expense",
-                      data: yearlyExpenseArray,
+                      data: displayedYearlyExpenseArray,
                       color: {
                         linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
                         stops: [
@@ -1056,7 +1171,7 @@ const AnalysisPage = () => {
                     : "rgba(0,0,0,0.15)",
               },
               yAxis: {
-                title: { text: "Amount (THB)", style: { color: chartAxisColor } },
+                title: { text: `Amount (${currencyCode})`, style: { color: chartAxisColor } },
                 labels: { style: { color: chartAxisColor } },
                 gridLineColor: chartGridColor,
                 plotLines: [
@@ -1077,7 +1192,7 @@ const AnalysisPage = () => {
                   color: theme.palette.mode === "dark" ? "#fff" : "#0f1115",
                 },
                 pointFormat:
-                  '<span style="color:{point.color}">●</span> Net: <b>฿{point.y:,.0f}</b><br/>',
+                  `<span style="color:{point.color}">●</span> Net: <b>${currencySymbol}{point.y:,.0f}</b><br/>`,
               },
               legend: { enabled: false },
               credits: { enabled: false },
@@ -1142,7 +1257,7 @@ const AnalysisPage = () => {
               },
               yAxis: {
                 title: {
-                  text: "Cumulative net (THB)",
+                  text: `Cumulative net (${currencyCode})`,
                   style: { color: chartAxisColor },
                 },
                 labels: { style: { color: chartAxisColor } },
@@ -1164,7 +1279,7 @@ const AnalysisPage = () => {
                   color: theme.palette.mode === "dark" ? "#fff" : "#0f1115",
                 },
                 pointFormat:
-                  '<span style="color:{point.color}">●</span> Cumulative net: <b>฿{point.y:,.0f}</b><br/>',
+                  `<span style="color:{point.color}">●</span> Cumulative net: <b>${currencySymbol}{point.y:,.0f}</b><br/>`,
               },
               legend: { enabled: false },
               credits: { enabled: false },
@@ -1202,7 +1317,17 @@ const AnalysisPage = () => {
   );
 };
 
-const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 320 }) => {
+const GridLikeTopCategories = ({
+  title,
+  data,
+  color,
+  seriesName,
+  sx,
+  height = 320,
+  currencySymbol = "฿",
+  currencyCode = "THB",
+  conversionRate = 1,
+}) => {
   const theme = useTheme();
   if (!data || data.length === 0) return null;
 
@@ -1214,6 +1339,7 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
   const chartAxisColor = theme.palette.mode === "dark" ? "#cfd8dc" : "#546e7a";
   const chartGridColor =
     theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)";
+  const convertedValues = data.map((d) => Number(d.value || 0) * conversionRate);
 
   return (
     <Paper
@@ -1256,7 +1382,7 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
                 : "rgba(0,0,0,0.15)",
           },
           yAxis: {
-            title: { text: "Amount (THB)", style: { color: chartAxisColor } },
+            title: { text: `Amount (${currencyCode})`, style: { color: chartAxisColor } },
             labels: { style: { color: chartAxisColor } },
             gridLineColor: chartGridColor,
           },
@@ -1270,7 +1396,7 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
             formatter: function () {
               const rank = (this.point?.index ?? this.point?.x ?? 0) + 1;
               return (
-                `<span style="color:${color}">●</span> ${seriesName}: <b>฿${Highcharts.numberFormat(this.y, 0)}</b><br/>` +
+                `<span style="color:${color}">●</span> ${seriesName}: <b>${currencySymbol}${Highcharts.numberFormat(this.y, 0)}</b><br/>` +
                 `<span style="color:#b0bec5">Rank #${rank}</span>`
               );
             },
@@ -1282,7 +1408,7 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
               dataLabels: {
                 enabled: true,
                 formatter: function () {
-                  return `฿${Highcharts.numberFormat(this.y, 0)}`;
+                  return `${currencySymbol}${Highcharts.numberFormat(this.y, 0)}`;
                 },
                 style: { color: chartAxisColor, textOutline: "none", fontWeight: 600 },
                 crop: false,
@@ -1293,7 +1419,7 @@ const GridLikeTopCategories = ({ title, data, color, seriesName, sx, height = 32
           series: [
             {
               name: seriesName,
-              data: data.map((d) => d.value),
+              data: convertedValues,
               colors: shades,
               color,
             },
