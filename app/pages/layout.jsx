@@ -38,8 +38,9 @@ const layout = ({ children }) => {
         <Box
           sx={{
             width: 240,
-            bgcolor: "background.paper",
-            borderRight: "1px solid #23272f",
+            // bgcolor: "background.paper",
+            // borderRight: "1px solid #23272f",
+            marginLeft: 2,
             boxShadow: 1,
             display: "flex",
             flexDirection: "column",

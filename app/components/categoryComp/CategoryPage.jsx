@@ -19,17 +19,21 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import CategoryIcon from "@mui/icons-material/Category";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import SearchIcon from "@mui/icons-material/Search";
 import { useCategoryQuery } from "../../services/useCategoryServices";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-const CategoryList = ({ title, categories = [], color, onDelete }) => {
+const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = "" }) => {
+  const theme = useTheme();
   const isIncome = title === "Income";
   const gradient = isIncome
     ? "linear-gradient(135deg, #66bb6a, #43a047)"
@@ -40,16 +44,22 @@ const CategoryList = ({ title, categories = [], color, onDelete }) => {
       sx={{
         borderRadius: 3,
         bgcolor: "background.paper",
-        border: "1px solid #23272f",
+        border: "1px solid",
+        borderColor: "divider",
         overflow: "hidden",
         height: "100%",
+        boxShadow:
+          theme.palette.mode === "dark"
+            ? "0 10px 28px rgba(0,0,0,0.32)"
+            : "0 12px 26px rgba(15,23,42,0.08)",
       }}
     >
       {/* Header */}
       <Box
         sx={{
           p: 2.5,
-          borderBottom: "1px solid #23272f",
+          borderBottom: "1px solid",
+          borderColor: "divider",
           background: gradient,
           position: "relative",
           overflow: "hidden",
@@ -151,7 +161,7 @@ const CategoryList = ({ title, categories = [], color, onDelete }) => {
                     transition: "all 0.2s ease",
                     "&:hover": {
                       transform: "translateY(-2px)",
-                      boxShadow: `0 4px 12px ${isIncome ? "rgba(67, 160, 71, 0.2)" : "rgba(255, 94, 98, 0.2)"}`,
+                      boxShadow: `0 10px 18px ${isIncome ? "rgba(67, 160, 71, 0.18)" : "rgba(255, 94, 98, 0.18)"}`,
                       borderColor: isIncome ? "#43a047" : "#ff5e62",
                     },
                   }}
@@ -201,23 +211,30 @@ const CategoryList = ({ title, categories = [], color, onDelete }) => {
             ))}
           </Grid>
         )}
+        {categories.length > 0 && searchTerm && (
+          <Typography variant="caption" sx={{ mt: 2, display: "block", color: "text.secondary" }}>
+            Showing {categories.length} result{categories.length > 1 ? "s" : ""} for "{searchTerm}"
+          </Typography>
+        )}
       </Box>
     </Paper>
   );
 };
 
 const CategoryPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const {
     isPending,
     isError,
     data: categoriesFetched = [],
-    refetch,
   } = useCategoryQuery();
 
   const queryClient = useQueryClient();
   const [openCategoryModal, setOpenCategoryModal] = React.useState(false);
   const [newCategoryName, setNewCategoryName] = React.useState("");
   const [newCategoryType, setNewCategoryType] = React.useState("Expense");
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const categoryMutation = useMutation({
     mutationFn: async (categorydata) => {
@@ -282,6 +299,13 @@ const CategoryPage = () => {
   const expenseCats = (categoriesFetched || []).filter(
     (c) => c.categoryType === "Expense"
   );
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredIncomeCats = incomeCats.filter((c) =>
+    c.name?.toLowerCase().includes(normalizedQuery)
+  );
+  const filteredExpenseCats = expenseCats.filter((c) =>
+    c.name?.toLowerCase().includes(normalizedQuery)
+  );
 
   const totalCategories = incomeCats.length + expenseCats.length;
 
@@ -294,8 +318,14 @@ const CategoryPage = () => {
         p: { xs: 2, sm: 3 },
         bgcolor: "background.paper",
         borderRadius: { xs: 0, sm: 3 },
-        boxShadow: { xs: 0, sm: 4 },
+        boxShadow: { xs: 0, sm: 6 },
         minHeight: { xs: 300, sm: 400 },
+        border: { xs: "none", sm: "1px solid" },
+        borderColor: "divider",
+        backgroundImage:
+          theme.palette.mode === "dark"
+            ? "radial-gradient(circle at top right, rgba(255,153,102,0.12), transparent 42%), radial-gradient(circle at bottom left, rgba(100,181,246,0.10), transparent 38%)"
+            : "radial-gradient(circle at top right, rgba(255,153,102,0.10), transparent 40%), radial-gradient(circle at bottom left, rgba(100,181,246,0.10), transparent 36%)",
       }}
     >
       {/* Header Section */}
@@ -303,7 +333,8 @@ const CategoryPage = () => {
         sx={{
           mb: 4,
           pb: 3,
-          borderBottom: "2px solid #23272f",
+          borderBottom: "1px solid",
+          borderColor: "divider",
         }}
       >
         <Stack
@@ -331,22 +362,18 @@ const CategoryPage = () => {
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Paper
-              sx={{
-                px: 2,
-                py: 1,
-                bgcolor: "background.default",
-                border: "1px solid #23272f",
-                borderRadius: 2,
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <CategoryIcon sx={{ color: "#ff9966", fontSize: 20 }} />
-                <Typography variant="body2" fontWeight={600}>
-                  Total: {totalCategories}
-                </Typography>
-              </Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "stretch", sm: "center" }}>
+            <Paper sx={{ px: 2, py: 1, bgcolor: "background.default", border: "1px solid", borderColor: "divider", borderRadius: 2, minWidth: 120 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Total</Typography>
+              <Typography variant="h6" fontWeight={800}>{totalCategories}</Typography>
+            </Paper>
+            <Paper sx={{ px: 2, py: 1, bgcolor: alpha("#43a047", 0.1), border: "1px solid", borderColor: alpha("#43a047", 0.35), borderRadius: 2, minWidth: 120 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Income</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: "#43a047" }}>{incomeCats.length}</Typography>
+            </Paper>
+            <Paper sx={{ px: 2, py: 1, bgcolor: alpha("#ef5350", 0.1), border: "1px solid", borderColor: alpha("#ef5350", 0.35), borderRadius: 2, minWidth: 120 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Expense</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: "#ef5350" }}>{expenseCats.length}</Typography>
             </Paper>
             <Button
               variant="contained"
@@ -373,6 +400,27 @@ const CategoryPage = () => {
             </Button>
           </Stack>
         </Stack>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search categories..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{
+            mt: 2.5,
+            maxWidth: isMobile ? "100%" : 420,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 2.5,
+              bgcolor: "background.default",
+              "& fieldset": { borderColor: "divider" },
+              "&:hover fieldset": { borderColor: "primary.main" },
+              "&.Mui-focused fieldset": { borderColor: "primary.main" },
+            },
+          }}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />,
+          }}
+        />
       </Box>
 
       {/* Loading & Error States */}
@@ -414,18 +462,20 @@ const CategoryPage = () => {
           <Grid item xs={12} lg={6}>
             <CategoryList
               title="Income"
-              categories={incomeCats}
+              categories={filteredIncomeCats}
               color="#43a047"
               onDelete={handleDeleteRequest}
+              searchTerm={normalizedQuery}
             />
           </Grid>
 
           <Grid item xs={12} lg={6}>
             <CategoryList
               title="Expense"
-              categories={expenseCats}
+              categories={filteredExpenseCats}
               color="#ff5e62"
               onDelete={handleDeleteRequest}
+              searchTerm={normalizedQuery}
             />
           </Grid>
         </Grid>

@@ -11,13 +11,15 @@ import {
   Stack,
   Divider,
   Tooltip,
-  Snackbar,
+  Chip,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import DownloadIcon from "@mui/icons-material/Download";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
@@ -28,6 +30,8 @@ import toast from "react-hot-toast";
 let jsPDF;
 
 const ExportPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [startDate, setStartDate] = useState(dayjs().subtract(30, "day"));
   const [endDate, setEndDate] = useState(dayjs());
   const [pdfLoaded, setPdfLoaded] = useState(false);
@@ -269,6 +273,27 @@ const ExportPage = () => {
     (startDate && endDate && endDate.isAfter(startDate)) ||
     endDate.isSame(startDate, "day");
 
+  const totalExpense = React.useMemo(
+    () =>
+      filteredData
+        .filter((tx) => tx.type === "Expense")
+        .reduce((sum, tx) => sum + Number(tx.amount || 0), 0),
+    [filteredData]
+  );
+  const totalIncome = React.useMemo(
+    () =>
+      filteredData
+        .filter((tx) => tx.type === "Income")
+        .reduce((sum, tx) => sum + Number(tx.amount || 0), 0),
+    [filteredData]
+  );
+
+  const applyQuickRange = (days) => {
+    const end = dayjs();
+    setEndDate(end);
+    setStartDate(end.subtract(days, "day"));
+  };
+
   return (
     <Box
       sx={{
@@ -278,26 +303,58 @@ const ExportPage = () => {
         p: { xs: 2, sm: 3 },
         bgcolor: "background.paper",
         borderRadius: { xs: 0, sm: 3 },
-        boxShadow: { xs: 0, sm: 4 },
+        boxShadow: { xs: 0, sm: 6 },
         minHeight: { xs: 500, sm: 500 },
+        border: { xs: "none", sm: "1px solid" },
+        borderColor: "divider",
+        backgroundImage:
+          theme.palette.mode === "dark"
+            ? "radial-gradient(circle at top right, rgba(239,83,80,0.10), transparent 42%), radial-gradient(circle at bottom left, rgba(25,118,210,0.10), transparent 40%)"
+            : "radial-gradient(circle at top right, rgba(239,83,80,0.08), transparent 42%), radial-gradient(circle at bottom left, rgba(25,118,210,0.08), transparent 40%)",
       }}
     >
       <TitleHeader text="Export Transaction Data" />
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 2, textAlign: "center", maxWidth: 760, mx: "auto" }}
+      >
+        Pick a date range, preview what will be exported, and download a clean CSV or PDF report in one click.
+      </Typography>
 
       <Paper
         elevation={0}
-        sx={{ p: 3, bgcolor: "rgba(0,0,0,0.02)", borderRadius: 2, mb: 3 }}
+        sx={{
+          p: { xs: 2, sm: 3 },
+          bgcolor: "background.default",
+          borderRadius: 3,
+          mb: 3,
+          border: "1px solid",
+          borderColor: "divider",
+        }}
       >
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          Select a date range to export your transaction data.
-        </Typography>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          spacing={1.5}
+          sx={{ mb: 2 }}
+        >
+          <Typography variant="body1" fontWeight={700}>
+            Select date range
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap">
+            <Chip label="Last 7d" onClick={() => applyQuickRange(7)} clickable size="small" />
+            <Chip label="Last 30d" onClick={() => applyQuickRange(30)} clickable size="small" />
+            <Chip label="Last 90d" onClick={() => applyQuickRange(90)} clickable size="small" />
+          </Stack>
+        </Stack>
 
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={3}
-            alignItems="center"
-            sx={{ mb: 3 }}
+            alignItems={{ xs: "stretch", sm: "center" }}
+            sx={{ mb: 2 }}
           >
             <FormControl>
               <FormLabel
@@ -318,7 +375,7 @@ const ExportPage = () => {
                     helperText: !isDateRangeValid ? "Invalid date range" : "",
                   },
                 }}
-                sx={{ minWidth: 200 }}
+                sx={{ minWidth: isMobile ? "100%" : 220 }}
               />
             </FormControl>
 
@@ -343,11 +400,55 @@ const ExportPage = () => {
                       : "",
                   },
                 }}
-                sx={{ minWidth: 200 }}
+                sx={{ minWidth: isMobile ? "100%" : 220 }}
               />
             </FormControl>
           </Stack>
         </LocalizationProvider>
+
+        {!isPending && !error && (
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mb: 2 }}>
+            <Paper
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: "background.paper",
+                minWidth: 120,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">Transactions</Typography>
+              <Typography variant="h6" fontWeight={800}>{filteredData.length}</Typography>
+            </Paper>
+            <Paper
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: alpha("#43a047", 0.35),
+                bgcolor: alpha("#43a047", 0.09),
+                minWidth: 120,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">Income</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: "#43a047" }}>{totalIncome} THB</Typography>
+            </Paper>
+            <Paper
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: alpha("#ef5350", 0.35),
+                bgcolor: alpha("#ef5350", 0.09),
+                minWidth: 120,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">Expense</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: "#ef5350" }}>{totalExpense} THB</Typography>
+            </Paper>
+          </Stack>
+        )}
 
         {isPending ? (
           <Box sx={{ display: "flex", justifyContent: "center", my: 3 }}>
@@ -381,70 +482,114 @@ const ExportPage = () => {
         justifyContent="center"
         sx={{ mb: 3 }}
       >
-        <Tooltip title="Download as CSV for spreadsheet applications">
-          <span>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<InsertDriveFileIcon />}
-              onClick={handleExportCSV}
-              disabled={!isDateRangeValid || isPending || !filteredData.length}
-              sx={{
-                minWidth: 180,
-                py: 1.5,
-                boxShadow: 2,
-                backgroundColor: "#1976d2",
-                "&:hover": {
-                  backgroundColor: "#1565c0",
-                },
-              }}
-            >
-              Export as CSV
-            </Button>
-          </span>
-        </Tooltip>
+        <Paper
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.default",
+            flex: 1,
+            maxWidth: 360,
+          }}
+        >
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+            CSV Export
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Best for spreadsheet analysis and bulk edits.
+          </Typography>
+          <Tooltip title="Download as CSV for spreadsheet applications">
+            <span>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<InsertDriveFileIcon />}
+                onClick={handleExportCSV}
+                disabled={!isDateRangeValid || isPending || !filteredData.length}
+                sx={{
+                  py: 1.3,
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  background: "linear-gradient(135deg, #1e88e5, #1565c0)",
+                  boxShadow: "0 8px 20px rgba(30,136,229,0.28)",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #1976d2, #0d47a1)",
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                Export as CSV
+              </Button>
+            </span>
+          </Tooltip>
+        </Paper>
 
-        <Tooltip title="Download as PDF for printing or sharing">
-          <span>
-            <Button
-              variant="contained"
-              color="error"
-              startIcon={<PictureAsPdfIcon />}
-              onClick={handleExportPDF}
-              disabled={
-                !isDateRangeValid ||
-                isPending ||
-                !filteredData.length ||
-                !pdfLoaded
-              }
-              sx={{
-                minWidth: 180,
-                py: 1.5,
-                boxShadow: 2,
-                backgroundColor: "#ef5350",
-                "&:hover": {
-                  backgroundColor: "#d32f2f",
-                },
-              }}
-            >
-              Export as PDF
-            </Button>
-          </span>
-        </Tooltip>
+        <Paper
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.default",
+            flex: 1,
+            maxWidth: 360,
+          }}
+        >
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+            PDF Export
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Best for printing, reporting, and sharing snapshots.
+          </Typography>
+          <Tooltip title="Download as PDF for printing or sharing">
+            <span>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<PictureAsPdfIcon />}
+                onClick={handleExportPDF}
+                disabled={
+                  !isDateRangeValid ||
+                  isPending ||
+                  !filteredData.length ||
+                  !pdfLoaded
+                }
+                sx={{
+                  py: 1.3,
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 700,
+                  background: "linear-gradient(135deg, #ef5350, #c62828)",
+                  boxShadow: "0 8px 20px rgba(239,83,80,0.28)",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #e53935, #b71c1c)",
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                Export as PDF
+              </Button>
+            </span>
+          </Tooltip>
+        </Paper>
       </Stack>
 
       {!isPending && filteredData.length > 0 && (
         <Paper
           sx={{
-            p: 2,
+            p: { xs: 2, sm: 2.5 },
             mt: 3,
-            bgcolor: "rgba(0,0,0,0.03)",
-            borderRadius: 2,
+            bgcolor: "background.default",
+            borderRadius: 3,
             maxHeight: 400,
             overflow: "auto",
+            border: "1px solid",
+            borderColor: "divider",
           }}
         >
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
             Preview: {Math.min(5, filteredData.length)} of {filteredData.length}{" "}
             transactions
           </Typography>

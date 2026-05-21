@@ -54,25 +54,21 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          background: "linear-gradient(90deg, #1976d2 0%, #43a047 100%)",
-          color: "#fff",
-          border: 0,
-          boxShadow: "0 2px 8px 0 rgba(25, 118, 210, 0.15)",
+          borderRadius: 12,
+          textTransform: "none",
+          fontWeight: 700,
+          transition: "transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease",
         },
-        containedPrimary: {
-          background: "linear-gradient(90deg, #1976d2 0%, #43a047 100%)",
-        },
-        containedSecondary: {
-          background: "linear-gradient(90deg, #f48fb1 0%, #29b6f6 100%)",
-        },
-        containedSuccess: {
-          background: "linear-gradient(90deg, #43a047 0%, #66bb6a 100%)",
-        },
-        containedError: {
-          background: "linear-gradient(90deg, #ef5350 0%, #f48fb1 100%)",
-        },
-        containedInfo: {
-          background: "linear-gradient(90deg, #29b6f6 0%, #90caf9 100%)",
+        contained: {
+          boxShadow: "0 6px 14px rgba(0,0,0,0.2)",
+          "&:hover": {
+            boxShadow: "0 10px 20px rgba(0,0,0,0.26)",
+            transform: "translateY(-1px)",
+            filter: "brightness(1.03)",
+          },
+          "&:active": {
+            transform: "translateY(0px)",
+          },
         },
       },
     },
