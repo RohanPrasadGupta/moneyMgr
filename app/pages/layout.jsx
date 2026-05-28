@@ -10,6 +10,12 @@ const layout = ({ children }) => {
   const theme = useTheme();
   const isTabletOrBelow = useMediaQuery(theme.breakpoints.down("md"));
   const isBigScreen = useMediaQuery(theme.breakpoints.up("md"));
+  const themedCardSx = {
+    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+  };
 
   return (
     <Box
@@ -37,11 +43,9 @@ const layout = ({ children }) => {
       {isBigScreen && (
         <Box
           sx={{
+            ...themedCardSx,
             width: 240,
-            // bgcolor: "background.paper",
-            // borderRight: "1px solid #23272f",
             marginLeft: 2,
-            boxShadow: 1,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",

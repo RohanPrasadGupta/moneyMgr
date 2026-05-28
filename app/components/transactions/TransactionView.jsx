@@ -113,6 +113,12 @@ function getTotals(transactions) {
 const TransactionView = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const themedCardSx = {
+    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+  };
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [selectedTxId, setSelectedTxId] = React.useState(null);
   const [currentYear, setCurrentYear] = React.useState("");
@@ -413,9 +419,8 @@ const TransactionView = () => {
           <Grid item xs={12} md={6}>
             <Paper
               sx={{
+                ...themedCardSx,
                 p: { xs: 1.5, sm: 2 },
-                bgcolor: "background.default",
-                border: "1px solid #23272f",
                 borderRadius: 2,
                 display: "flex",
                 flexDirection: { xs: "column", sm: "row" },
@@ -494,9 +499,9 @@ const TransactionView = () => {
             >
               <Paper
                 sx={{
+                  ...themedCardSx,
                   flex: 1,
                   p: { xs: 1.5, sm: 2 },
-                  bgcolor: "background.default",
                   border: "1px solid rgba(67, 160, 71, 0.3)",
                   borderRadius: 2,
                   minWidth: 0,
@@ -533,9 +538,9 @@ const TransactionView = () => {
 
               <Paper
                 sx={{
+                  ...themedCardSx,
                   flex: 1,
                   p: { xs: 1.5, sm: 2 },
-                  bgcolor: "background.default",
                   border: "1px solid rgba(239, 83, 80, 0.3)",
                   borderRadius: 2,
                   minWidth: 0,
@@ -572,9 +577,9 @@ const TransactionView = () => {
 
               <Paper
                 sx={{
+                  ...themedCardSx,
                   flex: 1,
                   p: { xs: 1.5, sm: 2 },
-                  bgcolor: "background.default",
                   border: "1px solid rgba(255, 255, 255, 0.08)",
                   borderRadius: 2,
                   minWidth: 0,
@@ -614,12 +619,11 @@ const TransactionView = () => {
       {/* Interactive Filters */}
       <Paper
         sx={{
+          ...themedCardSx,
           mb: { xs: 2, sm: 3 },
           p: { xs: 1.5, sm: 2 },
-          border: "1px solid #23272f",
-          bgcolor: "background.default",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
           borderRadius: 2,
-          boxShadow: { xs: 0, sm: 4 },
         }}
       >
         <Stack spacing={{ xs: 1.5, sm: 2 }}>
@@ -827,10 +831,10 @@ const TransactionView = () => {
                 {/* Day Header */}
                 <Paper
                   sx={{
+                    ...themedCardSx,
                     p: { xs: 1.5, sm: 2 },
                     mb: { xs: 1.5, sm: 2 },
-                    bgcolor: "background.default",
-                    border: "1px solid #23272f",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
                     borderRadius: 2,
                     display: "flex",
                     alignItems: "center",
@@ -937,11 +941,9 @@ const TransactionView = () => {
                     <Paper
                       key={tx._id}
                       sx={{
+                        ...themedCardSx,
                         p: { xs: 1.5, sm: 2 },
                         borderRadius: 2,
-                        bgcolor: "background.paper",
-                        backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
-                        backdropFilter: "blur(6px)",
                         border: `1px solid ${tx.type === "Income" ? "rgba(67, 160, 71, 0.3)" : "rgba(239, 83, 80, 0.3)"}`,
                         display: "flex",
                         flexDirection: { xs: "column", sm: "row" },

@@ -38,20 +38,20 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
   const gradient = isIncome
     ? "linear-gradient(135deg, #66bb6a, #43a047)"
     : "linear-gradient(135deg, #ff9966, #ff5e62)";
+  const themedCardSx = {
+    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+  };
 
   return (
     <Paper
       sx={{
+        ...themedCardSx,
         borderRadius: 3,
-        bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
         overflow: "hidden",
         height: "100%",
-        boxShadow:
-          theme.palette.mode === "dark"
-            ? "0 10px 28px rgba(0,0,0,0.32)"
-            : "0 12px 26px rgba(15,23,42,0.08)",
       }}
     >
       {/* Header */}
@@ -224,6 +224,12 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
 const CategoryPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const themedCardSx = {
+    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+  };
   const {
     isPending,
     isError,
@@ -312,16 +318,13 @@ const CategoryPage = () => {
   return (
     <Box
       sx={{
+        ...themedCardSx,
         width: "100%",
         mx: "auto",
         mt: { xs: 1, sm: 3 },
         p: { xs: 2, sm: 3 },
-        bgcolor: "background.paper",
         borderRadius: { xs: 0, sm: 3 },
-        boxShadow: { xs: 0, sm: 6 },
         minHeight: { xs: 300, sm: 400 },
-        border: { xs: "none", sm: "1px solid" },
-        borderColor: "divider",
         backgroundImage:
           theme.palette.mode === "dark"
             ? "radial-gradient(circle at top right, rgba(255,153,102,0.12), transparent 42%), radial-gradient(circle at bottom left, rgba(100,181,246,0.10), transparent 38%)"

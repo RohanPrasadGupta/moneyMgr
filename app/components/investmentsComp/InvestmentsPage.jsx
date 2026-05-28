@@ -14,6 +14,12 @@ const InvestmentsPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [activeTab, setActiveTab] = useState(0);
+  const themedCardSx = {
+    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+  };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -26,7 +32,7 @@ const InvestmentsPage = () => {
         height: "100%",
         minHeight: "100vh",
         p: { xs: 2, sm: 3, md: 4 },
-        bgcolor: "background.default",
+        bgcolor: "background.paper",
         position: "relative",
         overflowX: "hidden",
         overflowY: "visible",
@@ -47,10 +53,9 @@ const InvestmentsPage = () => {
       <Paper
         elevation={3}
         sx={{
+          ...themedCardSx,
           p: { xs: 2, sm: 2.5, md: 3 },
           borderRadius: { xs: 2, sm: 3 },
-          bgcolor: "background.paper",
-          border: "1px solid #23272f",
           mb: { xs: 2, sm: 3 },
           position: "relative",
           overflow: "hidden",

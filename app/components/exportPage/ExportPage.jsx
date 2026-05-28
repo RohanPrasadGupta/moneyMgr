@@ -32,6 +32,12 @@ let jsPDF;
 const ExportPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const themedCardSx = {
+    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+  };
   const [startDate, setStartDate] = useState(dayjs().subtract(30, "day"));
   const [endDate, setEndDate] = useState(dayjs());
   const [pdfLoaded, setPdfLoaded] = useState(false);
@@ -301,12 +307,9 @@ const ExportPage = () => {
         mx: "auto",
         mt: { xs: 1, sm: 3 },
         p: { xs: 2, sm: 3 },
-        bgcolor: "background.paper",
+        ...themedCardSx,
         borderRadius: { xs: 0, sm: 3 },
-        boxShadow: { xs: 0, sm: 6 },
         minHeight: { xs: 500, sm: 500 },
-        border: { xs: "none", sm: "1px solid" },
-        borderColor: "divider",
         backgroundImage:
           theme.palette.mode === "dark"
             ? "radial-gradient(circle at top right, rgba(239,83,80,0.10), transparent 42%), radial-gradient(circle at bottom left, rgba(25,118,210,0.10), transparent 40%)"
@@ -325,12 +328,10 @@ const ExportPage = () => {
       <Paper
         elevation={0}
         sx={{
+          ...themedCardSx,
           p: { xs: 2, sm: 3 },
-          bgcolor: "background.default",
           borderRadius: 3,
           mb: 3,
-          border: "1px solid",
-          borderColor: "divider",
         }}
       >
         <Stack
@@ -484,11 +485,9 @@ const ExportPage = () => {
       >
         <Paper
           sx={{
+            ...themedCardSx,
             p: 2,
             borderRadius: 3,
-            border: "1px solid",
-            borderColor: "divider",
-            bgcolor: "background.default",
             flex: 1,
             maxWidth: 360,
           }}
@@ -528,11 +527,9 @@ const ExportPage = () => {
 
         <Paper
           sx={{
+            ...themedCardSx,
             p: 2,
             borderRadius: 3,
-            border: "1px solid",
-            borderColor: "divider",
-            bgcolor: "background.default",
             flex: 1,
             maxWidth: 360,
           }}
