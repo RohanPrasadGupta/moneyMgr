@@ -30,6 +30,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -400,6 +401,32 @@ const StocksPage = () => {
     return sellTransactions.length > 0 ? sellTransactions[0].price : null;
   };
 
+  const sortedGroupedTransactions = Object.entries(groupedTransactions).sort(
+    ([symbolA, txListA], [symbolB, txListB]) => {
+      const qtyA = calculateTotalQuantity(txListA);
+      const qtyB = calculateTotalQuantity(txListB);
+      if (qtyA > 0 && qtyB === 0) return -1;
+      if (qtyA === 0 && qtyB > 0) return 1;
+      return symbolA.localeCompare(symbolB);
+    }
+  );
+
+  const chartData = sortedGroupedTransactions
+    .map(([symbol, txList]) => ({
+      name: symbol,
+      value: calculateNetInvestment(txList),
+    }))
+    .filter((item) => item.value > 0);
+
+  const COLORS = ['#00f2fe', '#4facfe', '#30cfd0', '#330867', '#f48fb1', '#90caf9', '#66bb6a', '#ffe082', '#ef5350'];
+
+  const globalOverallInvested = transactions.reduce((sum, t) => t.type === "BUY" ? sum + t.totalAmount : sum, 0);
+  const globalCurrentInvested = Object.values(groupedTransactions).reduce((sum, txList) => sum + calculateNetInvestment(txList), 0);
+  const globalTotalSold = transactions.reduce((sum, t) => t.type === "SELL" ? sum + t.totalAmount : sum, 0);
+  const globalTotalProfit = Object.values(groupedTransactions).reduce((sum, txList) => {
+    return sum + calculateProfitLoss(txList);
+  }, 0);
+
   return (
     <Box
       sx={{
@@ -461,144 +488,87 @@ const StocksPage = () => {
           <Box
             sx={{
               mb: { xs: 3, sm: 4 },
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              alignItems: { xs: "stretch", md: "center" },
-              justifyContent: "space-between",
-              gap: { xs: 2, sm: 3 },
-              bgcolor: "background.paper",
               p: { xs: 2, sm: 2.5, md: 3 },
-              borderRadius: { xs: 2, sm: 3 },
-              border: "1px solid #23272f",
-              boxShadow: 3,
+              background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
+              backdropFilter: "blur(10px)",
+              borderRadius: { xs: 2, sm: 4 },
+              border: "1px solid rgba(255, 255, 255, 0.05)",
+              boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.4)",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: { xs: 1.5, sm: 2 },
-              }}
-            >
-              <Box
-                sx={{
-                  background:
-                    "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-                  borderRadius: 2,
-                  p: { xs: 1, sm: 1.5 },
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <ShowChartIcon
-                  sx={{ fontSize: { xs: 28, sm: 32, md: 36 }, color: "#fff" }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h4"
-                  fontWeight="bold"
-                  sx={{
-                    color: "text.primary",
-                    letterSpacing: 0.5,
-                    fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.125rem" },
-                  }}
-                >
-                  Stock Portfolio
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    mt: 0.5,
-                    color: "text.secondary",
-                    fontSize: { xs: "0.8rem", sm: "0.875rem" },
-                  }}
-                >
-                  Track your investments and performance
-                </Typography>
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "row", sm: "row" },
-                justifyContent: { xs: "space-between", md: "flex-start" },
-                gap: { xs: 1, sm: 2 },
-                bgcolor: "background.paper",
-                p: { xs: 1, sm: 1.5 },
-                borderRadius: 2,
-                border: "1px solid #23272f",
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
-              {/* TOTAL STOCKS */}
-              <Box sx={{ textAlign: "center", minWidth: { xs: "auto", sm: "60px" } }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.5, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.65rem" } }}>
-                  TOTAL STOCKS
-                </Typography>
-                <Typography variant="h5" fontWeight="bold" sx={{ color: "#90caf9", fontSize: { xs: "1rem", sm: "1.1rem" } }}>
-                  {Object.keys(groupedTransactions).length}
-                </Typography>
-              </Box>
-              <Box sx={{ width: "1px", bgcolor: "#23272f", mx: { xs: 0, sm: 0.5 }, alignSelf: "stretch", display: { xs: "none", sm: "block" } }} />
+            {/* Decorative Glow */}
+            <Box sx={{ position: "absolute", top: "-50%", left: "-20%", width: "50%", height: "150%", background: "radial-gradient(ellipse at center, rgba(48, 207, 208, 0.15) 0%, transparent 70%)", zIndex: 0 }} />
 
-              {/* TRANSACTIONS */}
-              <Box sx={{ textAlign: "center", minWidth: { xs: "auto", sm: "60px" } }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.5, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.65rem" } }}>
-                  TRANSACTIONS
-                </Typography>
-                <Typography variant="h5" fontWeight="bold" sx={{ color: "#f48fb1", fontSize: { xs: "1rem", sm: "1.1rem" } }}>
-                  {transactions.length}
-                </Typography>
+            <Box sx={{ position: "relative", zIndex: 1 }}>
+              {/* Top Row: Title & Button */}
+              <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, mb: 3, gap: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, sm: 2 } }}>
+                  <Box sx={{ background: "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)", borderRadius: 3, p: { xs: 1, sm: 1.5 }, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 15px rgba(0, 242, 254, 0.4)" }}>
+                    <ShowChartIcon sx={{ fontSize: { xs: 28, sm: 32, md: 36 }, color: "#fff" }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" sx={{ color: "text.primary", letterSpacing: 0.5, fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.125rem" } }}>
+                      Stock Portfolio
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary", fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
+                      Overview & Performance
+                    </Typography>
+                  </Box>
+                </Box>
+                <Button variant="contained" startIcon={<AddIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />} onClick={() => handleOpenDialog()} sx={{ background: "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)", color: "#0d1117", fontWeight: 800, fontSize: { xs: "0.875rem", sm: "1rem" }, px: { xs: 3, sm: 4 }, py: { xs: 1.25, sm: 1.5 }, borderRadius: { xs: 2, sm: "16px" }, textTransform: "none", boxShadow: "0 4px 15px rgba(0, 242, 254, 0.4)", transition: "all 0.3s ease", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", boxShadow: "0 8px 25px rgba(0, 242, 254, 0.6)", transform: { xs: "none", md: "translateY(-2px)" } }, "&:active": { transform: "translateY(0px)" } }}>
+                  Add Transaction
+                </Button>
               </Box>
-              <Box sx={{ width: "1px", bgcolor: "#23272f", mx: { xs: 0, sm: 0.5 }, alignSelf: "stretch", display: { xs: "none", sm: "block" } }} />
 
-              {/* TOTAL REMAINING */}
-              <Box sx={{ textAlign: "center", minWidth: { xs: "auto", sm: "60px" } }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.5, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.65rem" } }}>
-                  TOTAL AMOUNT
-                </Typography>
-                <Typography variant="h5" fontWeight="bold" sx={{ color: "#ffe082", fontSize: { xs: "1rem", sm: "1.1rem" } }}>
-                  {formatCurrency(
-                    Object.values(groupedTransactions).reduce(
-                      (sum, txList) => sum + calculateNetInvestment(txList),
-                      0
-                    )
-                  )}
-                </Typography>
+              {/* Middle Row: Combined Metrics Grid */}
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 1fr)", md: "repeat(6, 1fr)" }, gap: { xs: 1.5, sm: 2 }, mb: chartData.length > 0 ? 4 : 0 }}>
+                {/* Metric Cards */}
+                <Box sx={{ bgcolor: "rgba(35, 39, 47, 0.4)", p: 1.5, borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.05)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TOTAL STOCKS</Typography>
+                  <Typography variant="h6" sx={{ color: "#90caf9", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.25rem" } }}>{Object.keys(groupedTransactions).length}</Typography>
+                </Box>
+                <Box sx={{ bgcolor: "rgba(35, 39, 47, 0.4)", p: 1.5, borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.05)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TRANSACTIONS</Typography>
+                  <Typography variant="h6" sx={{ color: "#f48fb1", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.25rem" } }}>{transactions.length}</Typography>
+                </Box>
+                <Box sx={{ bgcolor: "rgba(35, 39, 47, 0.4)", p: 1.5, borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.05)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <Typography variant="caption" sx={{ color: "#ffe082", fontWeight: 600, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>OVERALL INVESTED</Typography>
+                  <Typography variant="body1" sx={{ color: "#ffe082", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{formatCurrency(globalOverallInvested)}</Typography>
+                </Box>
+
+                <Box sx={{ bgcolor: "rgba(102, 187, 106, 0.1)", p: 1.5, borderRadius: 2, border: "1px solid rgba(102, 187, 106, 0.3)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <Typography variant="caption" sx={{ color: "#66bb6a", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>CURRENT INVESTED</Typography>
+                  <Typography variant="body1" sx={{ color: "#e3eafc", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{formatCurrency(globalCurrentInvested)}</Typography>
+                </Box>
+                <Box sx={{ bgcolor: "rgba(239, 83, 80, 0.1)", p: 1.5, borderRadius: 2, border: "1px solid rgba(239, 83, 80, 0.3)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <Typography variant="caption" sx={{ color: "#ef5350", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TOTAL SOLD</Typography>
+                  <Typography variant="body1" sx={{ color: "#e3eafc", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{formatCurrency(globalTotalSold)}</Typography>
+                </Box>
+                <Box sx={{ bgcolor: globalTotalProfit >= 0 ? "rgba(41, 182, 246, 0.1)" : "rgba(239, 83, 80, 0.1)", p: 1.5, borderRadius: 2, border: `1px solid ${globalTotalProfit >= 0 ? 'rgba(41, 182, 246, 0.3)' : 'rgba(239, 83, 80, 0.3)'}`, textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <Typography variant="caption" sx={{ color: globalTotalProfit >= 0 ? "#29b6f6" : "#ef5350", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>OVERALL P/L</Typography>
+                  <Typography variant="body1" sx={{ color: globalTotalProfit >= 0 ? "#29b6f6" : "#ef5350", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{globalTotalProfit > 0 ? "+" : ""}{formatCurrency(globalTotalProfit)}</Typography>
+                </Box>
               </Box>
+
+              {/* Bottom Row: Pie Chart */}
+              {chartData.length > 0 && (
+                <Box sx={{ width: "100%", height: 300, mt: 1 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={chartData} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={5} dataKey="value" stroke="none">
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: "rgba(30, 34, 45, 0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff", backdropFilter: "blur(8px)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }} itemStyle={{ color: "#fff", fontWeight: 600 }} />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ color: '#fff', fontSize: '0.875rem' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Box>
+              )}
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />}
-              onClick={() => handleOpenDialog()}
-              sx={{
-                background: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-                color: "#fff",
-                fontWeight: 600,
-                fontSize: { xs: "0.875rem", sm: "1rem" },
-                px: { xs: 3, sm: 4 },
-                py: { xs: 1.25, sm: 1.5 },
-                borderRadius: { xs: 2, sm: "16px" },
-                textTransform: "none",
-                boxShadow: "0 4px 15px rgba(48, 207, 208, 0.4)",
-                transition: "all 0.3s ease",
-                width: { xs: "100%", md: "auto" },
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #330867 0%, #30cfd0 100%)",
-                  boxShadow: "0 6px 20px rgba(48, 207, 208, 0.6)",
-                  transform: { xs: "none", md: "translateY(-2px)" },
-                },
-                "&:active": {
-                  transform: "translateY(0px)",
-                },
-              }}
-            >
-              Add Transaction
-            </Button>
           </Box>
 
           <Box
@@ -608,7 +578,7 @@ const StocksPage = () => {
               gap: { xs: 2, sm: 3 },
             }}
           >
-            {Object.entries(groupedTransactions).map(
+            {sortedGroupedTransactions.map(
               ([symbol, symbolTransactions]) => {
                 const totalInvestment =
                   calculateTotalInvestment(symbolTransactions);
@@ -618,7 +588,7 @@ const StocksPage = () => {
                 const totalQuantity =
                   calculateTotalQuantity(symbolTransactions);
                 const averagePrice = calculateAveragePrice(symbolTransactions);
-                const profitLoss = calculateProfitLoss(symbolTransactions) - calculateNetInvestment(symbolTransactions);
+                const profitLoss = calculateProfitLoss(symbolTransactions);
                 const stockName = symbolTransactions[0]?.stockName || "";
                 const latestBuyPrice = getLatestBuyPrice(symbolTransactions);
                 const latestSellPrice = getLatestSellPrice(symbolTransactions);
@@ -628,38 +598,38 @@ const StocksPage = () => {
                   <Accordion
                     key={symbol}
                     sx={{
-                      borderRadius: { xs: 2, sm: 3 },
+                      borderRadius: { xs: 2, sm: 4 },
                       "&:before": { display: "none" },
                       "&:first-of-type": {
-                        borderRadius: { xs: 2, sm: 3 },
+                        borderRadius: { xs: 2, sm: 4 },
                       },
                       "&:last-of-type": {
-                        borderRadius: { xs: 2, sm: 3 },
+                        borderRadius: { xs: 2, sm: 4 },
                       },
-                      boxShadow: 3,
-                      bgcolor: "background.paper",
-                      border: isZeroHolding ? "1px dashed rgba(255,255,255,0.06)" : "1px solid #23272f",
-                      opacity: isZeroHolding ? 0.65 : 1,
+                      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+                      background: isZeroHolding ? "rgba(30, 34, 45, 0.4)" : "linear-gradient(145deg, rgba(35, 39, 47, 0.8) 0%, rgba(20, 24, 32, 0.9) 100%)",
+                      backdropFilter: "blur(10px)",
+                      border: isZeroHolding ? "1px dashed rgba(255,255,255,0.05)" : "1px solid rgba(255,255,255,0.08)",
+                      opacity: isZeroHolding ? 0.7 : 1,
                       overflow: "hidden",
-                      transition: "all 0.3s ease",
+                      transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                       ...(isZeroHolding
                         ? {
                             "&:hover": {
-                              boxShadow: 1,
-                              transform: "none",
-                              borderColor: "rgba(255,255,255,0.06)",
+                              opacity: 0.9,
+                              borderColor: "rgba(255,255,255,0.1)",
                             },
                           }
                         : {
                             "&:hover": {
                               boxShadow: {
                                 xs: 3,
-                                sm: "0 8px 24px rgba(48, 207, 208, 0.2)",
+                                sm: "0 12px 32px rgba(0, 242, 254, 0.15)",
                               },
-                              transform: { xs: "none", sm: "translateY(-2px)" },
+                              transform: { xs: "none", sm: "translateY(-4px)" },
                               borderColor: {
-                                xs: "#23272f",
-                                sm: "rgba(48, 207, 208, 0.3)",
+                                xs: "rgba(255,255,255,0.08)",
+                                sm: "rgba(0, 242, 254, 0.3)",
                               },
                             },
                           }),
@@ -708,14 +678,17 @@ const StocksPage = () => {
                         >
                           <Box
                             sx={{
-                              background:
-                                "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-                              borderRadius: 2,
+                              background: isZeroHolding 
+                                ? "rgba(255,255,255,0.05)" 
+                                : "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
+                              borderRadius: 3,
                               p: { xs: 1, sm: 1.5 },
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              boxShadow: "0 4px 12px rgba(48, 207, 208, 0.3)",
+                              boxShadow: isZeroHolding 
+                                ? "none" 
+                                : "0 4px 15px rgba(0, 242, 254, 0.3)",
                             }}
                           >
                             <ShowChartIcon
@@ -1106,9 +1079,10 @@ const StocksPage = () => {
                               handleOpenDialog(symbol);
                             }}
                             sx={{
-                              background:
-                                "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-                              color: "#fff",
+                              background: isZeroHolding
+                                ? "rgba(255, 255, 255, 0.05)"
+                                : "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
+                              color: isZeroHolding ? "text.secondary" : "#0d1117",
                               width: { xs: 40, sm: 48 },
                               height: { xs: 40, sm: 48 },
                               borderRadius: "50%",
@@ -1117,12 +1091,17 @@ const StocksPage = () => {
                               alignItems: "center",
                               justifyContent: "center",
                               cursor: "pointer",
-                              boxShadow: "0 4px 12px rgba(48, 207, 208, 0.4)",
+                              boxShadow: isZeroHolding
+                                ? "none"
+                                : "0 4px 12px rgba(0, 242, 254, 0.4)",
                               "&:hover": {
-                                background:
-                                  "linear-gradient(135deg, #330867 0%, #30cfd0 100%)",
-                                transform: { xs: "none", sm: "scale(1.1)" },
-                                boxShadow: "0 6px 16px rgba(48, 207, 208, 0.6)",
+                                background: isZeroHolding
+                                  ? "rgba(255, 255, 255, 0.1)"
+                                  : "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                                transform: { xs: "none", sm: "scale(1.1) rotate(90deg)" },
+                                boxShadow: isZeroHolding
+                                  ? "none"
+                                  : "0 6px 20px rgba(0, 242, 254, 0.6)",
                               },
                               transition: "all 0.3s ease",
                               ml: { xs: "auto", sm: 1 },
