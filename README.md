@@ -188,18 +188,6 @@ The UI expects REST-style endpoints such as:
 
 Exact contracts are defined by your backend repository.
 
-## Possible future work
-
-- Multi-currency support beyond THB / BHT display helpers
-- Budget goals and recurring transactions
-- User settings (default account, default category type)
-- Backend/env documentation in-repo or OpenAPI spec
-- Automated tests (unit/e2e)
-
-## License
-
-MIT — see [LICENSE](LICENSE).
-
 ## Author
 
 Developed by [RohanPrasadGupta](https://github.com/RohanPrasadGupta)
