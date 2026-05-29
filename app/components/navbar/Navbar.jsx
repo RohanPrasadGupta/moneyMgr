@@ -1,60 +1,11 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, Button, Stack, Chip, useTheme } from "@mui/material";
+import { Box, Typography, Button, Stack, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { usePathname, useRouter } from "next/navigation";
-import HomeIcon from "@mui/icons-material/Home";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import CategoryIcon from "@mui/icons-material/Category";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-
-const navItems = [
-  {
-    label: "Home",
-    link: "/pages/home",
-    icon: <HomeIcon />,
-    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "#667eea",
-  },
-  {
-    label: "Analysis",
-    link: "/pages/analysis",
-    icon: <BarChartIcon />,
-    gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-    color: "#f5576c",
-  },
-  {
-    label: "Export Data",
-    link: "/pages/exportinfo",
-    icon: <FileDownloadIcon />,
-    gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-    color: "#4facfe",
-  },
-  {
-    label: "Categories",
-    link: "/pages/categories",
-    icon: <CategoryIcon />,
-    gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-    color: "#fa709a",
-  },
-  {
-    label: "Stock Analysis",
-    link: "/pages/stocks",
-    icon: <TrendingUpIcon />,
-    gradient: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
-    color: "#00a3ff",
-  },
-  {
-    label: "Investments",
-    link: "/pages/investments",
-    icon: <AccountBalanceIcon />,
-    gradient: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
-    color: "#ff9966",
-  },
-];
+import { navItems } from "../../navConfig";
+import { navbarRadialBg } from "../../themeStyles";
 
 const Navbar = () => {
   const theme = useTheme();
@@ -73,10 +24,7 @@ const Navbar = () => {
         px: 2,
         border: "1px solid",
         borderColor: "divider",
-        backgroundImage:
-          theme.palette.mode === "dark"
-            ? "radial-gradient(circle at top right, rgba(255,153,102,0.16), transparent 45%), radial-gradient(circle at bottom left, rgba(100,181,246,0.12), transparent 42%)"
-            : "radial-gradient(circle at top right, rgba(255,153,102,0.13), transparent 45%), radial-gradient(circle at bottom left, rgba(100,181,246,0.10), transparent 42%)",
+        backgroundImage: navbarRadialBg,
       }}
     >
       <Stack spacing={1} sx={{ mb: 3, px: 1 }}>
@@ -102,7 +50,7 @@ const Navbar = () => {
                 width: "100%",
                 py: 1.25,
                 px: 2,
-                color: active ? "#fff" : "text.primary",
+                color: active ? "common.white" : "text.primary",
                 whiteSpace: "nowrap",
                 borderColor: active ? "transparent" : alpha(item.color, 0.45),
                 bgcolor: active ? "transparent" : alpha(item.color, 0.08),

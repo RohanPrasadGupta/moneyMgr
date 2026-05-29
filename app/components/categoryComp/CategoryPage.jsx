@@ -12,15 +12,12 @@ import {
   Button,
   CircularProgress,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   RadioGroup,
   FormControlLabel,
   Radio,
   useTheme,
   useMediaQuery,
+  InputAdornment,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
@@ -28,22 +25,32 @@ import CategoryIcon from "@mui/icons-material/Category";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import SearchIcon from "@mui/icons-material/Search";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined";
 import { useCategoryQuery } from "../../services/useCategoryServices";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import {
+  themedCardSx,
+  gradients,
+  navbarRadialBg,
+  colors,
+  statCardSx,
+  textFieldOutlinedSx,
+  insetPanelSx,
+  primaryButtonSx,
+} from "../../themeStyles";
+import {
+  InvestmentFormDialog,
+  InvestmentDeleteDialog,
+  accentFieldSx,
+} from "../investmentsComp/InvestmentFormUi";
 
-const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = "" }) => {
-  const theme = useTheme();
+const CategoryList = ({ title, categories = [], accentColor, onDelete, searchTerm = "" }) => {
   const isIncome = title === "Income";
-  const gradient = isIncome
-    ? "linear-gradient(135deg, #66bb6a, #43a047)"
-    : "linear-gradient(135deg, #ff9966, #ff5e62)";
-  const themedCardSx = {
-    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
-  };
+  const gradient = isIncome ? gradients.income : gradients.expense;
+  const borderAccent = isIncome ? colors.success : colors.error;
 
   return (
     <Paper
@@ -52,9 +59,9 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
         borderRadius: 3,
         overflow: "hidden",
         height: "100%",
+        border: `1px solid ${alpha(borderAccent, 0.25)}`,
       }}
     >
-      {/* Header */}
       <Box
         sx={{
           p: 2.5,
@@ -66,10 +73,7 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
           "&::before": {
             content: '""',
             position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             background: "rgba(0,0,0,0.15)",
           },
         }}
@@ -81,11 +85,15 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
           sx={{ position: "relative", zIndex: 1 }}
         >
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <CategoryIcon sx={{ color: "#fff", fontSize: 28 }} />
+            {isIncome ? (
+              <TrendingUpIcon sx={{ color: "common.white", fontSize: 28 }} />
+            ) : (
+              <TrendingDownIcon sx={{ color: "common.white", fontSize: 28 }} />
+            )}
             <Typography
               variant="h5"
               fontWeight={700}
-              sx={{ color: "#fff", textShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
+              sx={{ color: "common.white", textShadow: "0 2px 4px rgba(0,0,0,0.2)" }}
             >
               {title}
             </Typography>
@@ -95,7 +103,7 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
             size="small"
             sx={{
               bgcolor: "rgba(255,255,255,0.25)",
-              color: "#fff",
+              color: "common.white",
               fontWeight: 700,
               fontSize: "0.8rem",
               backdropFilter: "blur(10px)",
@@ -105,7 +113,6 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
         </Stack>
       </Box>
 
-      {/* Categories Grid */}
       <Box sx={{ p: 2.5 }}>
         {categories.length === 0 ? (
           <Box
@@ -127,22 +134,21 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                opacity: 0.3,
+                opacity: 0.35,
               }}
             >
-              <LocalOfferIcon sx={{ fontSize: 40, color: "#fff" }} />
+              <LocalOfferIcon sx={{ fontSize: 40, color: "common.white" }} />
             </Box>
-            <Typography
-              variant="h6"
-              sx={{ color: "text.secondary", fontWeight: 600 }}
-            >
+            <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 600 }}>
               No Categories Yet
             </Typography>
             <Typography
               variant="body2"
               sx={{ color: "text.secondary", textAlign: "center", maxWidth: 300 }}
             >
-              Add your first {title.toLowerCase()} category to get started
+              {searchTerm
+                ? `No ${title.toLowerCase()} categories match your search`
+                : `Add your first ${title.toLowerCase()} category to get started`}
             </Typography>
           </Box>
         ) : (
@@ -150,30 +156,32 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
             {categories.map((c) => (
               <Grid item key={c._id} xs={12} sm={6} md={4}>
                 <Paper
+                  elevation={0}
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
                     p: 1.5,
                     borderRadius: 2,
-                    bgcolor: "background.default",
-                    border: `1px solid ${isIncome ? "rgba(67, 160, 71, 0.3)" : "rgba(255, 94, 98, 0.3)"}`,
+                    bgcolor: alpha(borderAccent, 0.06),
+                    border: `1px solid ${alpha(borderAccent, 0.3)}`,
                     transition: "all 0.2s ease",
                     "&:hover": {
                       transform: "translateY(-2px)",
-                      boxShadow: `0 10px 18px ${isIncome ? "rgba(67, 160, 71, 0.18)" : "rgba(255, 94, 98, 0.18)"}`,
-                      borderColor: isIncome ? "#43a047" : "#ff5e62",
+                      boxShadow: `0 10px 18px ${alpha(borderAccent, 0.2)}`,
+                      borderColor: accentColor,
                     },
                   }}
                 >
-                  <Stack direction="row" alignItems="center" spacing={1} flex={1}>
+                  <Stack direction="row" alignItems="center" spacing={1} flex={1} minWidth={0}>
                     <Box
                       sx={{
                         width: 8,
                         height: 8,
                         borderRadius: "50%",
-                        bgcolor: color,
-                        boxShadow: `0 0 8px ${color}`,
+                        bgcolor: accentColor,
+                        boxShadow: `0 0 8px ${accentColor}`,
+                        flexShrink: 0,
                       }}
                     />
                     <Typography
@@ -193,12 +201,14 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
                     size="small"
                     onClick={() => onDelete && onDelete(c)}
                     sx={{
-                      color: "#ef5350",
-                      bgcolor: "rgba(239, 83, 80, 0.1)",
-                      border: "1px solid rgba(239, 83, 80, 0.3)",
+                      color: colors.error,
+                      bgcolor: alpha(colors.error, 0.1),
+                      border: `1px solid ${alpha(colors.error, 0.3)}`,
+                      flexShrink: 0,
+                      ml: 0.5,
                       "&:hover": {
-                        bgcolor: "rgba(239, 83, 80, 0.2)",
-                        transform: "scale(1.1)",
+                        bgcolor: alpha(colors.error, 0.2),
+                        transform: "scale(1.05)",
                       },
                       transition: "all 0.2s ease",
                     }}
@@ -213,7 +223,7 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
         )}
         {categories.length > 0 && searchTerm && (
           <Typography variant="caption" sx={{ mt: 2, display: "block", color: "text.secondary" }}>
-            Showing {categories.length} result{categories.length > 1 ? "s" : ""} for "{searchTerm}"
+            Showing {categories.length} result{categories.length > 1 ? "s" : ""} for &ldquo;{searchTerm}&rdquo;
           </Typography>
         )}
       </Box>
@@ -221,15 +231,118 @@ const CategoryList = ({ title, categories = [], color, onDelete, searchTerm = ""
   );
 };
 
+const CategoryTypeSelector = ({ value, onChange }) => (
+  <Box>
+    <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1.2 }}>
+      Category type
+    </Typography>
+    <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+      Choose whether this label is used for money in or money out
+    </Typography>
+    <RadioGroup
+      row
+      value={value}
+      onChange={onChange}
+      sx={{
+        gap: 2,
+        "& .MuiFormControlLabel-root": { flex: 1, m: 0 },
+      }}
+    >
+      {[
+        {
+          type: "Income",
+          icon: TrendingUpIcon,
+          accent: colors.success,
+          label: "Income",
+          hint: "Salary, refunds, etc.",
+        },
+        {
+          type: "Expense",
+          icon: TrendingDownIcon,
+          accent: colors.error,
+          label: "Expense",
+          hint: "Bills, shopping, etc.",
+        },
+      ].map(({ type, icon: Icon, accent, label, hint }) => {
+        const selected = value === type;
+        return (
+          <Paper
+            key={type}
+            elevation={0}
+            sx={{
+              flex: 1,
+              border: "2px solid",
+              borderColor: selected ? accent : "divider",
+              borderRadius: 2,
+              bgcolor: selected ? alpha(accent, 0.1) : "background.default",
+              transition: "all 0.2s ease",
+              cursor: "pointer",
+              "&:hover": {
+                borderColor: selected ? accent : alpha(accent, 0.5),
+                bgcolor: alpha(accent, selected ? 0.12 : 0.05),
+              },
+            }}
+            onClick={() => onChange({ target: { value: type } })}
+          >
+            <FormControlLabel
+              value={type}
+              control={<Radio sx={{ color: accent, "&.Mui-checked": { color: accent } }} />}
+              label={
+                <Stack spacing={0.25}>
+                  <Stack direction="row" alignItems="center" spacing={0.75}>
+                    <Icon sx={{ fontSize: 20, color: accent }} />
+                    <Typography fontWeight={700}>{label}</Typography>
+                  </Stack>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    {hint}
+                  </Typography>
+                </Stack>
+              }
+              sx={{ p: 1.5, width: "100%", m: 0 }}
+            />
+          </Paper>
+        );
+      })}
+    </RadioGroup>
+  </Box>
+);
+
+const CategoryFormFields = ({ name, onNameChange, categoryType, onTypeChange, accent = "primary" }) => (
+    <Stack spacing={3}>
+      <Paper elevation={0} sx={{ ...insetPanelSx, p: { xs: 2, sm: 2.5 } }}>
+        <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1.2 }}>
+          Details
+        </Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          Name your category so you can pick it when adding transactions
+        </Typography>
+        <TextField
+          label="Category name"
+          placeholder="e.g. Groceries, Salary, Rent"
+          fullWidth
+          value={name}
+          onChange={onNameChange}
+          autoFocus
+          required
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LabelOutlinedIcon sx={{ fontSize: 20, color: colors.primary }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={accentFieldSx(accent)}
+        />
+      </Paper>
+      <Paper elevation={0} sx={{ ...insetPanelSx, p: { xs: 2, sm: 2.5 } }}>
+        <CategoryTypeSelector value={categoryType} onChange={onTypeChange} />
+      </Paper>
+    </Stack>
+);
+
 const CategoryPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const themedCardSx = {
-    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
-  };
   const {
     isPending,
     isError,
@@ -242,26 +355,30 @@ const CategoryPage = () => {
   const [newCategoryType, setNewCategoryType] = React.useState("Expense");
   const [searchQuery, setSearchQuery] = React.useState("");
 
+  const resetAddForm = () => {
+    setNewCategoryName("");
+    setNewCategoryType("Expense");
+  };
+
+  const handleCloseAddModal = () => {
+    setOpenCategoryModal(false);
+    resetAddForm();
+  };
+
   const categoryMutation = useMutation({
     mutationFn: async (categorydata) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/category`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(categorydata),
-        }
-      );
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/category`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(categorydata),
+      });
       return res.json();
     },
     onSuccess: () => {
       toast.success("Category added successfully");
       queryClient.invalidateQueries({ queryKey: ["getCategories"] });
-      setOpenCategoryModal(false);
-      setNewCategoryName("");
+      handleCloseAddModal();
     },
     onError: () => {
       toast.error("Failed to add category");
@@ -278,41 +395,42 @@ const CategoryPage = () => {
 
   const categoryDeleteMutation = useMutation({
     mutationFn: async (categoryId) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/category/${categoryId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/category/${categoryId}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
       return res.json();
     },
     onSuccess: () => {
-      toast.success("Category Deleted successfully");
+      toast.success("Category deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["getCategories"] });
+      setDeleteModalOpen(false);
+      setDeleteTarget(null);
     },
     onError: () => {
       toast.error("Failed to delete category");
     },
   });
 
-  const incomeCats = (categoriesFetched || []).filter(
-    (c) => c.categoryType === "Income"
-  );
-  const expenseCats = (categoriesFetched || []).filter(
-    (c) => c.categoryType === "Expense"
-  );
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-  const filteredIncomeCats = incomeCats.filter((c) =>
-    c.name?.toLowerCase().includes(normalizedQuery)
-  );
-  const filteredExpenseCats = expenseCats.filter((c) =>
-    c.name?.toLowerCase().includes(normalizedQuery)
-  );
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+    categoryMutation.mutate({ name: trimmed, categoryType: newCategoryType });
+  };
 
+  const handleDeleteConfirm = () => {
+    if (deleteTarget?._id) {
+      categoryDeleteMutation.mutate(deleteTarget._id);
+    }
+  };
+
+  const incomeCats = (categoriesFetched || []).filter((c) => c.categoryType === "Income");
+  const expenseCats = (categoriesFetched || []).filter((c) => c.categoryType === "Expense");
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredIncomeCats = incomeCats.filter((c) => c.name?.toLowerCase().includes(normalizedQuery));
+  const filteredExpenseCats = expenseCats.filter((c) => c.name?.toLowerCase().includes(normalizedQuery));
   const totalCategories = incomeCats.length + expenseCats.length;
 
   return (
@@ -325,21 +443,10 @@ const CategoryPage = () => {
         p: { xs: 2, sm: 3 },
         borderRadius: { xs: 0, sm: 3 },
         minHeight: { xs: 300, sm: 400 },
-        backgroundImage:
-          theme.palette.mode === "dark"
-            ? "radial-gradient(circle at top right, rgba(255,153,102,0.12), transparent 42%), radial-gradient(circle at bottom left, rgba(100,181,246,0.10), transparent 38%)"
-            : "radial-gradient(circle at top right, rgba(255,153,102,0.10), transparent 40%), radial-gradient(circle at bottom left, rgba(100,181,246,0.10), transparent 36%)",
+        backgroundImage: navbarRadialBg,
       }}
     >
-      {/* Header Section */}
-      <Box
-        sx={{
-          mb: 4,
-          pb: 3,
-          borderBottom: "1px solid",
-          borderColor: "divider",
-        }}
-      >
+      <Box sx={{ mb: 4, pb: 3, borderBottom: "1px solid", borderColor: "divider" }}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
           justifyContent="space-between"
@@ -347,86 +454,111 @@ const CategoryPage = () => {
           spacing={2}
         >
           <Box>
-            <Typography
-              variant="h4"
-              fontWeight={800}
-              sx={{
-                background: "linear-gradient(135deg, #ff9966, #ff5e62)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                mb: 0.5,
-              }}
-            >
-              Category Management
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Organize your transactions with custom categories
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5 }}>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  background: gradients.primary,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: `0 6px 16px ${alpha(colors.primary, 0.35)}`,
+                }}
+              >
+                <CategoryIcon sx={{ color: "common.white", fontSize: 26 }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h4"
+                  fontWeight={800}
+                  sx={{
+                    background: gradients.primary,
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Categories
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Organize transactions with custom income and expense labels
+                </Typography>
+              </Box>
+            </Stack>
           </Box>
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ xs: "stretch", sm: "center" }}>
-            <Paper sx={{ px: 2, py: 1, bgcolor: "background.default", border: "1px solid", borderColor: "divider", borderRadius: 2, minWidth: 120 }}>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Total</Typography>
-              <Typography variant="h6" fontWeight={800}>{totalCategories}</Typography>
-            </Paper>
-            <Paper sx={{ px: 2, py: 1, bgcolor: alpha("#43a047", 0.1), border: "1px solid", borderColor: alpha("#43a047", 0.35), borderRadius: 2, minWidth: 120 }}>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Income</Typography>
-              <Typography variant="h6" fontWeight={800} sx={{ color: "#43a047" }}>{incomeCats.length}</Typography>
-            </Paper>
-            <Paper sx={{ px: 2, py: 1, bgcolor: alpha("#ef5350", 0.1), border: "1px solid", borderColor: alpha("#ef5350", 0.35), borderRadius: 2, minWidth: 120 }}>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Expense</Typography>
-              <Typography variant="h6" fontWeight={800} sx={{ color: "#ef5350" }}>{expenseCats.length}</Typography>
-            </Paper>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            alignItems={{ xs: "stretch", sm: "center" }}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
+              <Paper sx={{ ...statCardSx("neutral"), minWidth: 100, py: 1.5, px: 2 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                  TOTAL
+                </Typography>
+                <Typography variant="h6" fontWeight={800}>
+                  {totalCategories}
+                </Typography>
+              </Paper>
+              <Paper sx={{ ...statCardSx("success"), minWidth: 100, py: 1.5, px: 2 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                  INCOME
+                </Typography>
+                <Typography variant="h6" fontWeight={800} sx={{ color: colors.success }}>
+                  {incomeCats.length}
+                </Typography>
+              </Paper>
+              <Paper sx={{ ...statCardSx("error"), minWidth: 100, py: 1.5, px: 2 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                  EXPENSE
+                </Typography>
+                <Typography variant="h6" fontWeight={800} sx={{ color: colors.error }}>
+                  {expenseCats.length}
+                </Typography>
+              </Paper>
+            </Stack>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setOpenCategoryModal(true)}
               sx={{
-                background: "linear-gradient(135deg, #66bb6a, #43a047)",
-                color: "#fff",
-                fontWeight: 700,
-                px: 3,
+                ...primaryButtonSx,
                 py: 1.2,
-                borderRadius: 2,
-                textTransform: "none",
-                boxShadow: "0 4px 12px rgba(67, 160, 71, 0.3)",
-                "&:hover": {
-                  background: "linear-gradient(135deg, #5cb860, #388e3c)",
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 16px rgba(67, 160, 71, 0.4)",
-                },
-                transition: "all 0.2s ease",
+                px: 3,
+                width: { xs: "100%", sm: "auto" },
               }}
             >
               Add Category
             </Button>
           </Stack>
         </Stack>
+
         <TextField
           fullWidth
           size="small"
-          placeholder="Search categories..."
+          placeholder="Search categories by name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           sx={{
             mt: 2.5,
-            maxWidth: isMobile ? "100%" : 420,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 2.5,
-              bgcolor: "background.default",
-              "& fieldset": { borderColor: "divider" },
-              "&:hover fieldset": { borderColor: "primary.main" },
-              "&.Mui-focused fieldset": { borderColor: "primary.main" },
-            },
+            maxWidth: isMobile ? "100%" : 440,
+            ...textFieldOutlinedSx,
           }}
           InputProps={{
-            startAdornment: <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />,
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 20, color: "text.secondary" }} />
+              </InputAdornment>
+            ),
           }}
         />
       </Box>
 
-      {/* Loading & Error States */}
       {isPending ? (
         <Box
           sx={{
@@ -438,7 +570,7 @@ const CategoryPage = () => {
             gap: 2,
           }}
         >
-          <CircularProgress size={60} sx={{ color: "#ff9966" }} />
+          <CircularProgress size={48} sx={{ color: colors.primary }} />
           <Typography variant="body1" sx={{ color: "text.secondary" }}>
             Loading categories...
           </Typography>
@@ -448,12 +580,12 @@ const CategoryPage = () => {
           sx={{
             p: 4,
             textAlign: "center",
-            bgcolor: "rgba(239, 83, 80, 0.1)",
-            border: "1px solid rgba(239, 83, 80, 0.3)",
+            bgcolor: alpha(colors.error, 0.1),
+            border: `1px solid ${alpha(colors.error, 0.35)}`,
             borderRadius: 3,
           }}
         >
-          <Typography variant="h6" color="error" fontWeight={600}>
+          <Typography variant="h6" sx={{ color: colors.error, fontWeight: 600 }}>
             Failed to load categories
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
@@ -466,17 +598,16 @@ const CategoryPage = () => {
             <CategoryList
               title="Income"
               categories={filteredIncomeCats}
-              color="#43a047"
+              accentColor={colors.success}
               onDelete={handleDeleteRequest}
               searchTerm={normalizedQuery}
             />
           </Grid>
-
           <Grid item xs={12} lg={6}>
             <CategoryList
               title="Expense"
               categories={filteredExpenseCats}
-              color="#ff5e62"
+              accentColor={colors.error}
               onDelete={handleDeleteRequest}
               searchTerm={normalizedQuery}
             />
@@ -484,339 +615,58 @@ const CategoryPage = () => {
         </Grid>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      <InvestmentDeleteDialog
         open={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-          },
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeleteTarget(null);
         }}
-      >
-        <DialogTitle
-          sx={{
-            borderBottom: "1px solid #23272f",
-            pb: 2,
-          }}
-        >
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                bgcolor: "rgba(239, 83, 80, 0.1)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <DeleteIcon sx={{ color: "#ef5350" }} />
-            </Box>
-            <Box>
-              <Typography variant="h6" fontWeight={700}>
-                Delete Category
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                This action cannot be undone
-              </Typography>
-            </Box>
-          </Stack>
-        </DialogTitle>
+        title="Delete Category"
+        subtitle="This action cannot be undone"
+        message="Removing this category will unlink it from future transaction picks. Existing transactions may still reference it."
+        icon={DeleteIcon}
+        headerVariant="stock"
+        onConfirm={handleDeleteConfirm}
+        isPending={categoryDeleteMutation.isPending}
+        fullScreen={isMobile}
+        rows={
+          deleteTarget
+            ? [
+                { label: "Name", value: deleteTarget.name },
+                {
+                  label: "Type",
+                  value: deleteTarget.categoryType,
+                  color: deleteTarget.categoryType === "Income" ? colors.success : colors.error,
+                },
+              ]
+            : []
+        }
+      />
 
-        <DialogContent sx={{ mt: 2 }}>
-          <Paper
-            sx={{
-              p: 2,
-              bgcolor: "background.default",
-              border: "1px solid #23272f",
-              borderRadius: 2,
-            }}
-          >
-            <Typography variant="body1" sx={{ color: "text.primary" }}>
-              Are you sure you want to delete{" "}
-              <Typography
-                component="span"
-                sx={{
-                  fontWeight: 700,
-                  color: "#ff5e62",
-                }}
-              >
-                {deleteTarget?.name}
-              </Typography>
-              ?
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", mt: 1 }}
-            >
-              This will remove the category from your system.
-            </Typography>
-          </Paper>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button
-            onClick={() => setDeleteModalOpen(false)}
-            sx={{
-              background: "linear-gradient(135deg, #757575, #9e9e9e)",
-              color: "#fff",
-              fontWeight: 600,
-              px: 3,
-              py: 1,
-              borderRadius: 2,
-              textTransform: "none",
-              "&:hover": {
-                background: "linear-gradient(135deg, #616161, #757575)",
-              },
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (deleteTarget?._id) {
-                categoryDeleteMutation.mutate(deleteTarget._id);
-                setDeleteModalOpen(false);
-                setDeleteTarget(null);
-              }
-            }}
-            disabled={categoryDeleteMutation.isPending}
-            sx={{
-              background: "linear-gradient(135deg, #ef5350, #f44336)",
-              color: "#fff",
-              fontWeight: 600,
-              px: 3,
-              py: 1,
-              borderRadius: 2,
-              textTransform: "none",
-              "&:hover": {
-                background: "linear-gradient(135deg, #e53935, #d32f2f)",
-              },
-              "&:disabled": {
-                background: "linear-gradient(135deg, #757575, #9e9e9e)",
-                color: "#fff",
-                opacity: 0.6,
-              },
-            }}
-          >
-            {categoryDeleteMutation.isPending ? (
-              <CircularProgress size={20} sx={{ color: "#fff" }} />
-            ) : (
-              "Delete"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Add Category Dialog */}
-      <Dialog
+      <InvestmentFormDialog
         open={openCategoryModal}
-        onClose={() => setOpenCategoryModal(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-          },
-        }}
+        onClose={handleCloseAddModal}
+        title="Add Category"
+        subtitle="Create a label for income or expense transactions"
+        icon={AddIcon}
+        headerVariant="primary"
+        formId="category-add-form"
+        submitLabel="Add Category"
+        isPending={categoryMutation.isPending}
+        submitDisabled={!newCategoryName.trim()}
+        submitVariant="success"
+        fullScreen={isMobile}
       >
-        <DialogTitle
-          sx={{
-            borderBottom: "1px solid #23272f",
-            pb: 2,
-          }}
-        >
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #66bb6a, #43a047)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <AddIcon sx={{ color: "#fff" }} />
-            </Box>
-            <Box>
-              <Typography variant="h6" fontWeight={700}>
-                Add New Category
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                Create a custom category for your transactions
-              </Typography>
-            </Box>
-          </Stack>
-        </DialogTitle>
-
-        <DialogContent sx={{ mt: 2 }}>
-          <Stack spacing={3}>
-            <TextField
-              label="Category Name"
-              placeholder="Enter category name..."
-              fullWidth
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              autoFocus
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  bgcolor: "background.default",
-                  "&:hover fieldset": {
-                    borderColor: "#ff9966",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#ff9966",
-                  },
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#ff9966",
-                },
-              }}
-            />
-
-            <Box>
-              <Typography
-                variant="body2"
-                fontWeight={600}
-                sx={{ mb: 1.5, color: "text.primary" }}
-              >
-                Category Type
-              </Typography>
-              <RadioGroup
-                row
-                value={newCategoryType}
-                onChange={(e) => setNewCategoryType(e.target.value)}
-                sx={{
-                  gap: 2,
-                  "& .MuiFormControlLabel-root": {
-                    flex: 1,
-                    m: 0,
-                  },
-                }}
-              >
-                <Paper
-                  sx={{
-                    flex: 1,
-                    border:
-                      newCategoryType === "Income"
-                        ? "2px solid #43a047"
-                        : "1px solid #23272f",
-                    borderRadius: 2,
-                    bgcolor:
-                      newCategoryType === "Income"
-                        ? "rgba(67, 160, 71, 0.1)"
-                        : "background.default",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <FormControlLabel
-                    value="Income"
-                    control={<Radio sx={{ color: "#43a047" }} />}
-                    label={
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Typography fontWeight={600}>Income</Typography>
-                      </Stack>
-                    }
-                    sx={{ p: 1.5, width: "100%" }}
-                  />
-                </Paper>
-                <Paper
-                  sx={{
-                    flex: 1,
-                    border:
-                      newCategoryType === "Expense"
-                        ? "2px solid #ff5e62"
-                        : "1px solid #23272f",
-                    borderRadius: 2,
-                    bgcolor:
-                      newCategoryType === "Expense"
-                        ? "rgba(255, 94, 98, 0.1)"
-                        : "background.default",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <FormControlLabel
-                    value="Expense"
-                    control={<Radio sx={{ color: "#ff5e62" }} />}
-                    label={
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Typography fontWeight={600}>Expense</Typography>
-                      </Stack>
-                    }
-                    sx={{ p: 1.5, width: "100%" }}
-                  />
-                </Paper>
-              </RadioGroup>
-            </Box>
-          </Stack>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button
-            onClick={() => {
-              setOpenCategoryModal(false);
-              setNewCategoryName("");
-            }}
-            sx={{
-              background: "linear-gradient(135deg, #757575, #9e9e9e)",
-              color: "#fff",
-              fontWeight: 600,
-              px: 3,
-              py: 1,
-              borderRadius: 2,
-              textTransform: "none",
-              "&:hover": {
-                background: "linear-gradient(135deg, #616161, #757575)",
-              },
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() =>
-              categoryMutation.mutate({
-                name: newCategoryName.trim(),
-                categoryType: newCategoryType,
-              })
-            }
-            disabled={!newCategoryName.trim() || categoryMutation.isPending}
-            sx={{
-              background: "linear-gradient(135deg, #66bb6a, #43a047)",
-              color: "#fff",
-              fontWeight: 600,
-              px: 3,
-              py: 1,
-              borderRadius: 2,
-              textTransform: "none",
-              "&:hover": {
-                background: "linear-gradient(135deg, #5cb860, #388e3c)",
-              },
-              "&:disabled": {
-                background: "linear-gradient(135deg, #757575, #9e9e9e)",
-                color: "#fff",
-                opacity: 0.6,
-              },
-            }}
-          >
-            {categoryMutation.isPending ? (
-              <CircularProgress size={20} sx={{ color: "#fff" }} />
-            ) : (
-              "Add Category"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Box component="form" id="category-add-form" onSubmit={handleAddSubmit}>
+          <CategoryFormFields
+            name={newCategoryName}
+            onNameChange={(e) => setNewCategoryName(e.target.value)}
+            categoryType={newCategoryType}
+            onTypeChange={(e) => setNewCategoryType(e.target.value)}
+            accent="primary"
+          />
+        </Box>
+      </InvestmentFormDialog>
     </Box>
   );
 };

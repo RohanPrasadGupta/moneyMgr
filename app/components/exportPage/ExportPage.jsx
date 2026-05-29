@@ -26,18 +26,13 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import TitleHeader from "../header/TitleHeader";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { themedCardSx } from "../../themeStyles";
 
 let jsPDF;
 
 const ExportPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const themedCardSx = {
-    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
-  };
   const [startDate, setStartDate] = useState(dayjs().subtract(30, "day"));
   const [endDate, setEndDate] = useState(dayjs());
   const [pdfLoaded, setPdfLoaded] = useState(false);
@@ -433,7 +428,7 @@ const ExportPage = () => {
               }}
             >
               <Typography variant="caption" color="text.secondary">Income</Typography>
-              <Typography variant="h6" fontWeight={800} sx={{ color: "#43a047" }}>{totalIncome} THB</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: "success.dark" }}>{totalIncome} THB</Typography>
             </Paper>
             <Paper
               sx={{
@@ -446,7 +441,7 @@ const ExportPage = () => {
               }}
             >
               <Typography variant="caption" color="text.secondary">Expense</Typography>
-              <Typography variant="h6" fontWeight={800} sx={{ color: "#ef5350" }}>{totalExpense} THB</Typography>
+              <Typography variant="h6" fontWeight={800} sx={{ color: "error.main" }}>{totalExpense} THB</Typography>
             </Paper>
           </Stack>
         )}
@@ -558,7 +553,7 @@ const ExportPage = () => {
                   borderRadius: 2,
                   textTransform: "none",
                   fontWeight: 700,
-                  background: "linear-gradient(135deg, #ef5350, #c62828)",
+                  background: "linear-gradient(135deg, #ef5350, #e53935)",
                   boxShadow: "0 8px 20px rgba(239,83,80,0.28)",
                   "&:hover": {
                     background: "linear-gradient(135deg, #e53935, #b71c1c)",
@@ -600,7 +595,7 @@ const ExportPage = () => {
                   p: 1,
                   mb: 1,
                   borderLeft: "4px solid",
-                  borderColor: tx.type === "Expense" ? "#ef5350" : "#43a047",
+                  borderColor: tx.type === "Expense" ? "error.main" : "success.dark",
                   bgcolor: "background.paper",
                   borderRadius: 1,
                   boxShadow: 1,
@@ -614,7 +609,7 @@ const ExportPage = () => {
                     variant="body2"
                     sx={{
                       fontWeight: 600,
-                      color: tx.type === "Expense" ? "#ef5350" : "#43a047",
+                      color: tx.type === "Expense" ? "error.main" : "success.dark",
                     }}
                   >
                     {tx.type === "Expense" ? "-" : "+"}

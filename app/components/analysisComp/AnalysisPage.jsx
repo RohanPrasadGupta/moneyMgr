@@ -19,6 +19,7 @@ import dayjs from "dayjs";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { useCategoryQuery } from "../../services/useCategoryServices";
+import { themedCardSx, chartColors, colors, insetPanelSx } from "../../themeStyles";
 
 const Months = [
   "January",
@@ -58,21 +59,16 @@ const AnalysisPage = () => {
   ];
   const pieDataLabelDist = isMobile ? 12 : 20;
   const pieInnerSize = isMobile ? "55%" : "60%";
-  const chartAxisColor = theme.palette.mode === "dark" ? "#cfd8dc" : "#546e7a";
-  const chartGridColor =
-    theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)";
-  const pieSliceBorder = theme.palette.mode === "dark" ? "#0f1115" : "#eceff1";
-  const pieDataLabelColor = theme.palette.mode === "dark" ? "#eceff1" : "#37474f";
-  const pieConnectorColor =
-    theme.palette.mode === "dark" ? "rgba(255,255,255,0.4)" : "rgba(55,71,79,0.35)";
+  const chartAxisColor = chartColors.axis;
+  const chartGridColor = chartColors.grid;
+  const pieSliceBorder = chartColors.pieBorder;
+  const pieDataLabelColor = chartColors.pieLabel;
+  const pieConnectorColor = chartColors.pieConnector;
   const sectionPaperSx = {
+    ...themedCardSx,
     mb: { xs: 3, sm: 4 },
     p: { xs: 2, sm: 3, md: 4 },
-    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-    backdropFilter: "blur(10px)",
     borderRadius: { xs: 2, sm: 4 },
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
     position: "relative",
     overflow: "hidden",
   };
@@ -362,16 +358,16 @@ const AnalysisPage = () => {
             {/* Quick Stats Grid */}
             <Box sx={{ display: "flex", gap: { xs: 1.5, sm: 2 }, flexWrap: "wrap", width: { xs: "100%", lg: "auto" } }}>
               <Box sx={{ flex: { xs: "1 1 45%", sm: "none" }, bgcolor: "rgba(67, 160, 71, 0.1)", p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: "1px solid rgba(67, 160, 71, 0.3)", textAlign: "center", minWidth: { sm: "140px" } }}>
-                <Typography variant="caption" sx={{ color: "#66bb6a", fontWeight: "bold", display: "block", mb: 0.5 }}>INCOME</Typography>
-                <Typography variant="h6" sx={{ color: "#e3eafc", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{formatAmount(pieIncomeTotal)}</Typography>
+                <Typography variant="caption" sx={{ color: "success.main", fontWeight: "bold", display: "block", mb: 0.5 }}>INCOME</Typography>
+                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{formatAmount(pieIncomeTotal)}</Typography>
               </Box>
               <Box sx={{ flex: { xs: "1 1 45%", sm: "none" }, bgcolor: "rgba(239, 83, 80, 0.1)", p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: "1px solid rgba(239, 83, 80, 0.3)", textAlign: "center", minWidth: { sm: "140px" } }}>
-                <Typography variant="caption" sx={{ color: "#ef5350", fontWeight: "bold", display: "block", mb: 0.5 }}>EXPENSE</Typography>
-                <Typography variant="h6" sx={{ color: "#e3eafc", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{formatAmount(pieTotalExpense)}</Typography>
+                <Typography variant="caption" sx={{ color: "error.main", fontWeight: "bold", display: "block", mb: 0.5 }}>EXPENSE</Typography>
+                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{formatAmount(pieTotalExpense)}</Typography>
               </Box>
               <Box sx={{ flex: { xs: "1 1 100%", sm: "none" }, bgcolor: (pieIncomeTotal - pieTotalExpense) >= 0 ? "rgba(144, 202, 249, 0.1)" : "rgba(255, 138, 128, 0.1)", p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: `1px solid ${(pieIncomeTotal - pieTotalExpense) >= 0 ? "rgba(144, 202, 249, 0.3)" : "rgba(255, 138, 128, 0.3)"}`, textAlign: "center", minWidth: { sm: "140px" } }}>
-                <Typography variant="caption" sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "#29b6f6" : "#ef5350", fontWeight: "bold", display: "block", mb: 0.5 }}>NET BALANCE</Typography>
-                <Typography variant="h6" sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "#29b6f6" : "#ef5350", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{(pieIncomeTotal - pieTotalExpense) >= 0 ? "+" : ""}{formatAmount(pieIncomeTotal - pieTotalExpense)}</Typography>
+                <Typography variant="caption" sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "primary.main" : "error.main", fontWeight: "bold", display: "block", mb: 0.5 }}>NET BALANCE</Typography>
+                <Typography variant="h6" sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "primary.main" : "error.main", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{(pieIncomeTotal - pieTotalExpense) >= 0 ? "+" : ""}{formatAmount(pieIncomeTotal - pieTotalExpense)}</Typography>
               </Box>
             </Box>
           </Box>
@@ -710,7 +706,7 @@ const AnalysisPage = () => {
           title="Top Expense Categories"
           seriesName="Expense"
           data={topExpenseCategories}
-          color="#ef5350"
+          color={colors.error}
           height={barCategoryHeight}
           currencySymbol={currencySymbol}
           currencyCode={currencyCode}
@@ -720,7 +716,7 @@ const AnalysisPage = () => {
           title="Top Income Categories"
           seriesName="Income"
           data={topIncomeCategories}
-          color="#43a047"
+          color={colors.success}
           height={barCategoryHeight}
           sx={{ mt: 3 }}
           currencySymbol={currencySymbol}
@@ -811,7 +807,7 @@ const AnalysisPage = () => {
                 sx={{
                   fontSize: "1.25rem",
                   fontWeight: "bold",
-                  color: "#ef5350",
+                  color: "error.main",
                 }}
               >
                 {formatAmount(yearlyExpenseTotal)}
@@ -833,7 +829,7 @@ const AnalysisPage = () => {
                 sx={{
                   fontSize: "1.25rem",
                   fontWeight: "bold",
-                  color: "#66bb6a",
+                  color: "success.main",
                 }}
               >
                 {formatAmount(yearlyIncomeTotal)}
@@ -855,7 +851,7 @@ const AnalysisPage = () => {
                 sx={{
                   fontSize: "1.25rem",
                   fontWeight: "bold",
-                  color: yearlyNetTotal >= 0 ? "#29b6f6" : "#ef5350",
+                  color: yearlyNetTotal >= 0 ? "primary.main" : "error.main",
                 }}
               >
                 {formatAmount(yearlyNetTotal)}
@@ -997,8 +993,8 @@ const AnalysisPage = () => {
                       color: {
                         linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
                         stops: [
-                          [0, "#66bb6a"],
-                          [1, "#2e7d32"],
+                          [0, colors.success],
+                          [1, colors.successDark],
                         ],
                       },
                     },
@@ -1008,8 +1004,8 @@ const AnalysisPage = () => {
                       color: {
                         linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
                         stops: [
-                          [0, "#ff867c"],
-                          [1, "#c62828"],
+                          [0, colors.error],
+                          [1, colors.errorDark],
                         ],
                       },
                     },
@@ -1084,12 +1080,12 @@ const AnalysisPage = () => {
                       [1, "rgba(144,202,249,0.05)"],
                     ],
                   },
-                  lineColor: "#90caf9",
+                  lineColor: "#64b5f6",
                   lineWidth: 2.5,
                   marker: {
                     enabled: true,
                     radius: 3,
-                    fillColor: "#90caf9",
+                    fillColor: "#64b5f6",
                     lineColor: theme.palette.mode === "dark" ? "#0f1115" : "#fff",
                     lineWidth: 1,
                   },
@@ -1211,26 +1207,35 @@ const GridLikeTopCategories = ({
   const theme = useTheme();
   if (!data || data.length === 0) return null;
 
-  const shades = data.map((_, idx) => {
-    const factor = (idx / Math.max(data.length - 1, 1)) * 0.4 - 0.2; // range approx -0.2..0.2
-    return Highcharts.color(color).brighten(factor).get();
-  });
-
   const chartAxisColor = theme.palette.mode === "dark" ? "#cfd8dc" : "#546e7a";
   const chartGridColor =
     theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)";
   const convertedValues = data.map((d) => Number(d.value || 0) * conversionRate);
+
+  const base = Highcharts.color(color).get() || color;
+  const shades = data.map((_, idx) => {
+    const factor = (idx / Math.max(data.length - 1, 1)) * 0.35 - 0.15;
+    return Highcharts.color(base).brighten(factor).get();
+  });
+
+  const barData = convertedValues.map((y, idx) => ({
+    y,
+    color: {
+      linearGradient: { x1: 0, y1: 0, x2: 1, y2: 0 },
+      stops: [
+        [0, Highcharts.color(shades[idx]).brighten(0.12).get()],
+        [1, shades[idx]],
+      ],
+    },
+  }));
 
   return (
     <Box
       sx={{
         mb: { xs: 3, sm: 4 },
         p: { xs: 2, sm: 3, md: 4 },
-        background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-        backdropFilter: "blur(10px)",
+        ...themedCardSx,
         borderRadius: { xs: 2, sm: 4 },
-        border: "1px solid rgba(255, 255, 255, 0.05)",
-        boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
         position: "relative",
         overflow: "hidden",
         width: "100%",
@@ -1275,15 +1280,15 @@ const GridLikeTopCategories = ({
             formatter: function () {
               const rank = (this.point?.index ?? this.point?.x ?? 0) + 1;
               return (
-                `<span style="color:${color}">●</span> ${seriesName}: <b>${currencySymbol}${Highcharts.numberFormat(this.y, 0)}</b><br/>` +
+                `<span style="color:${base}">●</span> ${seriesName}: <b>${currencySymbol}${Highcharts.numberFormat(this.y, 0)}</b><br/>` +
                 `<span style="color:#b0bec5">Rank #${rank}</span>`
               );
             },
           },
           plotOptions: {
             bar: {
-              borderRadius: 4,
-              colorByPoint: true,
+              borderRadius: 6,
+              borderWidth: 0,
               dataLabels: {
                 enabled: true,
                 formatter: function () {
@@ -1298,9 +1303,8 @@ const GridLikeTopCategories = ({
           series: [
             {
               name: seriesName,
-              data: convertedValues,
-              colors: shades,
-              color,
+              data: barData,
+              color: base,
             },
           ],
         }}

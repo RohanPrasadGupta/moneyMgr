@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -14,22 +14,28 @@ import {
   TableRow,
   Chip,
   Button,
-  TextField,
   IconButton,
   CircularProgress,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   useMediaQuery,
   useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Stack,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
+import { investmentChartColors, colors, statCardSx } from "../../themeStyles";
+import {
+  InvestmentFormDialog,
+  InvestmentDeleteDialog,
+  CoinFormFields,
+} from "./InvestmentFormUi";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart,
@@ -59,6 +65,19 @@ const CoinInvestmentPage = () => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState(null);
+  const [bhtToNprRate, setBhtToNprRate] = useState("4.3");
+
+  const bhtToNprOptions = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => {
+        const value = (4.1 + i * 0.1).toFixed(1);
+        return { value, label: `1 BHT = ${value} NPR` };
+      }),
+    []
+  );
+
+  const conversionRate = Number(bhtToNprRate) || 4.3;
+  const convertBhtToNpr = (bhtAmount) => bhtAmount * conversionRate;
 
   // Fetch all coin investments
   const {
@@ -235,65 +254,6 @@ const CoinInvestmentPage = () => {
 
   const chartData = getYearlyInvestments();
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-NP", {
-      style: "currency",
-      currency: "NPR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <Paper
-          sx={{
-            p: 2,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600, mb: 1 }}>
-            Year: {payload[0].payload.year}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#ff9966", fontWeight: 600 }}>
-            Investment: {formatCurrencyBHT(payload[0].payload.amount)}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#ef5350", fontWeight: 600 }}>
-            Charges: {formatCurrencyBHT(payload[0].payload.transactionCharges)}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: "#90caf9", fontWeight: 700, mt: 0.5, pt: 0.5, borderTop: "1px solid #23272f" }}
-          >
-            Total (BHT): {formatCurrencyBHT(payload[0].value)}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: "#66bb6a", fontWeight: 700, mt: 0.5 }}
-          >
-            Total (NPR): {formatCurrencyNPR(payload[0].value * 4.3)}
-          </Typography>
-        </Paper>
-      );
-    }
-    return null;
-  };
-
-  const totalInvestment = apiResponse?.summary?.totalAmount || coinInvestments.reduce((sum, inv) => sum + inv.amount, 0);
-  const totalCharges = apiResponse?.summary?.totalTransactionCharge || coinInvestments.reduce((sum, inv) => sum + inv.transactionCharge, 0);
-  const grandTotal = apiResponse?.summary?.grandTotal || coinInvestments.reduce((sum, inv) => sum + inv.totalAmount, 0);
-  const grandTotalInNPR = grandTotal * 4.3; // Convert BHT to NPR
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   const formatCurrencyBHT = (amount) => {
     return new Intl.NumberFormat("th-TH", {
       style: "currency",
@@ -309,11 +269,71 @@ const CoinInvestmentPage = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
-  
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <Paper
+          sx={{
+            p: 2,
+            bgcolor: "background.paper",
+            border: "1px solid", borderColor: "divider",
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600, mb: 1 }}>
+            Year: {payload[0].payload.year}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "error.main", fontWeight: 600 }}>
+            Investment: {formatCurrencyBHT(payload[0].payload.amount)}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "error.main", fontWeight: 600 }}>
+            Charges: {formatCurrencyBHT(payload[0].payload.transactionCharges)}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: "primary.main", fontWeight: 700, mt: 0.5, pt: 0.5, borderTop: "1px solid", borderTopColor: "divider" }}
+          >
+            Total (BHT): {formatCurrencyBHT(payload[0].value)}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: "success.main", fontWeight: 700, mt: 0.5 }}
+          >
+            Total (NPR): {formatCurrencyNPR(convertBhtToNpr(payload[0].value))}
+          </Typography>
+        </Paper>
+      );
+    }
+    return null;
+  };
+
+  const totalInvestment = apiResponse?.summary?.totalAmount || coinInvestments.reduce((sum, inv) => sum + inv.amount, 0);
+  const totalCharges = apiResponse?.summary?.totalTransactionCharge || coinInvestments.reduce((sum, inv) => sum + inv.transactionCharge, 0);
+  const grandTotal = apiResponse?.summary?.grandTotal || coinInvestments.reduce((sum, inv) => sum + inv.totalAmount, 0);
+  const grandTotalInNPR = convertBhtToNpr(grandTotal);
+
+  const NprSubtext = ({ bhtAmount }) => (
+    <Typography
+      variant="caption"
+      sx={{ color: "text.secondary", display: "block", mt: 0.75, fontWeight: 600 }}
+    >
+      ≈ {formatCurrencyNPR(convertBhtToNpr(bhtAmount))}
+    </Typography>
+  );
+
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: 400, gap: 2 }}>
-        <CircularProgress size={60} sx={{ color: "#ff5e62" }} />
+        <CircularProgress size={60} sx={{ color: "error.main" }} />
         <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 600 }}>
           Loading coin investments...
         </Typography>
@@ -331,569 +351,199 @@ const CoinInvestmentPage = () => {
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Add Investment Dialog */}
-      <Dialog
+      <InvestmentFormDialog
         open={openAddDialog}
         onClose={() => setOpenAddDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        fullScreen={isMobile}
-        PaperProps={{
-          sx:{
-            borderRadius: isMobile ? 0 : 3,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-          },
-        }}
+        title="Add Coin Investment"
+        subtitle="Record amount and fees in BHT"
+        icon={CurrencyBitcoinIcon}
+        headerVariant="coin"
+        formId="coin-add-form"
+        submitLabel="Add Investment"
+        isPending={addInvestmentMutation.isPending}
+        submitVariant="success"
       >
-        <DialogTitle
-          sx={{
-            bgcolor: "background.default",
-            borderBottom: "1px solid #23272f",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            p: { xs: 2, sm: 2.5, md: 3 },
-          }}
-        >
-          <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}>
-            Add New Coin Investment
-          </Typography>
-          <IconButton onClick={() => setOpenAddDialog(false)} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ mt: { xs: 2, sm: 2.5, md: 3 }, p: { xs: 2, sm: 2.5, md: 3 } }}>
-          <Box component="form" id="add-form" onSubmit={handleAddSubmit}>
-            <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  size={isMobile ? "small" : "medium"}
-                  label="Date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  required
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#ff5e62",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#ff5e62",
-                      },
-                    },
-                    "& .MuiInputLabel-root": {
-                      color: "text.secondary",
-                    },
-                    "& .MuiSvgIcon-root": {
-                      color: "#fff",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  size={isMobile ? "small" : "medium"}
-                  label="Amount (BHT)"
-                  name="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#ff5e62",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#ff5e62",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  size={isMobile ? "small" : "medium"}
-                  label="Transaction Charge (BHT)"
-                  name="transactionCharge"
-                  type="number"
-                  value={formData.transactionCharge}
-                  onChange={handleInputChange}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#ff5e62",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#ff5e62",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: { xs: 2, sm: 2.5, md: 3 }, borderTop: "1px solid #23272f", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
-          <Button
-            onClick={() => setOpenAddDialog(false)}
-            variant="contained"
-            fullWidth={isMobile}
-            sx={{
-              background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: { xs: 2, sm: 2.5, md: 3 },
-              py: { xs: 1, sm: 1.1, md: 1.2 },
-              boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
-                boxShadow: "0 6px 16px rgba(117, 117, 117, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="add-form"
-            variant="contained"
-            fullWidth={isMobile}
-            disabled={addInvestmentMutation.isPending}
-            sx={{
-              background: "linear-gradient(135deg, #66bb6a 0%, #4caf50 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: { xs: 2, sm: 2.5, md: 3 },
-              py: { xs: 1, sm: 1.1, md: 1.2 },
-              boxShadow: "0 4px 12px rgba(102, 187, 106, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)",
-                boxShadow: "0 6px 16px rgba(102, 187, 106, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              "&:disabled": {
-                background: "linear-gradient(135deg, #555 0%, #333 100%)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            {addInvestmentMutation.isPending ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
-            ) : (
-              "Add Investment"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <CoinFormFields
+          formId="coin-add-form"
+          formData={formData}
+          onChange={handleInputChange}
+          onSubmit={handleAddSubmit}
+          accent="error"
+          isMobile={isMobile}
+        />
+      </InvestmentFormDialog>
 
-      {/* Edit Investment Dialog */}
-      <Dialog
+      <InvestmentFormDialog
         open={openEditDialog}
         onClose={() => setOpenEditDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        fullScreen={isMobile}
-        PaperProps={{
-          sx:{
-            borderRadius: isMobile ? 0 : 3,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-          },
-        }}
+        title="Edit Coin Investment"
+        subtitle="Update date, amount, or transaction charge"
+        icon={EditIcon}
+        headerVariant="coin"
+        formId="coin-edit-form"
+        submitLabel="Save Changes"
+        isPending={updateInvestmentMutation.isPending}
+        submitVariant="primary"
       >
-        <DialogTitle
-          sx={{
-            bgcolor: "background.default",
-            borderBottom: "1px solid #23272f",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            p: { xs: 2, sm: 2.5, md: 3 },
-          }}
-        >
-          <Typography variant="h6" fontWeight="bold" sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}>
-            Edit Coin Investment
-          </Typography>
-          <IconButton onClick={() => setOpenEditDialog(false)} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ mt: { xs: 2, sm: 2.5, md: 3 }, p: { xs: 2, sm: 2.5, md: 3 } }}>
-          <Box component="form" id="edit-form" onSubmit={handleEditSubmit}>
-            <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  size={isMobile ? "small" : "medium"}
-                  label="Date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  required
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                    },
-                    "& .MuiInputLabel-root": {
-                      color: "text.secondary",
-                    },
-                    "& .MuiSvgIcon-root": {
-                      color: "#fff",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  size={isMobile ? "small" : "medium"}
-                  label="Amount (BHT)"
-                  name="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  size={isMobile ? "small" : "medium"}
-                  label="Transaction Charge (BHT)"
-                  name="transactionCharge"
-                  type="number"
-                  value={formData.transactionCharge}
-                  onChange={handleInputChange}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: { xs: 2, sm: 2.5, md: 3 }, borderTop: "1px solid #23272f", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
-          <Button
-            onClick={() => setOpenEditDialog(false)}
-            variant="contained"
-            fullWidth={isMobile}
-            sx={{
-              background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: { xs: 2, sm: 2.5, md: 3 },
-              py: { xs: 1, sm: 1.1, md: 1.2 },
-              boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
-                boxShadow: "0 6px 16px rgba(117, 117, 117, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="edit-form"
-            variant="contained"
-            fullWidth={isMobile}
-            disabled={updateInvestmentMutation.isPending}
-            sx={{
-              background: "linear-gradient(135deg, #90caf9 0%, #42a5f5 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: { xs: 2, sm: 2.5, md: 3 },
-              py: { xs: 1, sm: 1.1, md: 1.2 },
-              boxShadow: "0 4px 12px rgba(144, 202, 249, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #42a5f5 0%, #90caf9 100%)",
-                boxShadow: "0 6px 16px rgba(144, 202, 249, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              "&:disabled": {
-                background: "linear-gradient(135deg, #555 0%, #333 100%)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            {updateInvestmentMutation.isPending ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
-            ) : (
-              "Update Investment"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <CoinFormFields
+          formId="coin-edit-form"
+          formData={formData}
+          onChange={handleInputChange}
+          onSubmit={handleEditSubmit}
+          accent="primary"
+          isMobile={isMobile}
+        />
+      </InvestmentFormDialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      <InvestmentDeleteDialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
-        maxWidth="xs"
-        fullWidth
-        fullScreen={isMobile}
-        PaperProps={{
-          sx:{
-            borderRadius: isMobile ? 0 : 3,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-          },
+        title="Delete Coin Investment"
+        subtitle="This action cannot be undone"
+        message="Are you sure you want to remove this coin investment record?"
+        icon={DeleteIcon}
+        headerVariant="coin"
+        onConfirm={handleDeleteConfirm}
+        isPending={deleteInvestmentMutation.isPending}
+        rows={
+          selectedInvestment
+            ? [
+                { label: "Date", value: formatDate(selectedInvestment.date) },
+                {
+                  label: "Amount",
+                  value: formatCurrencyBHT(selectedInvestment.amount),
+                  color: "primary.main",
+                },
+                {
+                  label: "Total",
+                  value: formatCurrencyBHT(selectedInvestment.totalAmount),
+                  color: "primary.main",
+                },
+              ]
+            : []
+        }
+      />
+
+      {/* BHT → NPR conversion */}
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          mb: { xs: 2, sm: 2.5, md: 3 },
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: alpha(colors.primary, 0.35),
+          bgcolor: alpha(colors.primary, 0.04),
         }}
       >
-        <DialogTitle
-          sx={{
-            bgcolor: "background.default",
-            borderBottom: "1px solid #23272f",
-            p: { xs: 2, sm: 2.5, md: 3 },
-          }}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ xs: "stretch", sm: "center" }}
+          justifyContent="space-between"
+          spacing={2}
         >
-          <Typography variant="h6" fontWeight="bold" sx={{ color: "#ef5350", fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}>
-            Confirm Delete
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ mt: { xs: 2, sm: 2.5, md: 3 }, p: { xs: 2, sm: 2.5, md: 3 } }}>
-          <Typography variant="body1" sx={{ mb: 2, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-            Are you sure you want to delete this coin investment?
-          </Typography>
-          {selectedInvestment && (
-            <Paper
+          <Box>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ color: "text.primary" }}>
+              BHT → NPR conversion
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Select a rate to see NPR amounts on stats, chart tooltips, and the table.
+            </Typography>
+          </Box>
+          <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
+            <InputLabel id="bht-npr-rate-label" sx={{ color: "text.secondary" }}>
+              Exchange rate
+            </InputLabel>
+            <Select
+              labelId="bht-npr-rate-label"
+              label="Exchange rate"
+              value={bhtToNprRate}
+              onChange={(e) => setBhtToNprRate(e.target.value)}
               sx={{
-                p: { xs: 1.5, sm: 2 },
                 bgcolor: "background.default",
-                border: "1px solid #23272f",
+                color: "text.primary",
                 borderRadius: 2,
+                "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" },
+                "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "primary.main" },
               }}
             >
-              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
-                Date: <strong>{formatDate(selectedInvestment.date)}</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
-                Amount: <strong>{formatCurrencyBHT(selectedInvestment.amount)}</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary", fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
-                Total: <strong>{formatCurrencyBHT(selectedInvestment.totalAmount)}</strong>
-              </Typography>
-            </Paper>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: { xs: 2, sm: 2.5, md: 3 }, borderTop: "1px solid #23272f", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
-          <Button
-            onClick={() => setOpenDeleteDialog(false)}
-            variant="contained"
-            fullWidth={isMobile}
-            sx={{
-              background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: { xs: 2, sm: 2.5, md: 3 },
-              py: { xs: 1, sm: 1.1, md: 1.2 },
-              boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
-                boxShadow: "0 6px 16px rgba(117, 117, 117, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            variant="contained"
-            fullWidth={isMobile}
-            disabled={deleteInvestmentMutation.isPending}
-            sx={{
-              background: "linear-gradient(135deg, #ef5350 0%, #f44336 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: { xs: 2, sm: 2.5, md: 3 },
-              py: { xs: 1, sm: 1.1, md: 1.2 },
-              boxShadow: "0 4px 12px rgba(239, 83, 80, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #f44336 0%, #ef5350 100%)",
-                boxShadow: "0 6px 16px rgba(239, 83, 80, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              "&:disabled": {
-                background: "linear-gradient(135deg, #555 0%, #333 100%)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            {deleteInvestmentMutation.isPending ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
-            ) : (
-              "Delete"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+              {bhtToNprOptions.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+      </Paper>
 
       {/* Statistics Cards with Add Button */}
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, alignItems: "stretch" }}>
-        <Grid item xs={12} sm={6} md={2}>
-          <Paper
-            sx={{
-              p: { xs: 2, sm: 2.5, md: 3 },
-              borderRadius: { xs: 2, sm: 2.5, md: 3 },
-              bgcolor: "background.paper",
-              border: "1px solid #23272f",
-              textAlign: "center",
-              height: "100%",
-            }}
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={statCardSx("error")}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.75rem" } }}>
               TOTAL INVESTMENT (BHT)
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#ff9966", mt: 1, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "error.main", mt: 1, fontSize: { xs: "1.35rem", sm: "1.5rem", md: "1.75rem" } }}>
               {formatCurrencyBHT(totalInvestment)}
             </Typography>
+            <NprSubtext bhtAmount={totalInvestment} />
+            <Chip label="Principal" size="small" sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.error, 0.35) }} />
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Paper
-            sx={{
-              p: { xs: 2, sm: 2.5, md: 3 },
-              borderRadius: { xs: 2, sm: 2.5, md: 3 },
-              bgcolor: "background.paper",
-              border: "1px solid #23272f",
-              textAlign: "center",
-              height: "100%",
-            }}
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={statCardSx("error")}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.75rem" } }}>
               TRANSACTION CHARGES
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#ef5350", mt: 1, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "error.main", mt: 1, fontSize: { xs: "1.35rem", sm: "1.5rem", md: "1.75rem" } }}>
               {formatCurrencyBHT(totalCharges)}
             </Typography>
+            <NprSubtext bhtAmount={totalCharges} />
+            <Chip label="Fees" size="small" sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.error, 0.35) }} />
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Paper
-            sx={{
-              p: { xs: 2, sm: 2.5, md: 3 },
-              borderRadius: { xs: 2, sm: 2.5, md: 3 },
-              bgcolor: "background.paper",
-              border: "1px solid #23272f",
-              textAlign: "center",
-              height: "100%",
-            }}
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={statCardSx("primary")}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.75rem" } }}>
               GRAND TOTAL (BHT)
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#90caf9", mt: 1, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "primary.main", mt: 1, fontSize: { xs: "1.35rem", sm: "1.5rem", md: "1.75rem" } }}>
               {formatCurrencyBHT(grandTotal)}
             </Typography>
+            <NprSubtext bhtAmount={grandTotal} />
+            <Chip label="All time" size="small" sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.primary, 0.35) }} />
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Paper
-            sx={{
-              p: { xs: 2, sm: 2.5, md: 3 },
-              borderRadius: { xs: 2, sm: 2.5, md: 3 },
-              bgcolor: "background.paper",
-              border: "1px solid rgba(102, 187, 106, 0.5)",
-              textAlign: "center",
-              boxShadow: "0 4px 12px rgba(102, 187, 106, 0.2)",
-              height: "100%",
-            }}
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-              NPR AMOUNT (×4.3)
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={statCardSx("success")}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.75rem" } }}>
+              NPR AMOUNT (×{conversionRate.toFixed(1)})
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#66bb6a", mt: 1, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' } }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "success.main", mt: 1, fontSize: { xs: "1.35rem", sm: "1.5rem", md: "1.75rem" } }}>
               {formatCurrencyNPR(grandTotalInNPR)}
             </Typography>
+            <Chip label="Grand total converted" size="small" sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.success, 0.4) }} />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={2.8} sx={{ display: "flex", justifyContent: { xs: 'center', md: 'flex-end' }, alignItems: "center" }}>
+        <Grid item xs={12} sx={{ display: "flex", justifyContent: { xs: "center", md: "flex-end" }, alignItems: "center" }}>
           <Button
             variant="contained"
             startIcon={<AddIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />}
             onClick={handleOpenAddDialog}
             fullWidth={isMobile}
             sx={{
-              background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
               px: { xs: 2.5, sm: 3, md: 3 },
               py: { xs: 1.25, sm: 1.375, md: 1.5 },
-              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
-              boxShadow: "0 4px 12px rgba(255, 94, 98, 0.3)",
+              fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+              boxShadow: "0 4px 12px rgba(239, 83, 80, 0.3)",
               "&:hover": {
-                background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+                background: "linear-gradient(135deg, #e53935, #ef5350)",
                 transform: "translateY(-2px)",
-                boxShadow: "0 6px 16px rgba(255, 94, 98, 0.4)",
+                boxShadow: "0 6px 16px rgba(239, 83, 80, 0.4)",
               },
               transition: "all 0.3s ease",
             }}
@@ -910,14 +560,14 @@ const CoinInvestmentPage = () => {
           p: { xs: 2, sm: 3, md: 4 },
           borderRadius: { xs: 2, sm: 2.5, md: 3 },
           bgcolor: "background.paper",
-          border: "1px solid #23272f",
+          border: "1px solid", borderColor: "divider",
           mb: { xs: 2, sm: 2.5, md: 3 },
         }}
       >
         <Box sx={{ display: "flex", flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: { xs: 2, sm: 2.5, md: 3 } }}>
           <Box
             sx={{
-              background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               borderRadius: 2,
               p: { xs: 1, sm: 1.25, md: 1.5 },
               display: "flex",
@@ -939,23 +589,29 @@ const CoinInvestmentPage = () => {
 
         <ResponsiveContainer width="100%" height={isMobile ? 300 : isTablet ? 350 : 400}>
           <BarChart data={chartData} margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 10 : 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#23272f" />
+            <defs>
+              <linearGradient id="coinGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={investmentChartColors.coinBar.top} stopOpacity={1} />
+                <stop offset="100%" stopColor={investmentChartColors.coinBar.bottom} stopOpacity={0.85} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={investmentChartColors.grid} />
             <XAxis
               dataKey="year"
-              stroke="#b0b8c1"
-              style={{ fontSize: isMobile ? "12px" : "14px", fontWeight: 600 }}
+              stroke={investmentChartColors.axis}
+              tick={{ fill: investmentChartColors.axis, fontSize: isMobile ? 12 : 14, fontWeight: 600 }}
             />
             <YAxis
-              stroke="#b0b8c1"
-              style={{ fontSize: isMobile ? "11px" : "14px" }}
+              stroke={investmentChartColors.axis}
+              tick={{ fill: investmentChartColors.axis, fontSize: isMobile ? 11 : 14 }}
               tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255, 94, 98, 0.1)" }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(100, 181, 246, 0.12)" }} />
             <Legend
               wrapperStyle={{ paddingTop: "20px" }}
               iconType="circle"
               formatter={(value) => (
-                <span style={{ color: "#f5f6fa", fontSize: isMobile ? "12px" : "14px", fontWeight: 600 }}>
+                <span style={{ color: investmentChartColors.legend, fontSize: isMobile ? "12px" : "14px", fontWeight: 600 }}>
                   {value}
                 </span>
               )}
@@ -966,12 +622,6 @@ const CoinInvestmentPage = () => {
               name="Total Investment (with charges)"
               radius={[8, 8, 0, 0]}
             />
-            <defs>
-              <linearGradient id="coinGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ff5e62" stopOpacity={1} />
-                <stop offset="100%" stopColor="#ff9966" stopOpacity={0.8} />
-              </linearGradient>
-            </defs>
           </BarChart>
         </ResponsiveContainer>
       </Paper>
@@ -981,7 +631,7 @@ const CoinInvestmentPage = () => {
             p: { xs: 4, sm: 5, md: 6 },
             borderRadius: { xs: 2, sm: 2.5, md: 3 },
             bgcolor: "background.paper",
-            border: "1px solid #23272f",
+            border: "1px solid", borderColor: "divider",
             mb: { xs: 2, sm: 2.5, md: 3 },
             textAlign: "center",
           }}
@@ -989,7 +639,7 @@ const CoinInvestmentPage = () => {
           <Box
             sx={{
               display: "inline-flex",
-              background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               borderRadius: 3,
               p: { xs: 2, sm: 2.5, md: 3 },
               mb: { xs: 2, sm: 2.5, md: 3 },
@@ -1012,14 +662,14 @@ const CoinInvestmentPage = () => {
           sx={{
             borderRadius: { xs: 2, sm: 2.5, md: 3 },
             bgcolor: "background.paper",
-            border: "1px solid #23272f",
+            border: "1px solid", borderColor: "divider",
             overflow: "hidden",
           }}
         >
         <Box
           sx={{
             p: { xs: 2, sm: 2.5, md: 3 },
-            borderBottom: "1px solid #23272f",
+            borderBottom: "1px solid", borderBottomColor: "divider",
             bgcolor: "background.default",
           }}
         >
@@ -1040,11 +690,11 @@ const CoinInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff5e62",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                     px: { xs: 1, sm: 2 },
                   }}
                 >
@@ -1055,11 +705,11 @@ const CoinInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff5e62",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                     px: { xs: 1, sm: 2 },
                   }}
                 >
@@ -1070,11 +720,11 @@ const CoinInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff5e62",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                     display: { xs: 'none', sm: 'table-cell' },
                     px: { xs: 1, sm: 2 },
                   }}
@@ -1086,11 +736,11 @@ const CoinInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff5e62",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                     px: { xs: 1, sm: 2 },
                   }}
                 >
@@ -1101,11 +751,27 @@ const CoinInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff5e62",
+                    borderBottom: "2px solid",
+                    borderBottomColor: "success.main",
+                    px: { xs: 1, sm: 2 },
+                  }}
+                >
+                  Total (NPR)
+                </TableCell>
+                <TableCell
+                  align="center"
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
+                    bgcolor: "background.paper",
+                    color: "text.primary",
+                    letterSpacing: 0.5,
+                    textTransform: "uppercase",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                     display: { xs: 'none', md: 'table-cell' },
                     px: { xs: 1, sm: 2 },
                   }}
@@ -1117,11 +783,11 @@ const CoinInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.85rem" },
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff5e62",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                     px: { xs: 1, sm: 2 },
                   }}
                 >
@@ -1137,7 +803,7 @@ const CoinInvestmentPage = () => {
                   key={transaction._id}
                   sx={{
                     "&:hover": {
-                      bgcolor: isMobile ? "transparent" : "rgba(255, 94, 98, 0.08)",
+                      bgcolor: isMobile ? "transparent" : "rgba(239, 83, 80, 0.08)",
                     },
                     transition: "all 0.2s ease",
                     "&:nth-of-type(odd)": {
@@ -1154,7 +820,7 @@ const CoinInvestmentPage = () => {
                     </Typography>
                   </TableCell>
                   <TableCell align="center" sx={{ px: { xs: 1, sm: 2 } }}>
-                    <Typography variant="body1" fontWeight="700" sx={{ color: "#ff9966", fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                    <Typography variant="body1" fontWeight="700" sx={{ color: "error.main", fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                       {formatCurrencyBHT(transaction.amount)}
                     </Typography>
                   </TableCell>
@@ -1164,7 +830,7 @@ const CoinInvestmentPage = () => {
                       size="small"
                       sx={{
                         bgcolor: "rgba(239, 83, 80, 0.15)",
-                        color: "#ef5350",
+                        color: "error.main",
                         fontWeight: 600,
                         border: "1px solid rgba(239, 83, 80, 0.3)",
                         fontSize: { xs: '0.7rem', sm: '0.8125rem' },
@@ -1172,8 +838,13 @@ const CoinInvestmentPage = () => {
                     />
                   </TableCell>
                   <TableCell align="center" sx={{ px: { xs: 1, sm: 2 } }}>
-                    <Typography variant="body1" fontWeight="bold" sx={{ color: "#90caf9", fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                    <Typography variant="body1" fontWeight="bold" sx={{ color: "primary.main", fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                       {formatCurrencyBHT(transaction.totalAmount)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center" sx={{ px: { xs: 1, sm: 2 } }}>
+                    <Typography variant="body2" fontWeight="700" sx={{ color: "success.main", fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
+                      {formatCurrencyNPR(convertBhtToNpr(transaction.totalAmount))}
                     </Typography>
                   </TableCell>
                 <TableCell align="center" sx={{ display: { xs: 'none', md: 'table-cell' }, px: { xs: 1, sm: 2 } }}>
@@ -1186,7 +857,7 @@ const CoinInvestmentPage = () => {
                     <IconButton
                       size="small"
                       sx={{
-                        color: "#90caf9",
+                        color: "primary.main",
                         bgcolor: "rgba(144, 202, 249, 0.1)",
                         border: "1px solid rgba(144, 202, 249, 0.3)",
                         "&:hover": {
@@ -1203,7 +874,7 @@ const CoinInvestmentPage = () => {
                     <IconButton
                       size="small"
                       sx={{
-                        color: "#ef5350",
+                        color: "error.main",
                         bgcolor: "rgba(239, 83, 80, 0.1)",
                         border: "1px solid rgba(239, 83, 80, 0.3)",
                         "&:hover": {

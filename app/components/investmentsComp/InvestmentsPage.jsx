@@ -9,18 +9,12 @@ import SavingsIcon from "@mui/icons-material/Savings";
 import StockInvestmentPage from "./StockInvestmentPage";
 import CoinInvestmentPage from "./CoinInvestmentPage";
 import SipInvestmentPage from "./SipInvestmentPage";
+import { themedCardSx } from "../../themeStyles";
 
 const InvestmentsPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [activeTab, setActiveTab] = useState(0);
-  const themedCardSx = {
-    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
-  };
-
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
@@ -80,7 +74,7 @@ const InvestmentsPage = () => {
           }}>
           <Box
             sx={{
-              background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               borderRadius: 2,
               p: { xs: 1, sm: 1.5 },
               display: "flex",
@@ -116,10 +110,10 @@ const InvestmentsPage = () => {
           </Box>
 
           <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: { xs: 1, sm: 1.5 } }}>
-            <Chip label="Stocks" icon={<ShowChartIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid #23272f" }} />
-            <Chip label="Crypto" icon={<CurrencyBitcoinIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid #23272f" }} />
-            <Chip label="SIP" icon={<SavingsIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid #23272f" }} />
-            <Chip label="Multi-asset view" sx={{ border: "1px solid #23272f", bgcolor: "rgba(255,255,255,0.04)" }} />
+            <Chip label="Stocks" icon={<ShowChartIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid", borderColor: "divider" }} />
+            <Chip label="Crypto" icon={<CurrencyBitcoinIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid", borderColor: "divider" }} />
+            <Chip label="SIP" icon={<SavingsIcon sx={{ fontSize: 18 }} />} sx={{ border: "1px solid", borderColor: "divider" }} />
+            <Chip label="Multi-asset view" sx={{ border: "1px solid", borderColor: "divider", bgcolor: "rgba(255,255,255,0.04)" }} />
           </Stack>
         </Box>
 
@@ -133,7 +127,7 @@ const InvestmentsPage = () => {
             zIndex: 1,
             mt: { xs: 1.5, sm: 2 },
             "& .MuiTabs-indicator": {
-              background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               height: 3,
               borderRadius: 1,
             },
@@ -154,7 +148,7 @@ const InvestmentsPage = () => {
               minHeight: { xs: 48, sm: 56 },
               px: { xs: 1, sm: 2 },
               "&.Mui-selected": {
-                color: "#ff9966",
+                color: "error.main",
               },
               "&:hover": {
                 bgcolor: "rgba(255, 153, 102, 0.08)",
@@ -174,10 +168,10 @@ const InvestmentsPage = () => {
               minHeight: { xs: 48, sm: 56 },
               px: { xs: 1, sm: 2 },
               "&.Mui-selected": {
-                color: "#ff5e62",
+                color: "error.main",
               },
               "&:hover": {
-                bgcolor: "rgba(255, 94, 98, 0.08)",
+                bgcolor: "rgba(239, 83, 80, 0.08)",
               },
               transition: "all 0.3s ease",
             }}
