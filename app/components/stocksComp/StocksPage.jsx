@@ -39,6 +39,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { themedCardSx } from "../../themeStyles";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK;
 
@@ -418,7 +419,7 @@ const StocksPage = () => {
     }))
     .filter((item) => item.value > 0);
 
-  const COLORS = ['#00f2fe', '#4facfe', '#30cfd0', '#330867', '#f48fb1', '#90caf9', '#66bb6a', '#ffe082', '#ef5350'];
+  const COLORS = ['#00f2fe', '#4facfe', '#30cfd0', '#330867', '#f48fb1', 'primary.main', 'success.main', '#ffe082', 'error.main'];
 
   const globalOverallInvested = transactions.reduce((sum, t) => t.type === "BUY" ? sum + t.totalAmount : sum, 0);
   const globalCurrentInvested = Object.values(groupedTransactions).reduce((sum, txList) => sum + calculateNetInvestment(txList), 0);
@@ -487,13 +488,10 @@ const StocksPage = () => {
         <>
           <Box
             sx={{
+              ...themedCardSx,
               mb: { xs: 3, sm: 4 },
               p: { xs: 2, sm: 2.5, md: 3 },
-              background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-              backdropFilter: "blur(10px)",
               borderRadius: { xs: 2, sm: 4 },
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-              boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.4)",
               position: "relative",
               overflow: "hidden",
             }}
@@ -527,7 +525,7 @@ const StocksPage = () => {
                 {/* Metric Cards */}
                 <Box sx={{ bgcolor: "rgba(35, 39, 47, 0.4)", p: 1.5, borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.05)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TOTAL STOCKS</Typography>
-                  <Typography variant="h6" sx={{ color: "#90caf9", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.25rem" } }}>{Object.keys(groupedTransactions).length}</Typography>
+                  <Typography variant="h6" sx={{ color: "primary.main", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.25rem" } }}>{Object.keys(groupedTransactions).length}</Typography>
                 </Box>
                 <Box sx={{ bgcolor: "rgba(35, 39, 47, 0.4)", p: 1.5, borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.05)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TRANSACTIONS</Typography>
@@ -539,16 +537,16 @@ const StocksPage = () => {
                 </Box>
 
                 <Box sx={{ bgcolor: "rgba(102, 187, 106, 0.1)", p: 1.5, borderRadius: 2, border: "1px solid rgba(102, 187, 106, 0.3)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <Typography variant="caption" sx={{ color: "#66bb6a", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>CURRENT INVESTED</Typography>
-                  <Typography variant="body1" sx={{ color: "#e3eafc", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{formatCurrency(globalCurrentInvested)}</Typography>
+                  <Typography variant="caption" sx={{ color: "success.main", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>CURRENT INVESTED</Typography>
+                  <Typography variant="body1" sx={{ color: "text.primary", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{formatCurrency(globalCurrentInvested)}</Typography>
                 </Box>
                 <Box sx={{ bgcolor: "rgba(239, 83, 80, 0.1)", p: 1.5, borderRadius: 2, border: "1px solid rgba(239, 83, 80, 0.3)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <Typography variant="caption" sx={{ color: "#ef5350", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TOTAL SOLD</Typography>
-                  <Typography variant="body1" sx={{ color: "#e3eafc", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{formatCurrency(globalTotalSold)}</Typography>
+                  <Typography variant="caption" sx={{ color: "error.main", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TOTAL SOLD</Typography>
+                  <Typography variant="body1" sx={{ color: "text.primary", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{formatCurrency(globalTotalSold)}</Typography>
                 </Box>
                 <Box sx={{ bgcolor: globalTotalProfit >= 0 ? "rgba(41, 182, 246, 0.1)" : "rgba(239, 83, 80, 0.1)", p: 1.5, borderRadius: 2, border: `1px solid ${globalTotalProfit >= 0 ? 'rgba(41, 182, 246, 0.3)' : 'rgba(239, 83, 80, 0.3)'}`, textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <Typography variant="caption" sx={{ color: globalTotalProfit >= 0 ? "#29b6f6" : "#ef5350", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>OVERALL P/L</Typography>
-                  <Typography variant="body1" sx={{ color: globalTotalProfit >= 0 ? "#29b6f6" : "#ef5350", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{globalTotalProfit > 0 ? "+" : ""}{formatCurrency(globalTotalProfit)}</Typography>
+                  <Typography variant="caption" sx={{ color: globalTotalProfit >= 0 ? "primary.main" : "error.main", fontWeight: "bold", display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>OVERALL P/L</Typography>
+                  <Typography variant="body1" sx={{ color: globalTotalProfit >= 0 ? "primary.main" : "error.main", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{globalTotalProfit > 0 ? "+" : ""}{formatCurrency(globalTotalProfit)}</Typography>
                 </Box>
               </Box>
 
@@ -639,7 +637,7 @@ const StocksPage = () => {
                       expandIcon={
                         <ExpandMoreIcon
                           sx={{
-                            color: "#90caf9",
+                            color: "primary.main",
                             fontSize: { xs: 24, sm: 28 },
                           }}
                         />
@@ -718,7 +716,7 @@ const StocksPage = () => {
                             <Typography
                               variant="body2"
                               sx={{
-                                color: "#90caf9",
+                                color: "primary.main",
                                 fontWeight: 500,
                                 fontSize: { xs: "0.8rem", sm: "0.875rem" },
                               }}
@@ -751,12 +749,12 @@ const StocksPage = () => {
                                     size="small"
                                     sx={{
                                       bgcolor: "rgba(102, 187, 106, 0.12)",
-                                      color: "#66bb6a",
+                                      color: "success.main",
                                       border: "1px solid rgba(102, 187, 106, 0.4)",
                                       fontWeight: 600,
                                       fontSize: { xs: "0.6rem", sm: "0.68rem" },
                                       height: { xs: 20, sm: 22 },
-                                      "& .MuiChip-icon": { color: "#66bb6a" },
+                                      "& .MuiChip-icon": { color: "success.main" },
                                       "& .MuiChip-label": { px: { xs: 0.75, sm: 1 } },
                                     }}
                                   />
@@ -772,12 +770,12 @@ const StocksPage = () => {
                                     size="small"
                                     sx={{
                                       bgcolor: "rgba(239, 83, 80, 0.12)",
-                                      color: "#ef5350",
+                                      color: "error.main",
                                       border: "1px solid rgba(239, 83, 80, 0.4)",
                                       fontWeight: 600,
                                       fontSize: { xs: "0.6rem", sm: "0.68rem" },
                                       height: { xs: 20, sm: 22 },
-                                      "& .MuiChip-icon": { color: "#ef5350" },
+                                      "& .MuiChip-icon": { color: "error.main" },
                                       "& .MuiChip-label": { px: { xs: 0.75, sm: 1 } },
                                     }}
                                   />
@@ -813,7 +811,7 @@ const StocksPage = () => {
                                 md: "140px",
                               },
                               flex: { xs: "none", lg: "0 0 140px" },
-                              border: "1px solid #23272f",
+                              border: "1px solid", borderColor: "divider",
                             }}
                           >
                             <Typography
@@ -832,7 +830,7 @@ const StocksPage = () => {
                               variant="body1"
                               fontWeight="bold"
                               sx={{
-                                color: "#90caf9",
+                                color: "primary.main",
                                 mt: 0.5,
                                 fontSize: { xs: "0.875rem", sm: "1rem" },
                               }}
@@ -883,7 +881,7 @@ const StocksPage = () => {
                               variant="body1"
                               fontWeight="bold"
                               sx={{
-                                color: "#66bb6a",
+                                color: "success.main",
                                 mt: 0.5,
                                 fontSize: { xs: "0.875rem", sm: "1rem" },
                               }}
@@ -935,7 +933,7 @@ const StocksPage = () => {
                                 variant="body1"
                                 fontWeight="bold"
                                 sx={{
-                                  color: "#ef5350",
+                                  color: "error.main",
                                   mt: 0.5,
                                   fontSize: { xs: "0.875rem", sm: "1rem" },
                                 }}
@@ -987,7 +985,7 @@ const StocksPage = () => {
                               variant="body1"
                               fontWeight="bold"
                               sx={{
-                                color: "#90caf9",
+                                color: "primary.main",
                                 mt: 0.5,
                                 fontSize: { xs: "0.875rem", sm: "1rem" },
                               }}
@@ -1046,9 +1044,9 @@ const StocksPage = () => {
                               sx={{
                                 color:
                                   profitLoss > 0
-                                    ? "#66bb6a"
+                                    ? "success.main"
                                     : profitLoss < 0
-                                    ? "#ef5350"
+                                    ? "error.main"
                                     : "text.secondary",
                                 mt: 0.5,
                                 fontSize: { xs: "0.875rem", sm: "1rem" },
@@ -1131,11 +1129,11 @@ const StocksPage = () => {
                                 sx={{
                                   fontWeight: "bold",
                                   fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                  bgcolor: "#1e1e1e",
-                                  color: "#f5f6fa",
+                                  bgcolor: "background.paper",
+                                  color: "text.primary",
                                   letterSpacing: 0.5,
                                   textTransform: "uppercase",
-                                  borderBottom: "2px solid #90caf9",
+                                  borderBottom: "2px solid primary.main",
                                   px: { xs: 1, sm: 2 },
                                   py: { xs: 1.5, sm: 2 },
                                 }}
@@ -1147,11 +1145,11 @@ const StocksPage = () => {
                                 sx={{
                                   fontWeight: "bold",
                                   fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                  bgcolor: "#1e1e1e",
-                                  color: "#f5f6fa",
+                                  bgcolor: "background.paper",
+                                  color: "text.primary",
                                   letterSpacing: 0.5,
                                   textTransform: "uppercase",
-                                  borderBottom: "2px solid #90caf9",
+                                  borderBottom: "2px solid primary.main",
                                   px: { xs: 1, sm: 2 },
                                   py: { xs: 1.5, sm: 2 },
                                 }}
@@ -1163,11 +1161,11 @@ const StocksPage = () => {
                                 sx={{
                                   fontWeight: "bold",
                                   fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                  bgcolor: "#1e1e1e",
-                                  color: "#f5f6fa",
+                                  bgcolor: "background.paper",
+                                  color: "text.primary",
                                   letterSpacing: 0.5,
                                   textTransform: "uppercase",
-                                  borderBottom: "2px solid #90caf9",
+                                  borderBottom: "2px solid primary.main",
                                   px: { xs: 1, sm: 2 },
                                   py: { xs: 1.5, sm: 2 },
                                 }}
@@ -1179,11 +1177,11 @@ const StocksPage = () => {
                                 sx={{
                                   fontWeight: "bold",
                                   fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                  bgcolor: "#1e1e1e",
-                                  color: "#f5f6fa",
+                                  bgcolor: "background.paper",
+                                  color: "text.primary",
                                   letterSpacing: 0.5,
                                   textTransform: "uppercase",
-                                  borderBottom: "2px solid #90caf9",
+                                  borderBottom: "2px solid primary.main",
                                   px: { xs: 1, sm: 2 },
                                   py: { xs: 1.5, sm: 2 },
                                   display: { xs: "none", sm: "table-cell" },
@@ -1196,11 +1194,11 @@ const StocksPage = () => {
                                 sx={{
                                   fontWeight: "bold",
                                   fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                  bgcolor: "#1e1e1e",
-                                  color: "#f5f6fa",
+                                  bgcolor: "background.paper",
+                                  color: "text.primary",
                                   letterSpacing: 0.5,
                                   textTransform: "uppercase",
-                                  borderBottom: "2px solid #90caf9",
+                                  borderBottom: "2px solid primary.main",
                                   px: { xs: 1, sm: 2 },
                                   py: { xs: 1.5, sm: 2 },
                                   display: { xs: "none", md: "table-cell" },
@@ -1213,11 +1211,11 @@ const StocksPage = () => {
                                 sx={{
                                   fontWeight: "bold",
                                   fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                  bgcolor: "#1e1e1e",
-                                  color: "#f5f6fa",
+                                  bgcolor: "background.paper",
+                                  color: "text.primary",
                                   letterSpacing: 0.5,
                                   textTransform: "uppercase",
-                                  borderBottom: "2px solid #90caf9",
+                                  borderBottom: "2px solid primary.main",
                                   px: { xs: 1, sm: 2 },
                                   py: { xs: 1.5, sm: 2 },
                                 }}
@@ -1314,7 +1312,7 @@ const StocksPage = () => {
                                     variant="body2"
                                     fontWeight="600"
                                     sx={{
-                                      color: "#90caf9",
+                                      color: "primary.main",
                                       fontSize: {
                                         xs: "0.75rem",
                                         sm: "0.875rem",
@@ -1384,7 +1382,7 @@ const StocksPage = () => {
                                         handleEditTransaction(transaction)
                                       }
                                       sx={{
-                                        color: "#90caf9",
+                                        color: "primary.main",
                                         width: { xs: 32, sm: 36 },
                                         height: { xs: 32, sm: 36 },
                                         "&:hover": {
@@ -1410,7 +1408,7 @@ const StocksPage = () => {
                                         deleteTransactionMutation.isPending
                                       }
                                       sx={{
-                                        color: "#ef5350",
+                                        color: "error.main",
                                         width: { xs: 32, sm: 36 },
                                         height: { xs: 32, sm: 36 },
                                         "&:hover": {
@@ -1452,7 +1450,7 @@ const StocksPage = () => {
               sx: {
                 borderRadius: { xs: 0, sm: 3 },
                 bgcolor: "background.paper",
-                border: { xs: "none", sm: "1px solid #23272f" },
+                border: { xs: "none", sm: "1px solid", borderColor: "divider" },
                 boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
                 m: { xs: 0, sm: 2 },
               },
@@ -1694,7 +1692,7 @@ const StocksPage = () => {
                       p: { xs: 2, sm: 2.5 },
                       bgcolor: "background.default",
                       borderRadius: 2,
-                      border: "2px solid #90caf9",
+                      border: "2px solid primary.main",
                     }}
                   >
                     <Typography
@@ -1712,7 +1710,7 @@ const StocksPage = () => {
                       variant="h5"
                       fontWeight="bold"
                       sx={{
-                        color: "#90caf9",
+                        color: "primary.main",
                         mt: 0.5,
                         fontSize: { xs: "1.25rem", sm: "1.5rem" },
                       }}
@@ -1806,7 +1804,7 @@ const StocksPage = () => {
               sx: {
                 borderRadius: { xs: 2, sm: 3 },
                 bgcolor: "background.paper",
-                border: "1px solid #23272f",
+                border: "1px solid", borderColor: "divider",
                 boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
                 m: { xs: 2, sm: 2 },
               },
@@ -1819,7 +1817,7 @@ const StocksPage = () => {
                 display: "flex",
                 alignItems: "center",
                 gap: { xs: 0.75, sm: 1 },
-                color: "#ef5350",
+                color: "error.main",
                 px: { xs: 2, sm: 3 },
                 pt: { xs: 2, sm: 3 },
                 pb: { xs: 1.5, sm: 2 },
@@ -1843,7 +1841,7 @@ const StocksPage = () => {
                     height: { xs: 56, sm: 64 },
                     borderRadius: "50%",
                     bgcolor: "rgba(239, 83, 80, 0.1)",
-                    border: "2px solid #ef5350",
+                    border: "2px solid", borderColor: "error.main",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1852,7 +1850,7 @@ const StocksPage = () => {
                   }}
                 >
                   <DeleteIcon
-                    sx={{ fontSize: { xs: 28, sm: 32 }, color: "#ef5350" }}
+                    sx={{ fontSize: { xs: 28, sm: 32 }, color: "error.main" }}
                   />
                 </Box>
                 <Typography
@@ -1883,7 +1881,7 @@ const StocksPage = () => {
                       bgcolor: "background.default",
                       p: { xs: 1.5, sm: 2 },
                       borderRadius: 2,
-                      border: "1px solid #23272f",
+                      border: "1px solid", borderColor: "divider",
                       mt: 2,
                     }}
                   >
@@ -1923,7 +1921,7 @@ const StocksPage = () => {
                       variant="body2"
                       fontWeight="bold"
                       sx={{
-                        color: "#90caf9",
+                        color: "primary.main",
                         mt: 0.5,
                         fontSize: { xs: "0.8rem", sm: "0.875rem" },
                       }}
@@ -1956,7 +1954,7 @@ const StocksPage = () => {
                   order: { xs: 2, sm: 1 },
                   "&:hover": {
                     bgcolor: "rgba(144, 202, 249, 0.1)",
-                    borderColor: "#90caf9",
+                    borderColor: "primary.main",
                   },
                 }}
               >
@@ -1968,7 +1966,7 @@ const StocksPage = () => {
                 fullWidth
                 disabled={deleteTransactionMutation.isPending}
                 sx={{
-                  bgcolor: "#ef5350",
+                  bgcolor: "error.main",
                   color: "#fff",
                   fontWeight: 600,
                   textTransform: "none",

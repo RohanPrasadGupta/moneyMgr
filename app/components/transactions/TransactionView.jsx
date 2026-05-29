@@ -48,6 +48,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 import { useCategoryQuery } from "../../services/useCategoryServices";
+import { themedCardSx, gradients, cancelButtonSx, primaryButtonSx, dangerButtonSx, successButtonSx } from "../../themeStyles";
 
 function formatDateTime(dateString) {
   return dayjs(dateString).format("MMM D, YYYY h:mm A");
@@ -113,12 +114,6 @@ function getTotals(transactions) {
 const TransactionView = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const themedCardSx = {
-    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
-  };
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [selectedTxId, setSelectedTxId] = React.useState(null);
   const [currentYear, setCurrentYear] = React.useState("");
@@ -360,7 +355,7 @@ const TransactionView = () => {
           gap: 2,
         }}
       >
-        <CircularProgress size={60} sx={{ color: "#ff9966" }} />
+        <CircularProgress size={60} sx={{ color: "error.main" }} />
         <Typography variant="body1" sx={{ color: "text.secondary", fontSize: { xs: "0.875rem", sm: "1rem" } }}>
           Loading transactions...
         </Typography>
@@ -393,7 +388,7 @@ const TransactionView = () => {
             variant="h4"
             fontWeight={800}
             sx={{
-              background: "linear-gradient(135deg, #ff9966, #ff5e62)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -438,7 +433,7 @@ const TransactionView = () => {
                   justifyContent: { xs: "space-between", sm: "flex-start" },
                 }}
               >
-                <ReceiptLongIcon sx={{ color: "#ff9966", fontSize: { xs: 20, sm: 24 } }} />
+                <ReceiptLongIcon sx={{ color: "error.main", fontSize: { xs: 20, sm: 24 } }} />
                 <Select
                   value={currentYear}
                   onChange={(e) => setCurrentYear(e.target.value)}
@@ -510,7 +505,7 @@ const TransactionView = () => {
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                  <TrendingUpIcon sx={{ color: "#43a047", fontSize: { xs: 18, sm: 20 } }} />
+                  <TrendingUpIcon sx={{ color: "success.dark", fontSize: { xs: 18, sm: 20 } }} />
                   <Typography
                     variant="caption"
                     sx={{
@@ -525,7 +520,7 @@ const TransactionView = () => {
                   variant="h6"
                   fontWeight={700}
                   sx={{
-                    color: "#43a047",
+                    color: "success.dark",
                     fontSize: { xs: "0.95rem", sm: "1.25rem" },
                     wordBreak: "break-all",
                   }}
@@ -549,7 +544,7 @@ const TransactionView = () => {
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                  <TrendingDownIcon sx={{ color: "#ef5350", fontSize: { xs: 18, sm: 20 } }} />
+                  <TrendingDownIcon sx={{ color: "error.main", fontSize: { xs: 18, sm: 20 } }} />
                   <Typography
                     variant="caption"
                     sx={{
@@ -564,7 +559,7 @@ const TransactionView = () => {
                   variant="h6"
                   fontWeight={700}
                   sx={{
-                    color: "#ef5350",
+                    color: "error.main",
                     fontSize: { xs: "0.95rem", sm: "1.25rem" },
                     wordBreak: "break-all",
                   }}
@@ -588,7 +583,7 @@ const TransactionView = () => {
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                  <AccountBalanceWalletIcon sx={{ color: netTotal >= 0 ? "#64b5f6" : "#ff5e62", fontSize: { xs: 18, sm: 20 } }} />
+                  <AccountBalanceWalletIcon sx={{ color: netTotal >= 0 ? "primary.main" : "error.main", fontSize: { xs: 18, sm: 20 } }} />
                   <Typography
                     variant="caption"
                     sx={{
@@ -603,7 +598,7 @@ const TransactionView = () => {
                   variant="h6"
                   fontWeight={700}
                   sx={{
-                    color: netTotal >= 0 ? "#64b5f6" : "#ff5e62",
+                    color: netTotal >= 0 ? "primary.main" : "error.main",
                     fontSize: { xs: "0.95rem", sm: "1.25rem" },
                     wordBreak: "break-all",
                   }}
@@ -669,7 +664,7 @@ const TransactionView = () => {
                   sx={{
                     bgcolor: "background.paper",
                     borderRadius: 2,
-                    border: "1px solid #23272f",
+                    border: "1px solid", borderColor: "divider",
                     overflow: "hidden",
                   }}
                 >
@@ -688,7 +683,7 @@ const TransactionView = () => {
                   sx={{
                     bgcolor: "background.paper",
                     borderRadius: 2,
-                    border: "1px solid #23272f",
+                    border: "1px solid", borderColor: "divider",
                     overflow: "hidden",
                   }}
                 >
@@ -708,7 +703,7 @@ const TransactionView = () => {
                     sx={{
                       bgcolor: "background.paper",
                       borderRadius: 2,
-                      border: "1px solid #23272f",
+                      border: "1px solid", borderColor: "divider",
                       overflow: "hidden",
                     }}
                   >
@@ -720,7 +715,7 @@ const TransactionView = () => {
                   <IconButton
                     onClick={() => setSortDir((prev) => (prev === "desc" ? "asc" : "desc"))}
                     sx={{
-                      border: "1px solid #23272f",
+                      border: "1px solid", borderColor: "divider",
                       bgcolor: "background.paper",
                       borderRadius: 2,
                     }}
@@ -737,27 +732,27 @@ const TransactionView = () => {
               <Chip
                 icon={<TuneIcon />}
                 label="Filters applied"
-                sx={{ bgcolor: "rgba(255,255,255,0.05)", border: "1px solid #23272f" }}
+                sx={{ bgcolor: "rgba(255,255,255,0.05)", border: "1px solid", borderColor: "divider" }}
               />
               {typeFilter !== "all" && (
                 <Chip
                   label={`Type: ${typeFilter}`}
                   onDelete={() => setTypeFilter("all")}
-                  sx={{ border: "1px solid #23272f" }}
+                  sx={{ border: "1px solid", borderColor: "divider" }}
                 />
               )}
               {accountFilter !== "all" && (
                 <Chip
                   label={`Account: ${accountFilter}`}
                   onDelete={() => setAccountFilter("all")}
-                  sx={{ border: "1px solid #23272f" }}
+                  sx={{ border: "1px solid", borderColor: "divider" }}
                 />
               )}
               {searchTerm && (
                 <Chip
                   label={`Search: ${searchTerm}`}
                   onDelete={() => setSearchTerm("")}
-                  sx={{ border: "1px solid #23272f" }}
+                  sx={{ border: "1px solid", borderColor: "divider" }}
                 />
               )}
             </Stack>
@@ -782,7 +777,7 @@ const TransactionView = () => {
               width: { xs: 60, sm: 80 },
               height: { xs: 60, sm: 80 },
               borderRadius: "50%",
-              background: "linear-gradient(135deg, #ff9966, #ff5e62)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -849,7 +844,7 @@ const TransactionView = () => {
                         width: { xs: 40, sm: 48 },
                         height: { xs: 40, sm: 48 },
                         borderRadius: 2,
-                        background: "linear-gradient(135deg, #ff9966, #ff5e62)",
+                        background: "linear-gradient(135deg, #ef5350, #e53935)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -903,7 +898,7 @@ const TransactionView = () => {
                         variant="body1" 
                         fontWeight={700} 
                         sx={{ 
-                          color: "#43a047",
+                          color: "success.dark",
                           fontSize: { xs: "0.9rem", sm: "1rem" },
                         }}
                       >
@@ -925,7 +920,7 @@ const TransactionView = () => {
                         variant="body1" 
                         fontWeight={700} 
                         sx={{ 
-                          color: "#ef5350",
+                          color: "error.main",
                           fontSize: { xs: "0.9rem", sm: "1rem" },
                         }}
                       >
@@ -953,7 +948,7 @@ const TransactionView = () => {
                         "&:hover": {
                           transform: { xs: "none", sm: "translateY(-2px)" },
                           boxShadow: `0 4px 12px ${tx.type === "Income" ? "rgba(67, 160, 71, 0.2)" : "rgba(239, 83, 80, 0.2)"}`,
-                          borderColor: tx.type === "Income" ? "#43a047" : "#ff5e62",
+                          borderColor: tx.type === "Income" ? "success.dark" : "error.main",
                         },
                       }}
                     >
@@ -982,9 +977,9 @@ const TransactionView = () => {
                           }}
                         >
                           {tx.type === "Income" ? (
-                            <ArrowUpwardIcon sx={{ color: "#43a047", fontSize: { xs: 20, sm: 24 } }} />
+                            <ArrowUpwardIcon sx={{ color: "success.dark", fontSize: { xs: 20, sm: 24 } }} />
                           ) : (
-                            <ArrowDownwardIcon sx={{ color: "#ef5350", fontSize: { xs: 20, sm: 24 } }} />
+                            <ArrowDownwardIcon sx={{ color: "error.main", fontSize: { xs: 20, sm: 24 } }} />
                           )}
                         </Box>
 
@@ -1013,7 +1008,7 @@ const TransactionView = () => {
                                 height: { xs: 18, sm: 20 },
                                 fontSize: { xs: "0.65rem", sm: "0.7rem" },
                                 bgcolor: "background.default",
-                                border: "1px solid #23272f",
+                                border: "1px solid", borderColor: "divider",
                               }}
                             />
                           </Stack>
@@ -1037,7 +1032,7 @@ const TransactionView = () => {
                             sx={{
                               mt: 0.5,
                               bgcolor: "rgba(255,255,255,0.04)",
-                              border: "1px solid #23272f",
+                              border: "1px solid", borderColor: "divider",
                               fontSize: { xs: "0.7rem", sm: "0.75rem" },
                             }}
                           />
@@ -1060,7 +1055,7 @@ const TransactionView = () => {
                             variant="h6"
                             fontWeight={700}
                             sx={{
-                              color: tx.type === "Income" ? "#43a047" : "#ef5350",
+                              color: tx.type === "Income" ? "success.dark" : "error.main",
                               fontSize: { xs: "1rem", sm: "1.25rem" },
                             }}
                           >
@@ -1083,7 +1078,7 @@ const TransactionView = () => {
                             size="small"
                             onClick={() => openEditDialog(tx)}
                             sx={{
-                              color: "#90caf9",
+                              color: "primary.main",
                               bgcolor: "rgba(144, 202, 249, 0.1)",
                               border: "1px solid rgba(144, 202, 249, 0.3)",
                               width: { xs: 32, sm: 36 },
@@ -1101,7 +1096,7 @@ const TransactionView = () => {
                             size="small"
                             onClick={() => handleDeleteClick(tx._id)}
                             sx={{
-                              color: "#ef5350",
+                              color: "error.main",
                               bgcolor: "rgba(239, 83, 80, 0.1)",
                               border: "1px solid rgba(239, 83, 80, 0.3)",
                               width: { xs: 32, sm: 36 },
@@ -1137,14 +1132,14 @@ const TransactionView = () => {
           sx: {
             borderRadius: { xs: 0, sm: 3 },
             bgcolor: "background.paper",
-            border: { xs: "none", sm: "1px solid #23272f" },
+            border: { xs: "none", sm: "1px solid", borderColor: "divider" },
             m: { xs: 0, sm: 2 },
           },
         }}
       >
         <DialogTitle
           sx={{
-            borderBottom: "1px solid #23272f",
+            borderBottom: "1px solid", borderBottomColor: "divider",
             pb: 2,
             px: { xs: 2, sm: 3 },
             pt: { xs: 2, sm: 3 },
@@ -1157,7 +1152,7 @@ const TransactionView = () => {
                   width: { xs: 36, sm: 40 },
                   height: { xs: 36, sm: 40 },
                   borderRadius: "50%",
-                  background: "linear-gradient(135deg, #90caf9, #42a5f5)",
+                  background: "linear-gradient(135deg, #64b5f6, #42a5f5)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1254,7 +1249,8 @@ const TransactionView = () => {
                   <Paper
                     sx={{
                       flex: 1,
-                      border: editData?.type === "Income" ? "2px solid #43a047" : "1px solid #23272f",
+                      border: editData?.type === "Income" ? "2px solid" : "1px solid",
+                      borderColor: editData?.type === "Income" ? "success.dark" : "divider",
                       borderRadius: 2,
                       bgcolor: editData?.type === "Income" ? "rgba(67, 160, 71, 0.1)" : "background.default",
                       transition: "all 0.2s ease",
@@ -1262,7 +1258,7 @@ const TransactionView = () => {
                   >
                     <FormControlLabel
                       value="Income"
-                      control={<Radio sx={{ color: "#43a047" }} />}
+                      control={<Radio sx={{ color: "success.dark" }} />}
                       label={<span style={{ fontSize: isMobile ? "0.875rem" : "1rem" }}>Income</span>}
                       sx={{ p: { xs: 1, sm: 1.5 }, width: "100%" }}
                     />
@@ -1270,15 +1266,16 @@ const TransactionView = () => {
                   <Paper
                     sx={{
                       flex: 1,
-                      border: editData?.type === "Expense" ? "2px solid #ff5e62" : "1px solid #23272f",
+                      border: editData?.type === "Expense" ? "2px solid" : "1px solid",
+                      borderColor: editData?.type === "Expense" ? "error.main" : "divider",
                       borderRadius: 2,
-                      bgcolor: editData?.type === "Expense" ? "rgba(255, 94, 98, 0.1)" : "background.default",
+                      bgcolor: editData?.type === "Expense" ? "rgba(239, 83, 80, 0.1)" : "background.default",
                       transition: "all 0.2s ease",
                     }}
                   >
                     <FormControlLabel
                       value="Expense"
-                      control={<Radio sx={{ color: "#ff5e62" }} />}
+                      control={<Radio sx={{ color: "error.main" }} />}
                       label={<span style={{ fontSize: isMobile ? "0.875rem" : "1rem" }}>Expense</span>}
                       sx={{ p: { xs: 1, sm: 1.5 }, width: "100%" }}
                     />
@@ -1305,12 +1302,12 @@ const TransactionView = () => {
                     maxHeight: { xs: 150, sm: 200 },
                     overflowY: "auto",
                     bgcolor: "background.default",
-                    border: "1px solid #23272f",
+                    border: "1px solid", borderColor: "divider",
                     borderRadius: 2,
                     "&::-webkit-scrollbar": { width: 6 },
                     "&::-webkit-scrollbar-track": { background: "transparent" },
                     "&::-webkit-scrollbar-thumb": {
-                      background: editData?.type === "Income" ? "rgba(67, 160, 71, 0.3)" : "rgba(255, 94, 98, 0.3)",
+                      background: editData?.type === "Income" ? "rgba(67, 160, 71, 0.3)" : "rgba(239, 83, 80, 0.3)",
                       borderRadius: 3,
                     },
                   }}
@@ -1344,12 +1341,12 @@ const TransactionView = () => {
                           }
                           sx={{
                             bgcolor: editData?.category === option?.name
-                              ? (editData?.type === "Income" ? "#43a047" : "#ff5e62")
+                              ? (editData?.type === "Income" ? "success.dark" : "error.main")
                               : "rgba(255,255,255,0.05)",
                             color: editData?.category === option?.name ? "#fff" : "text.primary",
                             border: editData?.category === option?.name
                               ? "none"
-                              : `1px solid ${editData?.type === "Income" ? "rgba(67, 160, 71, 0.3)" : "rgba(255, 94, 98, 0.3)"}`,
+                              : `1px solid ${editData?.type === "Income" ? "rgba(67, 160, 71, 0.3)" : "rgba(239, 83, 80, 0.3)"}`,
                             fontWeight: editData?.category === option?.name ? 700 : 400,
                             fontSize: { xs: "0.75rem", sm: "0.8125rem" },
                             height: { xs: 26, sm: 32 },
@@ -1393,7 +1390,7 @@ const TransactionView = () => {
                       control={
                         <Radio
                           sx={{
-                            color: editData?.type === "Income" ? "#43a047" : "#ff5e62",
+                            color: editData?.type === "Income" ? "success.dark" : "error.main",
                           }}
                         />
                       }
@@ -1475,7 +1472,7 @@ const TransactionView = () => {
             onClick={handleEditSubmit}
             disabled={updateTransactionMutation.isPending}
             sx={{
-              background: "linear-gradient(135deg, #90caf9, #42a5f5)",
+              background: "linear-gradient(135deg, #64b5f6, #42a5f5)",
               color: "#fff",
               fontWeight: 600,
               px: { xs: 2, sm: 3 },
@@ -1484,7 +1481,7 @@ const TransactionView = () => {
               textTransform: "none",
               fontSize: { xs: "0.875rem", sm: "1rem" },
               "&:hover": {
-                background: "linear-gradient(135deg, #64b5f6, #1e88e5)",
+                background: "linear-gradient(135deg, #64b5f6, #42a5f5)",
               },
               "&:disabled": {
                 background: "linear-gradient(135deg, #757575, #9e9e9e)",
@@ -1512,14 +1509,14 @@ const TransactionView = () => {
           sx: {
             borderRadius: { xs: 2, sm: 3 },
             bgcolor: "background.paper",
-            border: "1px solid #23272f",
+            border: "1px solid", borderColor: "divider",
             m: { xs: 2, sm: 2 },
           },
         }}
       >
         <DialogTitle
           sx={{
-            borderBottom: "1px solid #23272f",
+            borderBottom: "1px solid", borderBottomColor: "divider",
             pb: 2,
             px: { xs: 2, sm: 3 },
             pt: { xs: 2, sm: 3 },
@@ -1537,7 +1534,7 @@ const TransactionView = () => {
                 justifyContent: "center",
               }}
             >
-              <DeleteIcon sx={{ color: "#ef5350", fontSize: { xs: 18, sm: 20 } }} />
+              <DeleteIcon sx={{ color: "error.main", fontSize: { xs: 18, sm: 20 } }} />
             </Box>
             <Box>
               <Typography 
@@ -1565,7 +1562,7 @@ const TransactionView = () => {
             sx={{
               p: { xs: 1.5, sm: 2 },
               bgcolor: "background.default",
-              border: "1px solid #23272f",
+              border: "1px solid", borderColor: "divider",
               borderRadius: 2,
             }}
           >
@@ -1601,7 +1598,7 @@ const TransactionView = () => {
             onClick={handleConfirmDelete}
             disabled={mutation.isPending}
             sx={{
-              background: "linear-gradient(135deg, #ef5350, #f44336)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               color: "#fff",
               fontWeight: 600,
               px: { xs: 2, sm: 3 },

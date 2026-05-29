@@ -5,17 +5,12 @@ import Navbar from "../components/navbar/Navbar";
 import SpeedDialNavbar from "../components/navbar/SpeedDialNavbar";
 import QueryProvider from "./QueryProvider";
 import { useMediaQuery, useTheme } from "@mui/material";
+import { themedCardSx } from "../themeStyles";
 
 const layout = ({ children }) => {
   const theme = useTheme();
   const isTabletOrBelow = useMediaQuery(theme.breakpoints.down("md"));
   const isBigScreen = useMediaQuery(theme.breakpoints.up("md"));
-  const themedCardSx = {
-    background: "linear-gradient(145deg, rgba(30, 34, 45, 0.9) 0%, rgba(18, 18, 18, 0.95) 100%)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255, 255, 255, 0.05)",
-    boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
-  };
 
   return (
     <Box
@@ -43,7 +38,7 @@ const layout = ({ children }) => {
       {isBigScreen && (
         <Box
           sx={{
-            ...themedCardSx,
+            // ...themedCardSx,
             width: 240,
             marginLeft: 2,
             display: "flex",
@@ -72,7 +67,7 @@ const layout = ({ children }) => {
           maxWidth: "100vw",
           // Firefox
           scrollbarWidth: "thin",
-          scrollbarColor: "#3a3f44 transparent",
+          scrollbarColor: "#23272f transparent",
           // Webkit
           "&::-webkit-scrollbar": {
             width: 10,
@@ -81,13 +76,13 @@ const layout = ({ children }) => {
             background: "transparent",
           },
           "&::-webkit-scrollbar-thumb": {
-            background: "linear-gradient(180deg, #44494f 0%, #2a2a2f 100%)",
+            background: "linear-gradient(180deg, #3a3f47 0%, #252a33 100%)",
             borderRadius: 8,
             border: "2px solid transparent",
             backgroundClip: "padding-box",
           },
           "&::-webkit-scrollbar-thumb:hover": {
-            background: "#616568",
+            background: "#64b5f6",
           },
         }}
       >

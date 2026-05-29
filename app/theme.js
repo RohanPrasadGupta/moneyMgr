@@ -1,36 +1,48 @@
 import { createTheme } from "@mui/material/styles";
+import { colors } from "./themeStyles";
 
 const theme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#90caf9", // Light blue
-      contrastText: "#0d1117",
+      main: colors.primary,
+      dark: colors.primaryDark,
+      contrastText: colors.bg.default,
     },
     secondary: {
-      main: "#f48fb1", // Pink accent
-      contrastText: "#0d1117",
+      main: colors.text.secondary,
+      contrastText: colors.bg.default,
     },
     success: {
-      main: "#66bb6a",
-      contrastText: "#0d1117",
+      main: colors.success,
+      dark: colors.successDark,
+      contrastText: colors.bg.default,
     },
     error: {
-      main: "#ef5350",
-      contrastText: "#0d1117",
+      main: colors.error,
+      dark: colors.errorDark,
+      contrastText: colors.bg.default,
+    },
+    warning: {
+      main: colors.warning,
+      contrastText: colors.bg.default,
     },
     info: {
-      main: "#29b6f6",
-      contrastText: "#0d1117",
+      main: colors.primary,
+      contrastText: colors.bg.default,
     },
     background: {
-      default: "#121212", // true dark
-      paper: "#1e1e1e", // slightly lighter for cards
+      default: colors.bg.default,
+      paper: colors.bg.paper,
     },
     text: {
-      primary: "#f5f6fa", // bright for dark bg
-      secondary: "#b0b8c1", // muted but visible
-      disabled: "#6b778c", // for disabled text
+      primary: colors.text.primary,
+      secondary: colors.text.secondary,
+      disabled: colors.text.disabled,
+    },
+    divider: colors.border,
+    common: {
+      white: "#ffffff",
     },
   },
   typography: {
@@ -38,26 +50,74 @@ const theme = createTheme({
     fontWeightBold: 700,
     h4: {
       fontWeight: 700,
-      color: "#e3eafc",
+      color: colors.text.heading,
     },
     h5: {
       fontWeight: 700,
-      color: "#e3eafc",
+      color: colors.text.heading,
+    },
+    h6: {
+      fontWeight: 700,
+      color: colors.text.heading,
     },
     button: {
       textTransform: "none",
       fontWeight: 600,
-      letterSpacing: 1,
+      letterSpacing: 0.5,
     },
   },
+  shape: {
+    borderRadius: 14,
+  },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: colors.bg.default,
+          color: colors.text.primary,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundImage: "none",
+          backgroundColor: colors.bg.paper,
+          border: `1px solid ${colors.border}`,
+          borderRadius: 16,
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: colors.border,
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: colors.primary,
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: colors.primary,
+          },
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
           borderRadius: 12,
           textTransform: "none",
           fontWeight: 700,
-          transition: "transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease",
+          transition:
+            "transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease",
         },
         contained: {
           boxShadow: "0 6px 14px rgba(0,0,0,0.2)",
@@ -72,9 +132,27 @@ const theme = createTheme({
         },
       },
     },
-  },
-  shape: {
-    borderRadius: 14,
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiFab: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+        },
+      },
+    },
+    MuiCircularProgress: {
+      styleOverrides: {
+        root: {
+          color: colors.primary,
+        },
+      },
+    },
   },
 });
 

@@ -13,22 +13,23 @@ import {
   TableHead,
   TableRow,
   Button,
-  TextField,
   IconButton,
   CircularProgress,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Stack,
   Chip,
 } from "@mui/material";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
+import { investmentChartColors, chartColors, statCardSx, colors } from "../../themeStyles";
+import { alpha } from "@mui/material/styles";
+import {
+  InvestmentFormDialog,
+  InvestmentDeleteDialog,
+  StockFormFields,
+} from "./InvestmentFormUi";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart,
@@ -242,7 +243,7 @@ const StockInvestmentPage = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-        <CircularProgress sx={{ color: "#ff9966" }} />
+        <CircularProgress sx={{ color: "error.main" }} />
       </Box>
     );
   }
@@ -281,14 +282,14 @@ const StockInvestmentPage = () => {
           sx={{
             p: 2,
             bgcolor: "background.paper",
-            border: "1px solid #23272f",
+            border: "1px solid", borderColor: "divider",
             borderRadius: 2,
           }}
         >
           <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
             Year: {payload[0].payload.year}
           </Typography>
-          <Typography variant="body2" sx={{ color: "#ff9966", fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ color: "error.main", fontWeight: 600 }}>
             Investment: {formatCurrency(payload[0].value)}
           </Typography>
         </Paper>
@@ -309,7 +310,7 @@ const StockInvestmentPage = () => {
         sx={{
           p: 2,
           bgcolor: "background.paper",
-          border: "1px solid #23272f",
+          border: "1px solid", borderColor: "divider",
           borderRadius: 2,
         }}
       >
@@ -319,8 +320,8 @@ const StockInvestmentPage = () => {
 
         <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "#66bb6a" }} />
-            <Typography variant="body2" sx={{ color: "#66bb6a", fontWeight: 700 }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "success.main" }} />
+            <Typography variant="body2" sx={{ color: "success.main", fontWeight: 700 }}>
               Monthly invested: {formatCurrency(monthly ?? 0)}
             </Typography>
           </Box>
@@ -346,483 +347,137 @@ const StockInvestmentPage = () => {
 
   const totalInvestment = apiResponse?.totalAmount || stockInvestments.reduce((sum, inv) => sum + inv.amount, 0);
   const averageInvestment = stockInvestments.length > 0 ? totalInvestment / stockInvestments.length : 0;
-  const lastInvestmentDate = (() => {
-    if (!stockInvestments.length) return "-";
-    const latestTs = Math.max(...stockInvestments.map((inv) => new Date(inv.date).getTime()));
-    return formatDate(new Date(latestTs).toISOString());
-  })();
+  const lastInvestment = stockInvestments.length
+    ? stockInvestments.reduce((latest, inv) =>
+        new Date(inv.date) > new Date(latest.date) ? inv : latest
+      )
+    : null;
+  const lastInvestmentDate = lastInvestment ? formatDate(lastInvestment.date) : "—";
+  const lastInvestmentAmount = lastInvestment?.amount ?? 0;
 
   return (
     <Box sx={{ width: "100%" }}>
 
-      {/* Add Investment Dialog */}
-      <Dialog
+      <InvestmentFormDialog
         open={openAddDialog}
         onClose={() => setOpenAddDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-          },
-        }}
+        title="Add Stock Investment"
+        subtitle="Record capital invested in NPR"
+        icon={ShowChartIcon}
+        headerVariant="stock"
+        formId="stock-add-form"
+        submitLabel="Add Investment"
+        isPending={addInvestmentMutation.isPending}
+        submitVariant="success"
       >
-        <DialogTitle
-          sx={{
-            bgcolor: "background.default",
-            borderBottom: "1px solid #23272f",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="h6" fontWeight="bold">
-            Add New Investment
-          </Typography>
-          <IconButton onClick={() => setOpenAddDialog(false)} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
-          <Box component="form" id="add-form" onSubmit={handleAddSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  required
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#ff9966",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#ff9966",
-                      },
-                    },
-                    "& .MuiInputLabel-root": {
-                      color: "text.secondary",
-                    },
-                    "& .MuiSvgIcon-root": {
-                      color: "#fff",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Amount (NPR)"
-                  name="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#ff9966",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#ff9966",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
-          <Button
-            onClick={() => setOpenAddDialog(false)}
-            variant="contained"
-            sx={{
-              background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: 3,
-              py: 1.2,
-              boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
-                boxShadow: "0 6px 16px rgba(117, 117, 117, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="add-form"
-            variant="contained"
-            disabled={addInvestmentMutation.isPending}
-            sx={{
-              background: "linear-gradient(135deg, #66bb6a 0%, #4caf50 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: 3,
-              py: 1.2,
-              boxShadow: "0 4px 12px rgba(102, 187, 106, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)",
-                boxShadow: "0 6px 16px rgba(102, 187, 106, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              "&:disabled": {
-                background: "linear-gradient(135deg, #555 0%, #333 100%)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            {addInvestmentMutation.isPending ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
-            ) : (
-              "Add Investment"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <StockFormFields
+          formId="stock-add-form"
+          formData={formData}
+          onChange={handleInputChange}
+          onSubmit={handleAddSubmit}
+          accent="error"
+        />
+      </InvestmentFormDialog>
 
-      {/* Edit Investment Dialog */}
-      <Dialog
+      <InvestmentFormDialog
         open={openEditDialog}
         onClose={() => setOpenEditDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-          },
-        }}
+        title="Edit Stock Investment"
+        subtitle="Update date or amount for this entry"
+        icon={EditIcon}
+        headerVariant="stock"
+        formId="stock-edit-form"
+        submitLabel="Save Changes"
+        isPending={updateInvestmentMutation.isPending}
+        submitVariant="primary"
       >
-        <DialogTitle
-          sx={{
-            bgcolor: "background.default",
-            borderBottom: "1px solid #23272f",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="h6" fontWeight="bold">
-            Edit Investment
-          </Typography>
-          <IconButton onClick={() => setOpenEditDialog(false)} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
-          <Box component="form" id="edit-form" onSubmit={handleEditSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  required
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                    },
-                    "& .MuiInputLabel-root": {
-                      color: "text.secondary",
-                    },
-                    "& .MuiSvgIcon-root": {
-                      color: "#fff",
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Amount (NPR)"
-                  name="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={handleInputChange}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": {
-                        borderColor: "#23272f",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#90caf9",
-                      },
-                    },
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
-          <Button
-            onClick={() => setOpenEditDialog(false)}
-            variant="contained"
-            sx={{
-              background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: 3,
-              py: 1.2,
-              boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
-                boxShadow: "0 6px 16px rgba(117, 117, 117, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="edit-form"
-            variant="contained"
-            disabled={updateInvestmentMutation.isPending}
-            sx={{
-              background: "linear-gradient(135deg, #90caf9 0%, #42a5f5 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: 3,
-              py: 1.2,
-              boxShadow: "0 4px 12px rgba(144, 202, 249, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #42a5f5 0%, #90caf9 100%)",
-                boxShadow: "0 6px 16px rgba(144, 202, 249, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              "&:disabled": {
-                background: "linear-gradient(135deg, #555 0%, #333 100%)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            {updateInvestmentMutation.isPending ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
-            ) : (
-              "Update Investment"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <StockFormFields
+          formId="stock-edit-form"
+          formData={formData}
+          onChange={handleInputChange}
+          onSubmit={handleEditSubmit}
+          accent="primary"
+        />
+      </InvestmentFormDialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      <InvestmentDeleteDialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            bgcolor: "background.paper",
-            border: "1px solid #23272f",
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            bgcolor: "background.default",
-            borderBottom: "1px solid #23272f",
-          }}
-        >
-          <Typography variant="h6" fontWeight="bold" sx={{ color: "#ef5350" }}>
-            Confirm Delete
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Are you sure you want to delete this investment?
-          </Typography>
-          {selectedInvestment && (
-            <Paper
-              sx={{
-                p: 2,
-                bgcolor: "background.default",
-                border: "1px solid #23272f",
-                borderRadius: 2,
-              }}
-            >
-              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-                Date: <strong>{formatDate(selectedInvestment.date)}</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Amount: <strong>{formatCurrency(selectedInvestment.amount)}</strong>
-              </Typography>
-            </Paper>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
-          <Button
-            onClick={() => setOpenDeleteDialog(false)}
-            variant="contained"
-            sx={{
-              background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: 3,
-              py: 1.2,
-              boxShadow: "0 4px 12px rgba(117, 117, 117, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)",
-                boxShadow: "0 6px 16px rgba(117, 117, 117, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            variant="contained"
-            disabled={deleteInvestmentMutation.isPending}
-            sx={{
-              background: "linear-gradient(135deg, #ef5350 0%, #f44336 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: 3,
-              py: 1.2,
-              boxShadow: "0 4px 12px rgba(239, 83, 80, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #f44336 0%, #ef5350 100%)",
-                boxShadow: "0 6px 16px rgba(239, 83, 80, 0.4)",
-                transform: "translateY(-2px)",
-              },
-              "&:disabled": {
-                background: "linear-gradient(135deg, #555 0%, #333 100%)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            {deleteInvestmentMutation.isPending ? (
-              <CircularProgress size={24} sx={{ color: "#fff" }} />
-            ) : (
-              "Delete"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Delete Stock Investment"
+        subtitle="This action cannot be undone"
+        message="Are you sure you want to remove this stock capital record?"
+        icon={DeleteIcon}
+        headerVariant="stock"
+        onConfirm={handleDeleteConfirm}
+        isPending={deleteInvestmentMutation.isPending}
+        rows={
+          selectedInvestment
+            ? [
+                { label: "Date", value: formatDate(selectedInvestment.date) },
+                {
+                  label: "Amount",
+                  value: formatCurrency(selectedInvestment.amount),
+                  color: "error.main",
+                },
+              ]
+            : []
+        }
+      />
 
       {/* Statistics Cards with Add Investment Button */}
       <Grid container spacing={3} sx={{ mb: 3, alignItems: "stretch" }}>
-        <Grid item xs={12} md={3}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              bgcolor: "background.paper",
-              border: "1px solid #23272f",
-              height: "100%",
-            }}
-          >
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={statCardSx("error")}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
               TOTAL INVESTMENTS
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#ff9966", mt: 1 }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "error.main", mt: 1 }}>
               {formatCurrency(totalInvestment)}
             </Typography>
-            <Chip label="All time" size="small" sx={{ mt: 1, border: "1px solid #23272f" }} />
+            <Chip
+              label="All time"
+              size="small"
+              sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.error, 0.35) }}
+            />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              bgcolor: "background.paper",
-              border: "1px solid #23272f",
-              height: "100%",
-            }}
-          >
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={statCardSx("primary")}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
               AVERAGE PER ENTRY
             </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#90caf9", mt: 1 }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "primary.main", mt: 1 }}>
               {formatCurrency(averageInvestment)}
             </Typography>
-            <Chip label={`${stockInvestments.length} entries`} size="small" sx={{ mt: 1, border: "1px solid #23272f" }} />
+            <Chip
+              label={`${stockInvestments.length} entries`}
+              size="small"
+              sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.primary, 0.35) }}
+            />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              bgcolor: "background.paper",
-              border: "1px solid #23272f",
-              height: "100%",
-            }}
-          >
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={statCardSx("neutral")}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
               LAST INVESTMENT
             </Typography>
             <Typography variant="h6" fontWeight="bold" sx={{ color: "text.primary", mt: 1 }}>
               {lastInvestmentDate}
             </Typography>
-            <Chip label="Most recent" size="small" sx={{ mt: 1, border: "1px solid #23272f" }} />
+            {lastInvestment && (
+              <Typography variant="body2" fontWeight={700} sx={{ color: "error.main", mt: 0.5 }}>
+                {formatCurrency(lastInvestmentAmount)}
+              </Typography>
+            )}
+            <Chip
+              label="Most recent"
+              size="small"
+              sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.text.secondary, 0.4) }}
+            />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={3} sx={{ display: "flex", alignItems: "stretch" }}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              bgcolor: "linear-gradient(135deg, rgba(255,153,102,0.12), rgba(255,94,98,0.12))",
-              border: "1px solid rgba(255, 153, 102, 0.3)",
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
+        <Grid item xs={12} sm={6} md={3} sx={{ display: "flex", alignItems: "stretch" }}>
+          <Paper sx={{ ...statCardSx("action"), width: "100%" }}>
             <Box>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
                 QUICK ACTION
@@ -840,7 +495,7 @@ const StockInvestmentPage = () => {
               onClick={handleOpenAddDialog}
               sx={{
                 mt: 2,
-                background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+                background: "linear-gradient(135deg, #ef5350, #e53935)",
                 color: "#fff",
                 fontWeight: 700,
                 borderRadius: "12px",
@@ -848,7 +503,7 @@ const StockInvestmentPage = () => {
                 py: 1.25,
                 boxShadow: "0 6px 18px rgba(255, 153, 102, 0.35)",
                 "&:hover": {
-                  background: "linear-gradient(135deg, #ff5e62 0%, #ff9966 100%)",
+                  background: "linear-gradient(135deg, #ef5350, #e53935)",
                   transform: "translateY(-2px)",
                   boxShadow: "0 8px 22px rgba(255, 153, 102, 0.45)",
                 },
@@ -868,14 +523,14 @@ const StockInvestmentPage = () => {
             p: 4,
             borderRadius: 3,
             bgcolor: "background.paper",
-            border: "1px solid #23272f",
+            border: "1px solid", borderColor: "divider",
             mb: 3,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
             <Box
               sx={{
-                background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+                background: "linear-gradient(135deg, #ef5350, #e53935)",
                 borderRadius: 2,
                 p: 1.5,
                 display: "flex",
@@ -897,23 +552,29 @@ const StockInvestmentPage = () => {
 
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#23272f" />
+              <defs>
+                <linearGradient id="stockGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={investmentChartColors.stockBar.top} stopOpacity={1} />
+                  <stop offset="100%" stopColor={investmentChartColors.stockBar.bottom} stopOpacity={0.85} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={investmentChartColors.grid} />
               <XAxis
                 dataKey="year"
-                stroke="#b0b8c1"
-                style={{ fontSize: "14px", fontWeight: 600 }}
+                stroke={investmentChartColors.axis}
+                tick={{ fill: investmentChartColors.axis, fontSize: 14, fontWeight: 600 }}
               />
               <YAxis
-                stroke="#b0b8c1"
-                style={{ fontSize: "14px" }}
+                stroke={investmentChartColors.axis}
+                tick={{ fill: investmentChartColors.axis, fontSize: 14 }}
                 tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255, 153, 102, 0.1)" }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(239, 83, 80, 0.12)" }} />
               <Legend
                 wrapperStyle={{ paddingTop: "20px" }}
                 iconType="circle"
                 formatter={(value) => (
-                  <span style={{ color: "#f5f6fa", fontSize: "14px", fontWeight: 600 }}>
+                  <span style={{ color: investmentChartColors.legend, fontSize: "14px", fontWeight: 600 }}>
                     {value}
                   </span>
                 )}
@@ -924,12 +585,6 @@ const StockInvestmentPage = () => {
                 name="Total Investment"
                 radius={[8, 8, 0, 0]}
               />
-              <defs>
-                <linearGradient id="stockGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ff9966" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#ff5e62" stopOpacity={0.8} />
-                </linearGradient>
-              </defs>
             </BarChart>
           </ResponsiveContainer>
         </Paper>
@@ -939,7 +594,7 @@ const StockInvestmentPage = () => {
             p: 6,
             borderRadius: 3,
             bgcolor: "background.paper",
-            border: "1px solid #23272f",
+            border: "1px solid", borderColor: "divider",
             mb: 3,
             textAlign: "center",
           }}
@@ -947,7 +602,7 @@ const StockInvestmentPage = () => {
           <Box
             sx={{
               display: "inline-flex",
-              background: "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+              background: "linear-gradient(135deg, #ef5350, #e53935)",
               borderRadius: 3,
               p: 3,
               mb: 3,
@@ -971,14 +626,14 @@ const StockInvestmentPage = () => {
             p: 4,
             borderRadius: 3,
             bgcolor: "background.paper",
-            border: "1px solid #23272f",
+            border: "1px solid", borderColor: "divider",
             mb: 3,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
             <Box
               sx={{
-                background: "linear-gradient(135deg, #66bb6a 0%, #43a047 100%)",
+                background: "linear-gradient(135deg, #66bb6a, #43a047)",
                 borderRadius: 2,
                 p: 1.5,
                 display: "flex",
@@ -1002,26 +657,26 @@ const StockInvestmentPage = () => {
             <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
               <defs>
                 <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#66bb6a" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#43a047" stopOpacity={0.05} />
+                  <stop offset="5%" stopColor={investmentChartColors.areaFillTop} stopOpacity={0.4} />
+                  <stop offset="95%" stopColor={investmentChartColors.areaFillBottom} stopOpacity={0.05} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="4 4" stroke="rgba(35, 39, 47, 0.85)" />
+              <CartesianGrid strokeDasharray="4 4" stroke={chartColors.grid} />
               <XAxis
                 dataKey="label"
-                stroke="rgba(176, 184, 193, 0.9)"
-                tick={{ fill: "#b0b8c1", fontSize: 12, fontWeight: 600 }}
+                stroke={investmentChartColors.axis}
+                tick={{ fill: investmentChartColors.axis, fontSize: 12, fontWeight: 600 }}
                 interval="preserveStartEnd"
               />
               <YAxis
-                stroke="rgba(176, 184, 193, 0.9)"
-                tick={{ fill: "#b0b8c1", fontSize: 12 }}
+                stroke={investmentChartColors.axis}
+                tick={{ fill: investmentChartColors.axis, fontSize: 12 }}
                 tickFormatter={(value) => formatCompactCurrency(value)}
                 label={{
                   value: "Amount (NPR)",
                   angle: -90,
                   position: "insideLeft",
-                  style: { fill: "#b0b8c1", fontSize: 12, fontWeight: 600 },
+                  style: { fill: investmentChartColors.axis, fontSize: 12, fontWeight: 600 },
                 }}
               />
               <Tooltip
@@ -1036,28 +691,38 @@ const StockInvestmentPage = () => {
                 wrapperStyle={{ paddingTop: 12 }}
                 iconType="circle"
                 formatter={(value) => (
-                  <span style={{ color: "#f5f6fa", fontSize: "13px", fontWeight: 600 }}>{value}</span>
+                  <span style={{ color: investmentChartColors.legend, fontSize: "13px", fontWeight: 600 }}>{value}</span>
                 )}
               />
               <Area
                 type="monotone"
                 dataKey="invested"
                 name="Monthly invested"
-                stroke="#66bb6a"
+                stroke={investmentChartColors.areaLine}
                 fill="url(#areaFill)"
                 strokeWidth={2.5}
                 dot={false}
-                activeDot={{ r: 4, stroke: "#0f1115", fill: "#66bb6a", strokeWidth: 2 }}
+                activeDot={{
+                  r: 4,
+                  stroke: chartColors.pieBorder,
+                  fill: investmentChartColors.areaLine,
+                  strokeWidth: 2,
+                }}
               />
               <Line
                 type="monotone"
                 dataKey="cumulative"
                 name="Cumulative total"
-                stroke="#ffca28"
+                stroke={investmentChartColors.cumulativeLine}
                 strokeWidth={2.5}
                 strokeDasharray="6 4"
                 dot={false}
-                activeDot={{ r: 4, stroke: "#0f1115", fill: "#ffca28", strokeWidth: 2 }}
+                activeDot={{
+                  r: 4,
+                  stroke: chartColors.pieBorder,
+                  fill: investmentChartColors.cumulativeLine,
+                  strokeWidth: 2,
+                }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -1074,14 +739,14 @@ const StockInvestmentPage = () => {
           sx={{
             borderRadius: 3,
             bgcolor: "background.paper",
-            border: "1px solid #23272f",
+            border: "1px solid", borderColor: "divider",
             overflow: "hidden",
           }}
         >
         <Box
           sx={{
             p: 3,
-            borderBottom: "1px solid #23272f",
+            borderBottom: "1px solid", borderBottomColor: "divider",
             bgcolor: "background.default",
           }}
         >
@@ -1102,11 +767,11 @@ const StockInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: "0.85rem",
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff9966",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                   }}
                 >
                   Date
@@ -1116,11 +781,11 @@ const StockInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: "0.85rem",
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff9966",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                   }}
                 >
                   Amount
@@ -1130,11 +795,11 @@ const StockInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: "0.85rem",
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff9966",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                   }}
                 >
                   Year
@@ -1144,11 +809,11 @@ const StockInvestmentPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: "0.85rem",
-                    bgcolor: "#1e1e1e",
-                    color: "#f5f6fa",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
                     letterSpacing: 0.5,
                     textTransform: "uppercase",
-                    borderBottom: "2px solid #ff9966",
+                    borderBottom: "2px solid", borderBottomColor: "error.main",
                   }}
                 >
                   Actions
@@ -1178,12 +843,12 @@ const StockInvestmentPage = () => {
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <Typography variant="body1" fontWeight="700" sx={{ color: "#ff9966" }}>
+                    <Typography variant="body1" fontWeight="700" sx={{ color: "error.main" }}>
                       {formatCurrency(transaction.amount)}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <Typography variant="body2" fontWeight="600" sx={{ color: "#90caf9" }}>
+                    <Typography variant="body2" fontWeight="600" sx={{ color: "primary.main" }}>
                       {new Date(transaction.date).getFullYear()}
                     </Typography>
                   </TableCell>
@@ -1192,7 +857,7 @@ const StockInvestmentPage = () => {
                       <IconButton
                         size="small"
                         sx={{
-                          color: "#90caf9",
+                          color: "primary.main",
                           bgcolor: "rgba(144, 202, 249, 0.1)",
                           border: "1px solid rgba(144, 202, 249, 0.3)",
                           "&:hover": {
@@ -1208,7 +873,7 @@ const StockInvestmentPage = () => {
                       <IconButton
                         size="small"
                         sx={{
-                          color: "#ef5350",
+                          color: "error.main",
                           bgcolor: "rgba(239, 83, 80, 0.1)",
                           border: "1px solid rgba(239, 83, 80, 0.3)",
                           "&:hover": {

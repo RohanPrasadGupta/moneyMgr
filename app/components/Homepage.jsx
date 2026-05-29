@@ -1,8 +1,9 @@
-import { Box, Modal, Fab, Tooltip } from "@mui/material";
+import { Box, Fab, Tooltip } from "@mui/material";
 import React, { useState } from "react";
 import TransactionView from "./transactions/TransactionView";
 import AddTransaction from "./transactions/AddTransaction";
 import AddIcon from "@mui/icons-material/Add";
+import { gradients } from "../themeStyles";
 
 const Homepage = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -19,28 +20,18 @@ const Homepage = () => {
             right: 15,
             bottom: 25,
             zIndex: 1300,
-            boxShadow: 4,
-            color: "#fff",
-            background: "linear-gradient(135deg, #ef5350 0%, #23272f 100%)",
-            color: "#fff",
+            color: "common.white",
+            background: gradients.primary,
             boxShadow: 6,
             "&:hover": {
-              background: "linear-gradient(135deg, #b71c1c 0%, #23272f 100%)",
+              background: gradients.primaryHover,
             },
           }}
         >
           <AddIcon />
         </Fab>
       </Tooltip>
-      <Modal
-        open={addModalOpen}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={{ outline: "none" }}>
-          <AddTransaction setAddModalOpen={setAddModalOpen} />
-        </Box>
-      </Modal>
+      <AddTransaction open={addModalOpen} setAddModalOpen={setAddModalOpen} />
     </Box>
   );
 };

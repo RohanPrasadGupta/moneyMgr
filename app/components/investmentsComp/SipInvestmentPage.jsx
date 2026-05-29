@@ -12,6 +12,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Chip,
   Button,
   TextField,
   IconButton,
@@ -21,12 +22,21 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  Stack,
+  InputAdornment,
+  Divider,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import SavingsIcon from "@mui/icons-material/Savings";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import PaymentsIcon from "@mui/icons-material/Payments";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart,
@@ -40,12 +50,300 @@ import {
 } from "recharts";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import {
+  chartPalette,
+  colors,
+  investmentChartColors,
+  dialogPaperSx,
+  dialogTitleSx,
+  dialogActionsSx,
+  textFieldOutlinedSx,
+  cancelButtonSx,
+  successButtonSx,
+  dangerButtonSx,
+  gradients,
+  insetPanelSx,
+} from "../../themeStyles";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK_CAPITAL;
 
+const SIP_FUND_OPTIONS = ["Nabil", "NIC"];
+
+const SIP_FUND_META = {
+  Nabil: {
+    accent: colors.successDark,
+    subtitle: "Nabil Investment SIP",
+    badge: "NABIL",
+  },
+  NIC: {
+    accent: colors.error,
+    subtitle: "NIC Asia Cap SIP",
+    badge: "NIC",
+  },
+};
+
+const normalizeSipFundName = (name) => {
+  const lower = String(name || "").toLowerCase();
+  if (lower.includes("nic")) return "NIC";
+  if (lower.includes("nabil")) return "Nabil";
+  return SIP_FUND_OPTIONS[0];
+};
+
+const sipFieldSx = {
+  ...textFieldOutlinedSx,
+  "& .MuiOutlinedInput-root": {
+    ...textFieldOutlinedSx["& .MuiOutlinedInput-root"],
+    "&:hover fieldset": { borderColor: "success.dark" },
+    "&.Mui-focused fieldset": { borderColor: "success.dark" },
+  },
+};
+
+const SipFundSelector = ({ value, onChange }) => (
+  <Box>
+    <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1.2 }}>
+      SIP fund
+    </Typography>
+    <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+      Choose which fund this contribution belongs to
+    </Typography>
+    <RadioGroup
+      row
+      name="name"
+      value={value}
+      onChange={onChange}
+      sx={{ gap: 2, flexWrap: { xs: "wrap", sm: "nowrap" } }}
+    >
+      {SIP_FUND_OPTIONS.map((fund) => {
+        const selected = value === fund;
+        const meta = SIP_FUND_META[fund];
+        return (
+          <Paper
+            key={fund}
+            elevation={0}
+            onClick={() => onChange({ target: { name: "name", value: fund } })}
+            sx={{
+              flex: 1,
+              minWidth: { xs: "100%", sm: 0 },
+              p: 2,
+              border: selected ? "2px solid" : "1px solid",
+              borderColor: selected ? meta.accent : "divider",
+              borderRadius: 2.5,
+              bgcolor: selected ? alpha(meta.accent, 0.12) : "background.default",
+              cursor: "pointer",
+              transition: "all 0.22s ease",
+              boxShadow: selected ? `0 8px 20px ${alpha(meta.accent, 0.22)}` : "none",
+              "&:hover": {
+                borderColor: meta.accent,
+                transform: "translateY(-2px)",
+                boxShadow: `0 6px 16px ${alpha(meta.accent, 0.18)}`,
+              },
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  background: selected
+                    ? `linear-gradient(135deg, ${meta.accent} 0%, ${alpha(meta.accent, 0.75)} 100%)`
+                    : alpha(meta.accent, 0.15),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight={800}
+                  sx={{ color: selected ? "common.white" : meta.accent, fontSize: "0.65rem" }}
+                >
+                  {meta.badge}
+                </Typography>
+              </Box>
+              <Box sx={{ flex: 1, textAlign: "left" }}>
+                <FormControlLabel
+                  value={fund}
+                  control={
+                    <Radio
+                      size="small"
+                      sx={{
+                        color: meta.accent,
+                        p: 0.5,
+                        "&.Mui-checked": { color: meta.accent },
+                      }}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography fontWeight={700} sx={{ color: selected ? meta.accent : "text.primary", lineHeight: 1.2 }}>
+                        {fund}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        {meta.subtitle}
+                      </Typography>
+                    </Box>
+                  }
+                  sx={{ m: 0, alignItems: "flex-start" }}
+                />
+              </Box>
+            </Stack>
+          </Paper>
+        );
+      })}
+    </RadioGroup>
+  </Box>
+);
+
+const SipDialogHeader = ({ title, subtitle, icon: Icon = SavingsIcon, onClose }) => (
+  <DialogTitle sx={{ ...dialogTitleSx, px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 2.5 } }}>
+    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
+      <Stack direction="row" alignItems="center" spacing={2}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: 2,
+            background: gradients.income,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: `0 6px 16px ${alpha(colors.success, 0.35)}`,
+          }}
+        >
+          <Icon sx={{ color: "common.white", fontSize: 26 }} />
+        </Box>
+        <Box>
+          <Typography variant="h6" fontWeight={800} sx={{ color: "text.primary" }}>
+            {title}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.25 }}>
+            {subtitle}
+          </Typography>
+        </Box>
+      </Stack>
+      <IconButton
+        size="small"
+        onClick={onClose}
+        aria-label="Close"
+        sx={{
+          color: "text.secondary",
+          border: "1px solid",
+          borderColor: "divider",
+          "&:hover": { bgcolor: alpha(colors.text.secondary, 0.08) },
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </Stack>
+  </DialogTitle>
+);
+
+const SipFormFields = ({ formId, formData, onChange, onSubmit }) => (
+  <Box component="form" id={formId} onSubmit={onSubmit}>
+    <Stack spacing={3}>
+      <Paper elevation={0} sx={{ ...insetPanelSx, p: { xs: 2, sm: 2.5 } }}>
+        <SipFundSelector value={formData.name} onChange={onChange} />
+      </Paper>
+
+      <Box>
+        <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1.2 }}>
+          Details
+        </Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          Date and contribution amount in NPR
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Investment date"
+              name="date"
+              type="date"
+              value={formData.date}
+              onChange={onChange}
+              required
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <CalendarMonthIcon sx={{ fontSize: 20, color: "success.dark" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={sipFieldSx}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Amount"
+              name="amount"
+              type="number"
+              inputProps={{ min: 0, step: "any" }}
+              value={formData.amount}
+              onChange={onChange}
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PaymentsIcon sx={{ fontSize: 20, color: "success.dark" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary" }}>
+                      NPR
+                    </Typography>
+                  </InputAdornment>
+                ),
+              }}
+              sx={sipFieldSx}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+    </Stack>
+  </Box>
+);
+
+const SipInvestmentFormDialog = ({
+  open,
+  onClose,
+  title,
+  subtitle,
+  formId,
+  formData,
+  onChange,
+  onSubmit,
+  submitLabel,
+  isPending,
+}) => (
+  <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
+    <SipDialogHeader title={title} subtitle={subtitle} onClose={onClose} />
+    <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
+      <SipFormFields formId={formId} formData={formData} onChange={onChange} onSubmit={onSubmit} />
+    </DialogContent>
+    <DialogActions sx={{ ...dialogActionsSx, justifyContent: "flex-end", gap: 1.5 }}>
+      <Button onClick={onClose} sx={{ ...cancelButtonSx, width: { xs: "100%", sm: "auto" } }}>
+        Cancel
+      </Button>
+      <Button
+        type="submit"
+        form={formId}
+        disabled={isPending}
+        sx={{ ...successButtonSx, width: { xs: "100%", sm: "auto" }, minWidth: 140 }}
+      >
+        {isPending ? <CircularProgress size={22} sx={{ color: "common.white" }} /> : submitLabel}
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
 const SipInvestmentPage = () => {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({ name: "", date: "", amount: "" });
+  const [formData, setFormData] = useState({ name: "Nabil", date: "", amount: "" });
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -76,7 +374,7 @@ const SipInvestmentPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sipCapitalInvestments"] });
-      setFormData({ name: "", date: "", amount: "" });
+      setFormData({ name: "Nabil", date: "", amount: "" });
       setOpenAddDialog(false);
     },
   });
@@ -94,7 +392,7 @@ const SipInvestmentPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sipCapitalInvestments"] });
-      setFormData({ name: "", date: "", amount: "" });
+      setFormData({ name: "Nabil", date: "", amount: "" });
       setOpenEditDialog(false);
       setSelectedInvestment(null);
     },
@@ -122,14 +420,14 @@ const SipInvestmentPage = () => {
   };
 
   const handleOpenAddDialog = () => {
-    setFormData({ name: "", date: "", amount: "" });
+    setFormData({ name: "Nabil", date: "", amount: "" });
     setOpenAddDialog(true);
   };
 
   const handleOpenEditDialog = (investment) => {
     setSelectedInvestment(investment);
     setFormData({
-      name: investment.name,
+      name: normalizeSipFundName(investment.name),
       date: investment.date.split("T")[0],
       amount: investment.amount.toString(),
     });
@@ -232,18 +530,7 @@ const SipInvestmentPage = () => {
     apiResponse?.totalAmount ||
     sipInvestments.reduce((sum, inv) => sum + inv.amount, 0);
 
-  const FALLBACK_COLORS = [
-    "#66bb6a",
-    "#42a5f5",
-    "#ab47bc",
-    "#ff7043",
-    "#26c6da",
-    "#ffd54f",
-    "#ec407a",
-    "#8d6e63",
-    "#7e57c2",
-    "#29b6f6",
-  ];
+  const FALLBACK_COLORS = chartPalette;
 
   const getFundBrand = (fundName) => {
     const normalized = String(fundName || "").toLowerCase();
@@ -281,7 +568,7 @@ const SipInvestmentPage = () => {
       const totalForYear = row?.totalInvestment ?? 0;
 
       return (
-        <Paper sx={{ p: 2, bgcolor: "background.paper", border: "1px solid #23272f", borderRadius: 2 }}>
+        <Paper sx={{ p: 2, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
           <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
             Year: {year}
           </Typography>
@@ -311,20 +598,10 @@ const SipInvestmentPage = () => {
     return null;
   };
 
-  const fieldSx = (color) => ({
-    "& .MuiOutlinedInput-root": {
-      "& fieldset": { borderColor: "#23272f" },
-      "&:hover fieldset": { borderColor: color },
-      "&.Mui-focused fieldset": { borderColor: color },
-    },
-    "& .MuiInputLabel-root": { color: "text.secondary" },
-    "& .MuiSvgIcon-root": { color: "#fff" },
-  });
-
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-        <CircularProgress sx={{ color: "#66bb6a" }} />
+        <CircularProgress sx={{ color: "success.main" }} />
       </Box>
     );
   }
@@ -340,116 +617,110 @@ const SipInvestmentPage = () => {
   return (
     <Box sx={{ width: "100%" }}>
 
-      {/* Add Dialog */}
-      <Dialog
+      <SipInvestmentFormDialog
         open={openAddDialog}
         onClose={() => setOpenAddDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f" } }}
-      >
-        <DialogTitle sx={{ bgcolor: "background.default", borderBottom: "1px solid #23272f", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" fontWeight="bold">Add SIP Investment</Typography>
-          <IconButton onClick={() => setOpenAddDialog(false)} size="small"><CloseIcon /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
-          <Box component="form" id="sip-add-form" onSubmit={handleAddSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Name" name="name" value={formData.name} onChange={handleInputChange} required sx={fieldSx("#66bb6a")} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Date" name="date" type="date" value={formData.date} onChange={handleInputChange} required InputLabelProps={{ shrink: true }} sx={fieldSx("#66bb6a")} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Amount (NPR)" name="amount" type="number" value={formData.amount} onChange={handleInputChange} required sx={fieldSx("#66bb6a")} />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
-          <Button onClick={() => setOpenAddDialog(false)} variant="contained" sx={{ background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)", color: "#fff", fontWeight: 600, borderRadius: "12px", px: 3, py: 1.2, "&:hover": { background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)", transform: "translateY(-2px)" }, transition: "all 0.3s ease" }}>
-            Cancel
-          </Button>
-          <Button type="submit" form="sip-add-form" variant="contained" disabled={addMutation.isPending}
-            sx={{ background: "linear-gradient(135deg, #66bb6a 0%, #388e3c 100%)", color: "#fff", fontWeight: 600, borderRadius: "12px", px: 3, py: 1.2, boxShadow: "0 4px 12px rgba(102, 187, 106, 0.3)", "&:hover": { background: "linear-gradient(135deg, #388e3c 0%, #66bb6a 100%)", transform: "translateY(-2px)" }, "&:disabled": { background: "linear-gradient(135deg, #555 0%, #333 100%)" }, transition: "all 0.3s ease" }}>
-            {addMutation.isPending ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Add Investment"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Add SIP Investment"
+        subtitle="Record a new contribution to your SIP fund"
+        formId="sip-add-form"
+        formData={formData}
+        onChange={handleInputChange}
+        onSubmit={handleAddSubmit}
+        submitLabel="Add Investment"
+        isPending={addMutation.isPending}
+      />
 
-      {/* Edit Dialog */}
-      <Dialog
+      <SipInvestmentFormDialog
         open={openEditDialog}
         onClose={() => setOpenEditDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f" } }}
-      >
-        <DialogTitle sx={{ bgcolor: "background.default", borderBottom: "1px solid #23272f", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" fontWeight="bold">Edit SIP Investment</Typography>
-          <IconButton onClick={() => setOpenEditDialog(false)} size="small"><CloseIcon /></IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
-          <Box component="form" id="sip-edit-form" onSubmit={handleEditSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Name" name="name" value={formData.name} onChange={handleInputChange} required sx={fieldSx("#66bb6a")} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Date" name="date" type="date" value={formData.date} onChange={handleInputChange} required InputLabelProps={{ shrink: true }} sx={fieldSx("#66bb6a")} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Amount (NPR)" name="amount" type="number" value={formData.amount} onChange={handleInputChange} required sx={fieldSx("#66bb6a")} />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
-          <Button onClick={() => setOpenEditDialog(false)} variant="contained" sx={{ background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)", color: "#fff", fontWeight: 600, borderRadius: "12px", px: 3, py: 1.2, "&:hover": { background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)", transform: "translateY(-2px)" }, transition: "all 0.3s ease" }}>
-            Cancel
-          </Button>
-          <Button type="submit" form="sip-edit-form" variant="contained" disabled={updateMutation.isPending}
-            sx={{ background: "linear-gradient(135deg, #66bb6a 0%, #388e3c 100%)", color: "#fff", fontWeight: 600, borderRadius: "12px", px: 3, py: 1.2, boxShadow: "0 4px 12px rgba(102, 187, 106, 0.3)", "&:hover": { background: "linear-gradient(135deg, #388e3c 0%, #66bb6a 100%)", transform: "translateY(-2px)" }, "&:disabled": { background: "linear-gradient(135deg, #555 0%, #333 100%)" }, transition: "all 0.3s ease" }}>
-            {updateMutation.isPending ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Update Investment"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        title="Edit SIP Investment"
+        subtitle="Update fund, date, or amount for this entry"
+        formId="sip-edit-form"
+        formData={formData}
+        onChange={handleInputChange}
+        onSubmit={handleEditSubmit}
+        submitLabel="Save Changes"
+        isPending={updateMutation.isPending}
+      />
 
-      {/* Delete Dialog */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f" } }}
+        PaperProps={{ sx: dialogPaperSx }}
       >
-        <DialogTitle sx={{ bgcolor: "background.default", borderBottom: "1px solid #23272f" }}>
-          <Typography variant="h6" fontWeight="bold" sx={{ color: "#ef5350" }}>Confirm Delete</Typography>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 3 }}>
-          <Typography variant="body1" sx={{ mb: 2 }}>Are you sure you want to delete this SIP investment?</Typography>
+        <SipDialogHeader
+          title="Delete SIP Investment"
+          subtitle="This action cannot be undone"
+          icon={DeleteIcon}
+          onClose={() => setOpenDeleteDialog(false)}
+        />
+        <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
+          <Typography variant="body1" sx={{ color: "text.secondary", mb: 2.5 }}>
+            Are you sure you want to remove this SIP record?
+          </Typography>
           {selectedInvestment && (
-            <Paper sx={{ p: 2, bgcolor: "background.default", border: "1px solid #23272f", borderRadius: 2 }}>
-              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-                Name: <strong>{selectedInvestment.name}</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-                Date: <strong>{formatDate(selectedInvestment.date)}</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Amount: <strong>{formatCurrency(selectedInvestment.amount)}</strong>
-              </Typography>
+            <Paper
+              elevation={0}
+              sx={{
+                ...insetPanelSx,
+                p: 2,
+                borderColor: alpha(colors.error, 0.35),
+                bgcolor: alpha(colors.error, 0.06),
+              }}
+            >
+              <Stack spacing={1.5} divider={<Divider sx={{ borderColor: "divider" }} />}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                    Fund
+                  </Typography>
+                  <Chip
+                    label={normalizeSipFundName(selectedInvestment.name)}
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      bgcolor: alpha(SIP_FUND_META[normalizeSipFundName(selectedInvestment.name)]?.accent || colors.error, 0.15),
+                      color: SIP_FUND_META[normalizeSipFundName(selectedInvestment.name)]?.accent || colors.error,
+                      border: "1px solid",
+                      borderColor: alpha(SIP_FUND_META[normalizeSipFundName(selectedInvestment.name)]?.accent || colors.error, 0.35),
+                    }}
+                  />
+                </Stack>
+                <Stack direction="row" justifyContent="space-between">
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    Date
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    {formatDate(selectedInvestment.date)}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" justifyContent="space-between">
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    Amount
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700} sx={{ color: "success.main" }}>
+                    {formatCurrency(selectedInvestment.amount)}
+                  </Typography>
+                </Stack>
+              </Stack>
             </Paper>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #23272f" }}>
-          <Button onClick={() => setOpenDeleteDialog(false)} variant="contained" sx={{ background: "linear-gradient(135deg, #757575 0%, #9e9e9e 100%)", color: "#fff", fontWeight: 600, borderRadius: "12px", px: 3, py: 1.2, "&:hover": { background: "linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%)", transform: "translateY(-2px)" }, transition: "all 0.3s ease" }}>
+        <DialogActions sx={{ ...dialogActionsSx, justifyContent: "flex-end", gap: 1.5 }}>
+          <Button onClick={() => setOpenDeleteDialog(false)} sx={{ ...cancelButtonSx, width: { xs: "100%", sm: "auto" } }}>
             Cancel
           </Button>
-          <Button onClick={handleDeleteConfirm} variant="contained" disabled={deleteMutation.isPending}
-            sx={{ background: "linear-gradient(135deg, #ef5350 0%, #f44336 100%)", color: "#fff", fontWeight: 600, borderRadius: "12px", px: 3, py: 1.2, boxShadow: "0 4px 12px rgba(239, 83, 80, 0.3)", "&:hover": { background: "linear-gradient(135deg, #f44336 0%, #ef5350 100%)", transform: "translateY(-2px)" }, "&:disabled": { background: "linear-gradient(135deg, #555 0%, #333 100%)" }, transition: "all 0.3s ease" }}>
-            {deleteMutation.isPending ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Delete"}
+          <Button
+            onClick={handleDeleteConfirm}
+            disabled={deleteMutation.isPending}
+            sx={{ ...dangerButtonSx, width: { xs: "100%", sm: "auto" }, minWidth: 120 }}
+          >
+            {deleteMutation.isPending ? (
+              <CircularProgress size={22} sx={{ color: "common.white" }} />
+            ) : (
+              "Delete"
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -457,15 +728,15 @@ const SipInvestmentPage = () => {
       {/* Stats + Add Button */}
       <Grid container spacing={3} sx={{ mb: 3, alignItems: "center" }}>
         <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f", textAlign: "center" }}>
+          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", textAlign: "center" }}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>TOTAL SIP INVESTED</Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#66bb6a", mt: 1 }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: "success.main", mt: 1 }}>
               {formatCurrency(totalInvestment)}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f", textAlign: "center" }}>
+          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", textAlign: "center" }}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>TOTAL ENTRIES</Typography>
             <Typography variant="h4" fontWeight="bold" sx={{ color: "#f48fb1", mt: 1 }}>
               {sipInvestments.length}
@@ -478,7 +749,7 @@ const SipInvestmentPage = () => {
             startIcon={<AddIcon />}
             onClick={handleOpenAddDialog}
             sx={{
-              background: "linear-gradient(135deg, #66bb6a 0%, #388e3c 100%)",
+              background: "linear-gradient(135deg, #66bb6a, #43a047)",
               color: "#fff",
               fontWeight: 600,
               borderRadius: "12px",
@@ -486,7 +757,7 @@ const SipInvestmentPage = () => {
               py: 1.5,
               boxShadow: "0 4px 12px rgba(102, 187, 106, 0.3)",
               "&:hover": {
-                background: "linear-gradient(135deg, #388e3c 0%, #66bb6a 100%)",
+                background: "linear-gradient(135deg, #43a047, #66bb6a)",
                 transform: "translateY(-2px)",
                 boxShadow: "0 6px 16px rgba(102, 187, 106, 0.4)",
               },
@@ -500,9 +771,9 @@ const SipInvestmentPage = () => {
 
       {/* Bar Chart */}
       {sipInvestments.length > 0 ? (
-        <Paper sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f", mb: 3 }}>
+        <Paper sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-            <Box sx={{ background: "linear-gradient(135deg, #66bb6a 0%, #388e3c 100%)", borderRadius: 2, p: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ background: "linear-gradient(135deg, #66bb6a, #43a047)", borderRadius: 2, p: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <SavingsIcon sx={{ fontSize: 32, color: "#fff" }} />
             </Box>
             <Box>
@@ -512,22 +783,22 @@ const SipInvestmentPage = () => {
           </Box>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(35, 39, 47, 0.9)" />
+              <CartesianGrid strokeDasharray="3 3" stroke={investmentChartColors.grid} />
               <XAxis
                 dataKey="year"
-                stroke="rgba(176, 184, 193, 0.9)"
-                tick={{ fill: "#b0b8c1", fontSize: 13, fontWeight: 700 }}
+                stroke={investmentChartColors.axis}
+                tick={{ fill: investmentChartColors.axis, fontSize: 13, fontWeight: 700 }}
                 interval="preserveStartEnd"
               />
               <YAxis
-                stroke="rgba(176, 184, 193, 0.9)"
-                tick={{ fill: "#b0b8c1", fontSize: 13 }}
+                stroke={investmentChartColors.axis}
+                tick={{ fill: investmentChartColors.axis, fontSize: 13 }}
                 tickFormatter={(v) => formatCompactCurrency(v)}
                 label={{
                   value: "Amount (NPR)",
                   angle: -90,
                   position: "insideLeft",
-                  style: { fill: "#b0b8c1", fontSize: 12, fontWeight: 800 },
+                  style: { fill: investmentChartColors.axis, fontSize: 12, fontWeight: 800 },
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(102, 187, 106, 0.12)" }} />
@@ -535,7 +806,7 @@ const SipInvestmentPage = () => {
                 wrapperStyle={{ paddingTop: 20 }}
                 iconType="circle"
                 formatter={(value) => (
-                  <span style={{ color: "#f5f6fa", fontSize: 14, fontWeight: 700 }}>{value}</span>
+                  <span style={{ color: investmentChartColors.legend, fontSize: 14, fontWeight: 700 }}>{value}</span>
                 )}
               />
               {fundNames.map((fund, idx) => {
@@ -555,8 +826,8 @@ const SipInvestmentPage = () => {
           </ResponsiveContainer>
         </Paper>
       ) : (
-        <Paper sx={{ p: 6, borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f", mb: 3, textAlign: "center" }}>
-          <Box sx={{ display: "inline-flex", background: "linear-gradient(135deg, #66bb6a 0%, #388e3c 100%)", borderRadius: 3, p: 3, mb: 3 }}>
+        <Paper sx={{ p: 6, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3, textAlign: "center" }}>
+          <Box sx={{ display: "inline-flex", background: "linear-gradient(135deg, #66bb6a, #43a047)", borderRadius: 3, p: 3, mb: 3 }}>
             <SavingsIcon sx={{ fontSize: 64, color: "#fff", opacity: 0.7 }} />
           </Box>
           <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", mb: 1 }}>No SIP Data</Typography>
@@ -570,9 +841,9 @@ const SipInvestmentPage = () => {
       {sipInvestments.length > 0 && (
         <>
         {/* Pie Chart — Investment by Name */}
-        <Paper sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f", mb: 3 }}>
+        <Paper sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-            <Box sx={{ background: "linear-gradient(135deg, #66bb6a 0%, #388e3c 100%)", borderRadius: 2, p: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ background: "linear-gradient(135deg, #66bb6a, #43a047)", borderRadius: 2, p: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <SavingsIcon sx={{ fontSize: 32, color: "#fff" }} />
             </Box>
             <Box>
@@ -613,7 +884,7 @@ const SipInvestmentPage = () => {
                         shadow: false,
                         distance: 20,
                         connectorWidth: 1,
-                        connectorColor: "#888",
+                        connectorColor: colors.text.secondary,
                       },
                     },
                   },
@@ -638,7 +909,7 @@ const SipInvestmentPage = () => {
                   const { primaryColor, gradient } = getFundBrand(entry.name);
                   const percent = ((entry.y / totalInvestment) * 100).toFixed(1);
                   return (
-                    <Box key={entry.name} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: "background.default", border: "1px solid #23272f" }}>
+                    <Box key={entry.name} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: 2, bgcolor: "background.default", border: "1px solid", borderColor: "divider" }}>
                       <Box
                         sx={{
                           width: 14,
@@ -665,8 +936,8 @@ const SipInvestmentPage = () => {
         </Paper>
 
         {/* Transaction Table */}
-        <Paper sx={{ borderRadius: 3, bgcolor: "background.paper", border: "1px solid #23272f", overflow: "hidden" }}>
-          <Box sx={{ p: 3, borderBottom: "1px solid #23272f", bgcolor: "background.default" }}>
+        <Paper sx={{ borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+          <Box sx={{ p: 3, borderBottom: "1px solid", borderBottomColor: "divider", bgcolor: "background.default" }}>
             <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>SIP Transaction History</Typography>
             <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>Detailed list of all SIP investments</Typography>
           </Box>
@@ -675,7 +946,7 @@ const SipInvestmentPage = () => {
               <TableHead>
                 <TableRow>
                   {["Name", "Date", "Amount", "Year", "Actions"].map((col) => (
-                    <TableCell key={col} align="center" sx={{ fontWeight: "bold", fontSize: "0.85rem", bgcolor: "#1e1e1e", color: "#f5f6fa", letterSpacing: 0.5, textTransform: "uppercase", borderBottom: "2px solid #66bb6a" }}>
+                    <TableCell key={col} align="center" sx={{ fontWeight: "bold", fontSize: "0.85rem", bgcolor: "background.paper", color: "text.primary", letterSpacing: 0.5, textTransform: "uppercase", borderBottom: "2px solid", borderBottomColor: "success.main" }}>
                       {col}
                     </TableCell>
                   ))}
@@ -708,7 +979,7 @@ const SipInvestmentPage = () => {
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
-                      <Typography variant="body2" fontWeight="600" sx={{ color: "#90caf9" }}>
+                      <Typography variant="body2" fontWeight="600" sx={{ color: "primary.main" }}>
                         {new Date(investment.date).getFullYear()}
                       </Typography>
                     </TableCell>
@@ -716,14 +987,14 @@ const SipInvestmentPage = () => {
                       <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
                         <IconButton
                           size="small"
-                          sx={{ color: "#90caf9", bgcolor: "rgba(144, 202, 249, 0.1)", border: "1px solid rgba(144, 202, 249, 0.3)", "&:hover": { bgcolor: "rgba(144, 202, 249, 0.2)", transform: "scale(1.1)" }, transition: "all 0.2s ease" }}
+                          sx={{ color: "primary.main", bgcolor: "rgba(144, 202, 249, 0.1)", border: "1px solid rgba(144, 202, 249, 0.3)", "&:hover": { bgcolor: "rgba(144, 202, 249, 0.2)", transform: "scale(1.1)" }, transition: "all 0.2s ease" }}
                           onClick={() => handleOpenEditDialog(investment)}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
                         <IconButton
                           size="small"
-                          sx={{ color: "#ef5350", bgcolor: "rgba(239, 83, 80, 0.1)", border: "1px solid rgba(239, 83, 80, 0.3)", "&:hover": { bgcolor: "rgba(239, 83, 80, 0.2)", transform: "scale(1.1)" }, transition: "all 0.2s ease" }}
+                          sx={{ color: "error.main", bgcolor: "rgba(239, 83, 80, 0.1)", border: "1px solid rgba(239, 83, 80, 0.3)", "&:hover": { bgcolor: "rgba(239, 83, 80, 0.2)", transform: "scale(1.1)" }, transition: "all 0.2s ease" }}
                           onClick={() => handleOpenDeleteDialog(investment)}
                         >
                           <DeleteIcon fontSize="small" />
