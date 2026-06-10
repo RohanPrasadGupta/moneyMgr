@@ -53,6 +53,15 @@ import {
 
 const accountOptions = ["Cash", "Online"];
 
+const getDefaultForm = (type = "Expense") => ({
+  dateTime: dayjs().toISOString(),
+  account: "Cash",
+  category: "",
+  note: "",
+  type,
+  amount: "",
+});
+
 const FormSection = ({ title, subtitle, children }) => (
   <Box>
     <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1.2 }}>
@@ -147,14 +156,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [form, setForm] = useState({
-    dateTime: dayjs().toISOString(),
-    account: "Cash",
-    category: "",
-    note: "",
-    type: "Expense",
-    amount: "",
-  });
+  const [form, setForm] = useState(getDefaultForm);
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [newCategoryType, setNewCategoryType] = useState("Expense");
@@ -167,6 +169,11 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
   const accentColor = isIncome ? colors.success : colors.error;
   const headerVariant = isIncome ? "sip" : "stock";
 
+  const handleClose = () => {
+    setForm(getDefaultForm());
+    setAddModalOpen(false);
+  };
+
   const mutation = useMutation({
     mutationFn: async (submitData) => {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/data`, {
@@ -178,7 +185,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
       return res.json();
     },
     onSuccess: () => {
-      setAddModalOpen(false);
+      handleClose();
       queryClient.invalidateQueries({ queryKey: ["getMonthlyTransactions"] });
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("transactions:changed"));
@@ -215,14 +222,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
   };
 
   const handleTypeChange = (type) => {
-    setForm({
-      dateTime: dayjs().toISOString(),
-      account: "Cash",
-      category: "",
-      note: "",
-      type,
-      amount: "",
-    });
+    setForm(getDefaultForm(type));
   };
 
   const categoryMutation = useMutation({
@@ -283,7 +283,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
     <>
       <Dialog
         open={open}
-        onClose={() => setAddModalOpen(false)}
+        onClose={handleClose}
         maxWidth="sm"
         fullWidth
         fullScreen={isMobile}
@@ -298,7 +298,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
           title="Add Transaction"
           subtitle={`Record a new ${form.type.toLowerCase()} in THB`}
           icon={AddIcon}
-          onClose={() => setAddModalOpen(false)}
+          onClose={handleClose}
           variant={headerVariant}
         />
 
@@ -504,7 +504,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
         </DialogContent>
 
         <DialogActions sx={{ ...dialogActionsSx, justifyContent: "flex-end", gap: 1.5 }}>
-          <Button onClick={() => setAddModalOpen(false)} sx={{ ...cancelButtonSx, width: { xs: "100%", sm: "auto" } }}>
+          <Button onClick={handleClose} sx={{ ...cancelButtonSx, width: { xs: "100%", sm: "auto" } }}>
             Cancel
           </Button>
           <Button
