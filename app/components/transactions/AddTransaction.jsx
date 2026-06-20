@@ -17,6 +17,7 @@ import {
   FormControlLabel,
   CircularProgress,
   Chip,
+  FormHelperText,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -157,6 +158,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [form, setForm] = useState(getDefaultForm);
+  const [errors, setErrors] = useState({ amount: "", category: "" });
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [newCategoryType, setNewCategoryType] = useState("Expense");
@@ -171,6 +173,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
 
   const handleClose = () => {
     setForm(getDefaultForm());
+    setErrors({ amount: "", category: "" });
     setAddModalOpen(false);
   };
 
@@ -213,6 +216,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === "amount") setErrors((prev) => ({ ...prev, amount: "" }));
   };
 
   const handleDateTimeChange = (newValue) => {
@@ -223,6 +227,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
 
   const handleTypeChange = (type) => {
     setForm(getDefaultForm(type));
+    setErrors({ amount: "", category: "" });
   };
 
   const categoryMutation = useMutation({
@@ -265,7 +270,20 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    const newErrors = { amount: "", category: "" };
+    let hasError = false;
+    if (!form.amount || isNaN(Number(form.amount)) || Number(form.amount) <= 0) {
+      newErrors.amount = "Please enter a valid amount greater than 0";
+      hasError = true;
+    }
+    if (!form.category) {
+      newErrors.category = "Please select a category";
+      hasError = true;
+    }
+    if (hasError) {
+      setErrors(newErrors);
+      return;
+    }
     mutation.mutate({
       date: form.dateTime,
       account: form.account,
@@ -366,6 +384,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
                       </Stack>
                     </Box>
 
+                    <Box>
                     <TextField
                       label="Amount"
                       name="amount"
@@ -375,6 +394,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
                       onChange={handleChange}
                       fullWidth
                       required
+                      error={Boolean(errors.amount)}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -391,6 +411,10 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
                       }}
                       sx={fieldSx}
                     />
+                    {errors.amount && (
+                      <FormHelperText error sx={{ mx: 1.5 }}>{errors.amount}</FormHelperText>
+                    )}
+                    </Box>
                   </Stack>
                 </FormSection>
               </Paper>
@@ -458,7 +482,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
                           <Chip
                             key={option?._id}
                             label={option?.name}
-                            onClick={() => setForm((prev) => ({ ...prev, category: option?.name }))}
+                            onClick={() => { setForm((prev) => ({ ...prev, category: option?.name })); setErrors((prev) => ({ ...prev, category: "" })); }}
                             sx={{
                               fontWeight: selected ? 700 : 500,
                               cursor: "pointer",
@@ -475,6 +499,9 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
                     </Stack>
                   )}
                 </Paper>
+                {errors.category && (
+                  <FormHelperText error sx={{ mx: 1, mt: 0.5 }}>{errors.category}</FormHelperText>
+                )}
               </Paper>
 
               <Paper elevation={0} sx={{ ...insetPanelSx, p: { xs: 2, sm: 2.5 } }}>

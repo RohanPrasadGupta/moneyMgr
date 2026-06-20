@@ -28,6 +28,7 @@ import {
   Stack,
   InputAdornment,
   Divider,
+  useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SavingsIcon from "@mui/icons-material/Savings";
@@ -340,6 +341,216 @@ const SipInvestmentFormDialog = ({
     </DialogActions>
   </Dialog>
 );
+
+function calcSip(monthlyAmount, annualRate, years) {
+  const P = Number(monthlyAmount) || 0;
+  const r = (Number(annualRate) || 12) / 100;
+  const n = 12;
+  const t = Number(years) || 10;
+  const months = n * t;
+  const monthlyRate = r / n;
+  const maturity =
+    monthlyRate === 0
+      ? P * months
+      : P * (((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * (1 + monthlyRate));
+  const totalInvested = P * months;
+  const estimatedReturns = maturity - totalInvested;
+
+  const yearlyBreakdown = [];
+  for (let y = 1; y <= t; y++) {
+    const m = n * y;
+    const yMaturity =
+      monthlyRate === 0
+        ? P * m
+        : P * (((Math.pow(1 + monthlyRate, m) - 1) / monthlyRate) * (1 + monthlyRate));
+    const yInvested = P * m;
+    yearlyBreakdown.push({
+      year: y,
+      invested: Math.round(yInvested),
+      returns: Math.round(yMaturity - yInvested),
+      total: Math.round(yMaturity),
+    });
+  }
+  return { totalInvested, estimatedReturns, maturityValue: maturity, yearlyBreakdown };
+}
+
+const SipCalculatorSection = () => {
+  const theme = useTheme();
+  const [sipAmount, setSipAmount] = useState("5000");
+  const [annualRate, setAnnualRate] = useState("12");
+  const [years, setYears] = useState("10");
+
+  const { totalInvested, estimatedReturns, maturityValue, yearlyBreakdown } = calcSip(
+    sipAmount,
+    annualRate,
+    years
+  );
+
+  const fmt = (n) =>
+    new Intl.NumberFormat("en-NP", {
+      style: "currency",
+      currency: "NPR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(n);
+
+  const statCards = [
+    { label: "Total Amount Invested", value: fmt(totalInvested), color: colors.primary },
+    { label: "Profit / Estimated Returns", value: fmt(estimatedReturns), color: colors.success },
+    { label: "Final Maturity Value", value: fmt(maturityValue), color: colors.warning },
+  ];
+
+  const tooltipBg = theme.palette.background.paper;
+  const tooltipBorder = theme.palette.divider;
+  const tooltipText = theme.palette.text.primary;
+  const axisColor = theme.palette.text.secondary;
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        mt: 4,
+        p: { xs: 2, sm: 3 },
+        borderRadius: 3,
+        bgcolor: "background.paper",
+        border: "1px solid",
+        borderColor: "divider",
+      }}
+    >
+      <Stack direction="row" alignItems="center" spacing={1.5} mb={3}>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: 2,
+            background: gradients.income,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <SavingsIcon sx={{ color: "common.white", fontSize: 22 }} />
+        </Box>
+        <Box>
+          <Typography variant="h6" fontWeight={800}>
+            SIP Returns Calculator
+          </Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            Enter your monthly contribution, expected return rate, and how many years you plan to invest
+          </Typography>
+        </Box>
+      </Stack>
+
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Monthly SIP Amount"
+            placeholder="e.g. 5000"
+            helperText="How much you invest every month (NPR)"
+            type="number"
+            value={sipAmount}
+            onChange={(e) => setSipAmount(e.target.value)}
+            fullWidth
+            size="small"
+            inputProps={{ min: 0 }}
+            InputProps={{ endAdornment: <InputAdornment position="end"><Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>NPR</Typography></InputAdornment> }}
+            sx={textFieldOutlinedSx}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Expected Annual Return Rate"
+            placeholder="e.g. 12"
+            helperText="Average yearly return % your fund is expected to earn"
+            type="number"
+            value={annualRate}
+            onChange={(e) => setAnnualRate(e.target.value)}
+            fullWidth
+            size="small"
+            inputProps={{ min: 0, max: 100 }}
+            InputProps={{ endAdornment: <InputAdornment position="end"><Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>% / yr</Typography></InputAdornment> }}
+            sx={textFieldOutlinedSx}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <TextField
+            label="Investment Duration"
+            placeholder="e.g. 10"
+            helperText="Total number of years you will keep investing"
+            type="number"
+            value={years}
+            onChange={(e) => setYears(e.target.value)}
+            fullWidth
+            size="small"
+            inputProps={{ min: 1, max: 50 }}
+            InputProps={{ endAdornment: <InputAdornment position="end"><Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>yrs</Typography></InputAdornment> }}
+            sx={textFieldOutlinedSx}
+          />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} mb={3}>
+        {statCards.map((card) => (
+          <Grid item xs={12} sm={4} key={card.label}>
+            <Box
+              sx={{
+                p: { xs: 1.5, sm: 2 },
+                borderRadius: 2,
+                bgcolor: alpha(card.color, 0.08),
+                border: `1px solid ${alpha(card.color, 0.3)}`,
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                {card.label}
+              </Typography>
+              <Typography variant="h6" fontWeight={700} sx={{ color: card.color, mt: 0.5 }}>
+                {card.value}
+              </Typography>
+            </Box>
+          </Grid>
+        ))}
+      </Grid>
+
+      {yearlyBreakdown.length > 0 && (
+        <Box>
+          <Typography variant="body2" fontWeight={700} sx={{ mb: 1.5, color: "text.secondary" }}>
+            Yearly Breakdown — Invested vs Returns
+          </Typography>
+          <Box sx={{ height: { xs: 220, sm: 280 } }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={yearlyBreakdown} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={alpha(axisColor, 0.15)} />
+                <XAxis
+                  dataKey="year"
+                  tick={{ fill: axisColor, fontSize: 11 }}
+                  label={{ value: "Year", position: "insideBottom", offset: -2, fill: axisColor, fontSize: 11 }}
+                />
+                <YAxis
+                  tick={{ fill: axisColor, fontSize: 10 }}
+                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: tooltipBg,
+                    border: `1px solid ${tooltipBorder}`,
+                    borderRadius: 8,
+                    color: tooltipText,
+                  }}
+                  formatter={(value, name) => [fmt(value), name === "invested" ? "Invested" : "Returns"]}
+                  labelFormatter={(label) => `Year ${label}`}
+                />
+                <Legend formatter={(v) => (v === "invested" ? "Invested" : "Returns")} />
+                <Bar dataKey="invested" fill={colors.primary} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="returns" fill={colors.success} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Box>
+        </Box>
+      )}
+    </Paper>
+  );
+};
 
 const SipInvestmentPage = () => {
   const queryClient = useQueryClient();
@@ -1009,6 +1220,9 @@ const SipInvestmentPage = () => {
         </Paper>
         </>
       )}
+
+      {/* SIP Calculator */}
+      <SipCalculatorSection />
     </Box>
   );
 };

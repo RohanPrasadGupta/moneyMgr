@@ -59,11 +59,12 @@ const AnalysisPage = () => {
   ];
   const pieDataLabelDist = isMobile ? 12 : 20;
   const pieInnerSize = isMobile ? "55%" : "60%";
-  const chartAxisColor = chartColors.axis;
-  const chartGridColor = chartColors.grid;
-  const pieSliceBorder = chartColors.pieBorder;
-  const pieDataLabelColor = chartColors.pieLabel;
-  const pieConnectorColor = chartColors.pieConnector;
+  const isDark = theme.palette.mode === "dark";
+  const chartAxisColor = theme.palette.text.secondary;
+  const chartGridColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const pieSliceBorder = theme.palette.background.paper;
+  const pieDataLabelColor = theme.palette.text.primary;
+  const pieConnectorColor = theme.palette.text.secondary;
   const sectionPaperSx = {
     ...themedCardSx,
     mb: { xs: 3, sm: 4 },
@@ -373,11 +374,11 @@ const AnalysisPage = () => {
           </Box>
           
           {/* Controls */}
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center", bgcolor: "rgba(35, 39, 47, 0.6)", p: 2, borderRadius: 3, border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center", bgcolor: "background.default", p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
               <Chip label="Current View:" size="small" sx={{ bgcolor: "transparent", color: "text.secondary", fontWeight: 600, border: "none", px: 0 }} />
-              <Chip label={`${viewMode === "monthly" ? currentMonth : viewMode === "yearly" ? "Full year" : "All time"}`} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "#fff", fontWeight: 600, border: "none" }} />
-              <Chip label={`${currentYear}`} size="small" sx={{ bgcolor: "rgba(255,255,255,0.05)", color: "text.secondary", border: "none" }} />
+              <Chip label={`${viewMode === "monthly" ? currentMonth : viewMode === "yearly" ? "Full year" : "All time"}`} size="small" sx={{ bgcolor: "action.selected", color: "text.primary", fontWeight: 600, border: "none" }} />
+              <Chip label={`${currentYear}`} size="small" sx={{ bgcolor: "action.selected", color: "text.secondary", border: "none" }} />
             </Box>
             
             <Box sx={{ flexGrow: 1 }} />
@@ -392,27 +393,26 @@ const AnalysisPage = () => {
                   minWidth: 140,
                   fontWeight: 700,
                   textTransform: "none",
-                  color: "#fff",
-                  borderColor: selectedCurrency === "THB" ? "transparent" : "rgba(255,255,255,0.2)",
+                  borderColor: selectedCurrency === "THB" ? "transparent" : "divider",
                   background: selectedCurrency === "THB" ? "linear-gradient(135deg, #7c4dff 0%, #00bcd4 100%)" : "transparent",
                   boxShadow: selectedCurrency === "THB" ? "0 4px 15px rgba(124,77,255,0.3)" : "none",
-                  "&:hover": { background: selectedCurrency === "THB" ? "linear-gradient(135deg, #6f42f5 0%, #00acc1 100%)" : "rgba(255,255,255,0.05)" },
+                  "&:hover": { background: selectedCurrency === "THB" ? "linear-gradient(135deg, #6f42f5 0%, #00acc1 100%)" : "action.hover" },
                 }}
               >
                 {selectedCurrency === "THB" ? "Switch to NPR" : "Switch to THB"}
               </Button>
-              <Select value={selectedExchangeRange} onChange={(e) => setSelectedExchangeRange(e.target.value)} disabled={selectedCurrency !== "NPR"} size="small" sx={{ minWidth: 140, bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2, color: "#fff", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.1)" } }}>
+              <Select value={selectedExchangeRange} onChange={(e) => setSelectedExchangeRange(e.target.value)} disabled={selectedCurrency !== "NPR"} size="small" sx={{ minWidth: 140, bgcolor: "background.default", borderRadius: 2, "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
                 {exchangeRateOptions.map((rate) => <MenuItem key={rate.value} value={rate.value}>1 THB = {rate.label}</MenuItem>)}
               </Select>
-              <Select value={viewMode} onChange={(e) => setViewMode(e.target.value)} size="small" sx={{ minWidth: 100, bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2, color: "#fff", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.1)" } }}>
+              <Select value={viewMode} onChange={(e) => setViewMode(e.target.value)} size="small" sx={{ minWidth: 100, bgcolor: "background.default", borderRadius: 2, "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
                 <MenuItem value="monthly">Monthly</MenuItem>
                 <MenuItem value="yearly">Yearly</MenuItem>
                 <MenuItem value="all">View All</MenuItem>
               </Select>
-              <Select value={currentYear} onChange={(e) => setCurrentYear(e.target.value)} disabled={viewMode === "all"} size="small" sx={{ minWidth: 90, bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2, color: "#fff", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.1)" } }}>
+              <Select value={currentYear} onChange={(e) => setCurrentYear(e.target.value)} disabled={viewMode === "all"} size="small" sx={{ minWidth: 90, bgcolor: "background.default", borderRadius: 2, "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
                 {Years.map((year, index) => <MenuItem key={index} value={year}>{year}</MenuItem>)}
               </Select>
-              <Select value={currentMonth} onChange={(e) => setCurrentMonth(e.target.value)} disabled={viewMode === "yearly" || viewMode === "all"} size="small" sx={{ minWidth: 110, bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2, color: "#fff", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.1)" } }}>
+              <Select value={currentMonth} onChange={(e) => setCurrentMonth(e.target.value)} disabled={viewMode === "yearly" || viewMode === "all"} size="small" sx={{ minWidth: 110, bgcolor: "background.default", borderRadius: 2, "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
                 {Months.map((month, index) => <MenuItem key={index} value={month}>{month}</MenuItem>)}
               </Select>
             </Stack>
@@ -525,12 +525,12 @@ const AnalysisPage = () => {
                         tooltip: {
                           useHTML: true,
                           borderWidth: 0,
-                          backgroundColor: "rgba(17,20,24,0.9)",
-                          style: { color: "#fff", borderRadius: 12 },
+                          backgroundColor: theme.palette.background.paper,
+                          style: { color: theme.palette.text.primary, borderRadius: 12 },
                           formatter: function () {
                             return `<div style="padding:6px 8px;">` +
                               `<div style="font-weight:700;color:${this.color}">${this.point.name}</div>` +
-                              `<div style="color:#fff">${currencySymbol}${Highcharts.numberFormat(this.y,0)}</div>` +
+                              `<div>${currencySymbol}${Highcharts.numberFormat(this.y,0)}</div>` +
                               `</div>`;
                           },
                         },
@@ -650,12 +650,12 @@ const AnalysisPage = () => {
                         tooltip: {
                           useHTML: true,
                           borderWidth: 0,
-                          backgroundColor: "rgba(17,20,24,0.9)",
-                          style: { color: "#fff", borderRadius: 12 },
+                          backgroundColor: theme.palette.background.paper,
+                          style: { color: theme.palette.text.primary, borderRadius: 12 },
                           formatter: function () {
                             return `<div style="padding:6px 8px;">` +
                               `<div style="font-weight:700;color:${this.color}">${this.point.name}</div>` +
-                              `<div style="color:#fff">${currencySymbol}${Highcharts.numberFormat(this.y,0)}</div>` +
+                              `<div>${currencySymbol}${Highcharts.numberFormat(this.y,0)}</div>` +
                               `</div>`;
                           },
                         },
@@ -787,8 +787,9 @@ const AnalysisPage = () => {
               width: "100%",
               p: 2,
               borderRadius: 3,
-              bgcolor: "rgba(35, 39, 47, 0.4)",
-              border: "1px solid rgba(255, 255, 255, 0.05)"
+              bgcolor: "background.default",
+              border: "1px solid",
+              borderColor: "divider"
             }}
           >
             <Box sx={{ textAlign: "center", flex: "1 1 30%", minWidth: "120px" }}>
@@ -1273,15 +1274,15 @@ const GridLikeTopCategories = ({
           legend: { enabled: false },
           credits: { enabled: false },
           tooltip: {
-            backgroundColor: "rgba(17,20,24,0.9)",
+            backgroundColor: theme.palette.background.paper,
             borderWidth: 0,
-            style: { color: "#fff" },
+            style: { color: theme.palette.text.primary },
             useHTML: true,
             formatter: function () {
               const rank = (this.point?.index ?? this.point?.x ?? 0) + 1;
               return (
                 `<span style="color:${base}">●</span> ${seriesName}: <b>${currencySymbol}${Highcharts.numberFormat(this.y, 0)}</b><br/>` +
-                `<span style="color:#b0bec5">Rank #${rank}</span>`
+                `<span>Rank #${rank}</span>`
               );
             },
           },

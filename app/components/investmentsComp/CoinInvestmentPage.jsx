@@ -24,6 +24,8 @@ import {
   Select,
   MenuItem,
   Stack,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
@@ -49,6 +51,7 @@ import {
 } from "recharts";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_COIN_CAPITAL;
+
 
 const CoinInvestmentPage = () => {
   const theme = useTheme();

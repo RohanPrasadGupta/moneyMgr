@@ -2,8 +2,11 @@
 
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "@mui/material";
+import { useTheme, IconButton, Tooltip, Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { useThemeMode } from "../../context/ThemeContext";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
 import SpeedDial from "@mui/material/SpeedDial";
 import SpeedDialAction from "@mui/material/SpeedDialAction";
 import SpeedDialIcon from "@mui/material/SpeedDialIcon";
@@ -15,10 +18,30 @@ const SpeedDialNavbar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { mode, toggleTheme } = useThemeMode();
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   return (
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+      <Tooltip title={`Switch to ${mode === "dark" ? "light" : "dark"} mode`} placement="right">
+        <IconButton
+          onClick={toggleTheme}
+          sx={{
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            boxShadow: theme.palette.mode === "dark" ? 4 : 2,
+            "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.12) },
+          }}
+        >
+          {mode === "dark" ? (
+            <Brightness7Icon sx={{ color: "primary.main", fontSize: 20 }} />
+          ) : (
+            <Brightness4Icon sx={{ color: "primary.main", fontSize: 20 }} />
+          )}
+        </IconButton>
+      </Tooltip>
     <SpeedDial
       ariaLabel="SpeedDial navigation"
       sx={{
@@ -90,6 +113,7 @@ const SpeedDialNavbar = () => {
         );
       })}
     </SpeedDial>
+    </Box>
   );
 };
 

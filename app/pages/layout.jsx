@@ -6,6 +6,7 @@ import SpeedDialNavbar from "../components/navbar/SpeedDialNavbar";
 import QueryProvider from "./QueryProvider";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { themedCardSx } from "../themeStyles";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 
 const layout = ({ children }) => {
   const theme = useTheme();
@@ -60,6 +61,7 @@ const layout = ({ children }) => {
           flex: 1,
           p: { xs: 2, sm: 4 },
           px: { xs: 2, sm: 4 },
+          pb: { xs: 10, md: 4 },
           height: "100vh",
           overflowY: "auto",
           overflowX: "hidden",
@@ -86,7 +88,9 @@ const layout = ({ children }) => {
           },
         }}
       >
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </QueryProvider>
       </Box>
     </Box>
   );

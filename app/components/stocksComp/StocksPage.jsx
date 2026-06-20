@@ -523,15 +523,15 @@ const StocksPage = () => {
               {/* Middle Row: Combined Metrics Grid */}
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 1fr)", md: "repeat(6, 1fr)" }, gap: { xs: 1.5, sm: 2 }, mb: chartData.length > 0 ? 4 : 0 }}>
                 {/* Metric Cards */}
-                <Box sx={{ bgcolor: "rgba(35, 39, 47, 0.4)", p: 1.5, borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.05)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <Box sx={{ bgcolor: "background.default", p: 1.5, borderRadius: 2, border: "1px solid", borderColor: "divider", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TOTAL STOCKS</Typography>
                   <Typography variant="h6" sx={{ color: "primary.main", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.25rem" } }}>{Object.keys(groupedTransactions).length}</Typography>
                 </Box>
-                <Box sx={{ bgcolor: "rgba(35, 39, 47, 0.4)", p: 1.5, borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.05)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <Box sx={{ bgcolor: "background.default", p: 1.5, borderRadius: 2, border: "1px solid", borderColor: "divider", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>TRANSACTIONS</Typography>
                   <Typography variant="h6" sx={{ color: "#f48fb1", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.25rem" } }}>{transactions.length}</Typography>
                 </Box>
-                <Box sx={{ bgcolor: "rgba(35, 39, 47, 0.4)", p: 1.5, borderRadius: 2, border: "1px solid rgba(255, 255, 255, 0.05)", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <Box sx={{ bgcolor: "background.default", p: 1.5, borderRadius: 2, border: "1px solid", borderColor: "divider", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Typography variant="caption" sx={{ color: "#ffe082", fontWeight: 600, display: "block", mb: 0.5, fontSize: { xs: "0.6rem", sm: "0.7rem" } }}>OVERALL INVESTED</Typography>
                   <Typography variant="body1" sx={{ color: "#ffe082", fontWeight: "bold", fontSize: { xs: "1rem", sm: "1.1rem" } }}>{formatCurrency(globalOverallInvested)}</Typography>
                 </Box>
@@ -560,8 +560,8 @@ const StocksPage = () => {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: "rgba(30, 34, 45, 0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#fff", backdropFilter: "blur(8px)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }} itemStyle={{ color: "#fff", fontWeight: 600 }} />
-                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ color: '#fff', fontSize: '0.875rem' }} />
+                      <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 12, color: theme.palette.text.primary }} itemStyle={{ color: theme.palette.text.primary, fontWeight: 600 }} />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ color: theme.palette.text.primary, fontSize: '0.875rem' }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </Box>
@@ -605,9 +605,9 @@ const StocksPage = () => {
                         borderRadius: { xs: 2, sm: 4 },
                       },
                       boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
-                      background: isZeroHolding ? "rgba(30, 34, 45, 0.4)" : "linear-gradient(145deg, rgba(35, 39, 47, 0.8) 0%, rgba(20, 24, 32, 0.9) 100%)",
-                      backdropFilter: "blur(10px)",
-                      border: isZeroHolding ? "1px dashed rgba(255,255,255,0.05)" : "1px solid rgba(255,255,255,0.08)",
+                      bgcolor: "background.paper",
+                      border: isZeroHolding ? "1px dashed" : "1px solid",
+                      borderColor: "divider",
                       opacity: isZeroHolding ? 0.7 : 1,
                       overflow: "hidden",
                       transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
@@ -615,7 +615,7 @@ const StocksPage = () => {
                         ? {
                             "&:hover": {
                               opacity: 0.9,
-                              borderColor: "rgba(255,255,255,0.1)",
+                              borderColor: "text.disabled",
                             },
                           }
                         : {
@@ -676,9 +676,10 @@ const StocksPage = () => {
                         >
                           <Box
                             sx={{
-                              background: isZeroHolding 
-                                ? "rgba(255,255,255,0.05)" 
+                              background: isZeroHolding
+                                ? undefined
                                 : "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
+                              bgcolor: isZeroHolding ? "action.disabledBackground" : undefined,
                               borderRadius: 3,
                               p: { xs: 1, sm: 1.5 },
                               display: "flex",
@@ -1023,7 +1024,7 @@ const StocksPage = () => {
                                   ? "rgba(102, 187, 106, 0.5)"
                                   : profitLoss < 0
                                   ? "rgba(239, 83, 80, 0.5)"
-                                  : "#23272f",
+                                  : "divider",
                             }}
                           >
                             <Typography
@@ -1078,8 +1079,9 @@ const StocksPage = () => {
                             }}
                             sx={{
                               background: isZeroHolding
-                                ? "rgba(255, 255, 255, 0.05)"
+                                ? undefined
                                 : "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
+                              bgcolor: isZeroHolding ? "action.disabledBackground" : undefined,
                               color: isZeroHolding ? "text.secondary" : "#0d1117",
                               width: { xs: 40, sm: 48 },
                               height: { xs: 40, sm: 48 },
@@ -1094,8 +1096,9 @@ const StocksPage = () => {
                                 : "0 4px 12px rgba(0, 242, 254, 0.4)",
                               "&:hover": {
                                 background: isZeroHolding
-                                  ? "rgba(255, 255, 255, 0.1)"
+                                  ? undefined
                                   : "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                                bgcolor: isZeroHolding ? "action.hover" : undefined,
                                 transform: { xs: "none", sm: "scale(1.1) rotate(90deg)" },
                                 boxShadow: isZeroHolding
                                   ? "none"
@@ -1947,7 +1950,7 @@ const StocksPage = () => {
                 fullWidth
                 sx={{
                   color: "text.primary",
-                  borderColor: "#23272f",
+                  borderColor: "divider",
                   textTransform: "none",
                   fontWeight: 600,
                   fontSize: { xs: "0.875rem", sm: "1rem" },

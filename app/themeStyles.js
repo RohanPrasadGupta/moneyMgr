@@ -46,10 +46,10 @@ export const gradients = {
 };
 
 export const themedCardSx = {
-  background: gradients.card,
-  backdropFilter: "blur(10px)",
-  border: `1px solid ${colors.borderSubtle}`,
-  boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+  bgcolor: "background.paper",
+  border: "1px solid",
+  borderColor: "divider",
+  boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.1)",
   borderRadius: 3,
 };
 
@@ -82,10 +82,11 @@ export const dialogActionsSx = {
 };
 
 export const insetPanelSx = {
-  bgcolor: colors.bg.inset,
+  bgcolor: "background.default",
   p: 2,
   borderRadius: 3,
-  border: `1px solid ${colors.borderSubtle}`,
+  border: "1px solid",
+  borderColor: "divider",
 };
 
 export const textFieldOutlinedSx = {
@@ -276,7 +277,7 @@ export const statCardSx = (variant = "default") => {
   const base = {
     p: { xs: 2, sm: 2.5, md: 3 },
     borderRadius: { xs: 2, sm: 2.5, md: 3 },
-    bgcolor: colors.bg.paper,
+    bgcolor: "background.paper",
     textAlign: "center",
     height: "100%",
     border: "1px solid",
