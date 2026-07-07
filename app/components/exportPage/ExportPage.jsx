@@ -8,10 +8,12 @@ import {
   CircularProgress,
   FormControl,
   FormLabel,
+  TextField,
   Stack,
   Divider,
   Tooltip,
   Chip,
+  MenuItem,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -35,6 +37,7 @@ const ExportPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [startDate, setStartDate] = useState(dayjs().subtract(30, "day"));
   const [endDate, setEndDate] = useState(dayjs());
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [pdfLoaded, setPdfLoaded] = useState(false);
 
   const extractTextAfterEmoji = (text) => {
@@ -68,29 +71,62 @@ const ExportPage = () => {
     loadPdfLibs();
   }, []);
 
-  const {
-    isPending,
-    data: allTransactionData,
-    error,
-  } = useQuery({
-    queryKey: ["getAllTransactionData"],
+  const isDateRangeValid =
+    startDate &&
+    endDate &&
+    (endDate.isAfter(startDate) || endDate.isSame(startDate, "day"));
+
+  const { data: categoryData, isPending: isCategoryPending } = useQuery({
+    queryKey: ["exportCategories"],
     queryFn: () =>
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/data`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/category`, {
         method: "GET",
         credentials: "include",
       }).then((res) => res.json()),
   });
 
-  const filteredData = React.useMemo(() => {
-    if (!allTransactionData?.data) return [];
-    return allTransactionData.data.filter((tx) => {
-      const txDate = dayjs(tx.date);
-      return (
-        (txDate.isAfter(startDate, "day") || txDate.isSame(startDate, "day")) &&
-        (txDate.isBefore(endDate, "day") || txDate.isSame(endDate, "day"))
+  const categories = React.useMemo(() => {
+    if (!Array.isArray(categoryData)) return [];
+    return categoryData.map((cat) => String(cat?.name || "")).filter(Boolean);
+  }, [categoryData]);
+
+  const {
+    isPending,
+    data: reportData,
+    error,
+  } = useQuery({
+    queryKey: [
+      "reportData",
+      startDate?.toISOString(),
+      endDate?.toISOString(),
+      selectedCategory,
+    ],
+    enabled: Boolean(isDateRangeValid),
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate: startDate.startOf("day").toISOString(),
+        endDate: endDate.endOf("day").toISOString(),
+      });
+
+      if (selectedCategory) {
+        params.append("category", selectedCategory);
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/data/report?${params.toString()}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
       );
-    });
-  }, [allTransactionData, startDate, endDate]);
+      return res.json();
+    },
+  });
+
+  const filteredData = React.useMemo(
+    () => (Array.isArray(reportData?.data) ? reportData.data : []),
+    [reportData]
+  );
 
   const handleExportCSV = () => {
     if (!filteredData.length) {
@@ -270,10 +306,6 @@ const ExportPage = () => {
     }
   };
 
-  const isDateRangeValid =
-    (startDate && endDate && endDate.isAfter(startDate)) ||
-    endDate.isSame(startDate, "day");
-
   const totalExpense = React.useMemo(
     () =>
       filteredData
@@ -399,6 +431,24 @@ const ExportPage = () => {
                 sx={{ minWidth: isMobile ? "100%" : 220 }}
               />
             </FormControl>
+
+            <FormControl sx={{ minWidth: isMobile ? "100%" : 260 }}>
+              <FormLabel sx={{ mb: 1 }}>Category (Optional)</FormLabel>
+              <TextField
+                select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                disabled={isCategoryPending}
+                helperText="Leave as All Categories to export everything"
+              >
+                <MenuItem value="">All Categories</MenuItem>
+                {categories.map((cat) => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </FormControl>
           </Stack>
         </LocalizationProvider>
 
@@ -460,8 +510,8 @@ const ExportPage = () => {
             sx={{ mb: 3 }}
           >
             {filteredData.length
-              ? `${filteredData.length} transactions found in the selected date range.`
-              : "No transactions found in the selected date range."}
+              ? `${filteredData.length} transactions found for the selected filters.`
+              : "No transactions found for the selected filters."}
           </Alert>
         )}
       </Paper>

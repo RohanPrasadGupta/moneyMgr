@@ -39,7 +39,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { themedCardSx } from "../../themeStyles";
+import { themedCardSx, chartPieGradients } from "../../themeStyles";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK;
 
@@ -419,8 +419,6 @@ const StocksPage = () => {
     }))
     .filter((item) => item.value > 0);
 
-  const COLORS = ['#00f2fe', '#4facfe', '#30cfd0', '#330867', '#f48fb1', 'primary.main', 'success.main', '#ffe082', 'error.main'];
-
   const globalOverallInvested = transactions.reduce((sum, t) => t.type === "BUY" ? sum + t.totalAmount : sum, 0);
   const globalCurrentInvested = Object.values(groupedTransactions).reduce((sum, txList) => sum + calculateNetInvestment(txList), 0);
   const globalTotalSold = transactions.reduce((sum, t) => t.type === "SELL" ? sum + t.totalAmount : sum, 0);
@@ -555,9 +553,24 @@ const StocksPage = () => {
                 <Box sx={{ width: "100%", height: 300, mt: 1 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
+                      <defs>
+                        {chartPieGradients.map((gradient, index) => (
+                          <linearGradient
+                            key={`stock-pie-grad-${index}`}
+                            id={`stockPieGrad-${index}`}
+                            x1="0"
+                            y1="0"
+                            x2="1"
+                            y2="1"
+                          >
+                            <stop offset="0%" stopColor={gradient.start} />
+                            <stop offset="100%" stopColor={gradient.end} />
+                          </linearGradient>
+                        ))}
+                      </defs>
                       <Pie data={chartData} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={5} dataKey="value" stroke="none">
                         {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={`url(#stockPieGrad-${index % chartPieGradients.length})`} />
                         ))}
                       </Pie>
                       <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 12, color: theme.palette.text.primary }} itemStyle={{ color: theme.palette.text.primary, fontWeight: 600 }} />

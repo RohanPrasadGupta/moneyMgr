@@ -52,7 +52,7 @@ import {
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import {
-  chartPalette,
+  chartPieGradients,
   colors,
   investmentChartColors,
   dialogPaperSx,
@@ -64,6 +64,7 @@ import {
   dangerButtonSx,
   gradients,
   insetPanelSx,
+  statCardSx,
 } from "../../themeStyles";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK_CAPITAL;
@@ -520,6 +521,16 @@ const SipCalculatorSection = () => {
           <Box sx={{ height: { xs: 220, sm: 280 } }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={yearlyBreakdown} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                <defs>
+                  <linearGradient id="sipCalcInvestedGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={colors.primary} stopOpacity={1} />
+                    <stop offset="100%" stopColor={colors.primaryDark} stopOpacity={0.85} />
+                  </linearGradient>
+                  <linearGradient id="sipCalcReturnsGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={colors.success} stopOpacity={1} />
+                    <stop offset="100%" stopColor={colors.successDark} stopOpacity={0.85} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={alpha(axisColor, 0.15)} />
                 <XAxis
                   dataKey="year"
@@ -541,8 +552,8 @@ const SipCalculatorSection = () => {
                   labelFormatter={(label) => `Year ${label}`}
                 />
                 <Legend formatter={(v) => (v === "invested" ? "Invested" : "Returns")} />
-                <Bar dataKey="invested" fill={colors.primary} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="returns" fill={colors.success} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="invested" fill="url(#sipCalcInvestedGrad)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="returns" fill="url(#sipCalcReturnsGrad)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Box>
@@ -741,36 +752,51 @@ const SipInvestmentPage = () => {
     apiResponse?.totalAmount ||
     sipInvestments.reduce((sum, inv) => sum + inv.amount, 0);
 
-  const FALLBACK_COLORS = chartPalette;
-
   const getFundBrand = (fundName) => {
     const normalized = String(fundName || "").toLowerCase();
 
-    // Use logo-inspired colors for clearer mapping.
     if (normalized.includes("nabil")) {
       return {
         primaryColor: "#00a651",
-        gradient: "linear-gradient(135deg, #00a651 0%, #e53935 100%)",
+        start: colors.success,
+        end: colors.successDark,
+        gradient: `linear-gradient(180deg, ${colors.success} 0%, ${colors.successDark} 100%)`,
       };
     }
 
     if (normalized.includes("nic")) {
       return {
-        primaryColor: "#e53935",
-        gradient: "linear-gradient(135deg, #e53935 0%, #b71c1c 100%)",
+        primaryColor: colors.error,
+        start: colors.error,
+        end: "#b71c1c",
+        gradient: `linear-gradient(180deg, ${colors.error} 0%, #b71c1c 100%)`,
       };
     }
 
-    // Fallback: deterministic color per fund name.
     const idx = fundNames.indexOf(fundName);
-    const color = FALLBACK_COLORS[idx % FALLBACK_COLORS.length] || FALLBACK_COLORS[0];
+    const paletteGrad = chartPieGradients[idx % chartPieGradients.length];
     return {
-      primaryColor: color,
-      gradient: color,
+      primaryColor: paletteGrad.start,
+      start: paletteGrad.start,
+      end: paletteGrad.end,
+      gradient: `linear-gradient(135deg, ${paletteGrad.start} 0%, ${paletteGrad.end} 100%)`,
     };
   };
 
-  const pieColors = pieData.map((entry) => getFundBrand(entry.name).primaryColor);
+  const pieSeriesData = pieData.map((entry) => {
+    const { start, end } = getFundBrand(entry.name);
+    return {
+      name: entry.name,
+      y: entry.y,
+      color: {
+        linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+        stops: [
+          [0, start],
+          [1, end],
+        ],
+      },
+    };
+  });
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -939,7 +965,7 @@ const SipInvestmentPage = () => {
       {/* Stats + Add Button */}
       <Grid container spacing={3} sx={{ mb: 3, alignItems: "center" }}>
         <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", textAlign: "center" }}>
+          <Paper sx={{ ...statCardSx("success"), p: 3, borderRadius: 3 }}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>TOTAL SIP INVESTED</Typography>
             <Typography variant="h4" fontWeight="bold" sx={{ color: "success.main", mt: 1 }}>
               {formatCurrency(totalInvestment)}
@@ -947,7 +973,16 @@ const SipInvestmentPage = () => {
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", textAlign: "center" }}>
+          <Paper
+            sx={{
+              ...statCardSx("primary"),
+              p: 3,
+              borderRadius: 3,
+              borderColor: alpha("#f48fb1", 0.5),
+              bgcolor: alpha("#f48fb1", 0.08),
+              boxShadow: `0 4px 12px ${alpha("#f48fb1", 0.15)}`,
+            }}
+          >
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>TOTAL ENTRIES</Typography>
             <Typography variant="h4" fontWeight="bold" sx={{ color: "#f48fb1", mt: 1 }}>
               {sipInvestments.length}
@@ -994,6 +1029,17 @@ const SipInvestmentPage = () => {
           </Box>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <defs>
+                {fundNames.map((fund, idx) => {
+                  const { start, end } = getFundBrand(fund);
+                  return (
+                    <linearGradient key={fund} id={`sipFundGrad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={start} stopOpacity={1} />
+                      <stop offset="100%" stopColor={end} stopOpacity={0.85} />
+                    </linearGradient>
+                  );
+                })}
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={investmentChartColors.grid} />
               <XAxis
                 dataKey="year"
@@ -1020,19 +1066,16 @@ const SipInvestmentPage = () => {
                   <span style={{ color: investmentChartColors.legend, fontSize: 14, fontWeight: 700 }}>{value}</span>
                 )}
               />
-              {fundNames.map((fund, idx) => {
-                const { primaryColor } = getFundBrand(fund);
-                return (
-                  <Bar
-                    key={fund}
-                    dataKey={fund}
-                    name={fund}
-                    stackId="sipFundsByYear"
-                    fill={primaryColor}
-                    radius={idx === fundNames.length - 1 ? [8, 8, 0, 0] : [0, 0, 0, 0]}
-                  />
-                );
-              })}
+              {fundNames.map((fund, idx) => (
+                <Bar
+                  key={fund}
+                  dataKey={fund}
+                  name={fund}
+                  stackId="sipFundsByYear"
+                  fill={`url(#sipFundGrad-${idx})`}
+                  radius={idx === fundNames.length - 1 ? [8, 8, 0, 0] : [0, 0, 0, 0]}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </Paper>
@@ -1078,7 +1121,6 @@ const SipInvestmentPage = () => {
                   },
                   title: { text: "" },
                   credits: { enabled: false },
-                  colors: pieColors,
                   plotOptions: {
                     pie: {
                       innerSize: "50%",
@@ -1108,7 +1150,7 @@ const SipInvestmentPage = () => {
                   series: [
                     {
                       name: "SIP Investment",
-                      data: pieData,
+                      data: pieSeriesData,
                     },
                   ],
                 }}

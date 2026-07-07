@@ -48,7 +48,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 import { useCategoryQuery } from "../../services/useCategoryServices";
-import { themedCardSx, gradients, cancelButtonSx, primaryButtonSx, dangerButtonSx, successButtonSx } from "../../themeStyles";
+import { themedCardSx, gradients, cancelButtonSx, primaryButtonSx, dangerButtonSx, successButtonSx, colors } from "../../themeStyles";
 
 function formatDateTime(dateString) {
   return dayjs(dateString).format("MMM D, YYYY h:mm A");
@@ -380,7 +380,7 @@ const TransactionView = () => {
         sx={{
           mb: { xs: 3, sm: 4 },
           pb: { xs: 2, sm: 3 },
-          borderBottom: "2px solid #23272f",
+          borderBottom: `2px solid ${colors.border}`,
         }}
       >
         <Box sx={{ mb: { xs: 2, sm: 3 } }}>
@@ -416,6 +416,7 @@ const TransactionView = () => {
               sx={{
                 ...themedCardSx,
                 p: { xs: 1.5, sm: 2 },
+                border: `2px solid ${colors.border}`,
                 borderRadius: 2,
                 display: "flex",
                 flexDirection: { xs: "column", sm: "row" },
@@ -497,7 +498,7 @@ const TransactionView = () => {
                   ...themedCardSx,
                   flex: 1,
                   p: { xs: 1.5, sm: 2 },
-                  border: "1px solid rgba(67, 160, 71, 0.3)",
+                  border: `2px solid ${colors.border}`,
                   borderRadius: 2,
                   minWidth: 0,
                   position: "relative",
@@ -536,7 +537,7 @@ const TransactionView = () => {
                   ...themedCardSx,
                   flex: 1,
                   p: { xs: 1.5, sm: 2 },
-                  border: "1px solid rgba(239, 83, 80, 0.3)",
+                  border: `2px solid ${colors.border}`,
                   borderRadius: 2,
                   minWidth: 0,
                   position: "relative",
@@ -575,7 +576,7 @@ const TransactionView = () => {
                   ...themedCardSx,
                   flex: 1,
                   p: { xs: 1.5, sm: 2 },
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  border: `2px solid ${colors.border}`,
                   borderRadius: 2,
                   minWidth: 0,
                   position: "relative",

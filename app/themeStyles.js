@@ -271,6 +271,20 @@ export const chartPalette = [
   "#4db6ac",
 ];
 
+/** SVG pie slice gradients — start/end pairs for Recharts linearGradient defs */
+export const chartPieGradients = [
+  { start: "#00f2fe", end: "#4facfe" },
+  { start: "#64b5f6", end: "#1976d2" },
+  { start: "#66bb6a", end: "#2e7d32" },
+  { start: "#ef5350", end: "#c62828" },
+  { start: "#ffb74d", end: "#f57c00" },
+  { start: "#ab47bc", end: "#7b1fa2" },
+  { start: "#26c6da", end: "#00838f" },
+  { start: "#f48fb1", end: "#d81b60" },
+  { start: "#ffe082", end: "#ffb300" },
+  { start: "#7e57c2", end: "#4527a0" },
+];
+
 /** Recharts / Highcharts need real hex — not MUI palette paths */
 /** Bordered stat / summary cards (investments, etc.) */
 export const statCardSx = (variant = "default") => {
