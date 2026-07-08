@@ -199,16 +199,17 @@ const StocksPage = () => {
       }
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to update avg price flag");
       }
 
       return response.json();
     },
-    onMutate: ({ id }) => {
-      setUpdatingAvgPriceId(id);
+    onMutate: ({ id, silent }) => {
+      if (!silent) setUpdatingAvgPriceId(id);
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      if (variables?.silent) return;
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       setSnackbar({
         open: true,
@@ -216,15 +217,16 @@ const StocksPage = () => {
         severity: "success",
       });
     },
-    onError: (error) => {
+    onError: (error, variables) => {
+      if (variables?.silent) return;
       setSnackbar({
         open: true,
         message: error.message || "Failed to update avg price selection",
         severity: "error",
       });
     },
-    onSettled: () => {
-      setUpdatingAvgPriceId(null);
+    onSettled: (_data, _error, variables) => {
+      if (!variables?.silent) setUpdatingAvgPriceId(null);
     },
   });
 
@@ -294,6 +296,13 @@ const StocksPage = () => {
   const handleDeleteTransaction = (transaction) => {
     setTransactionToDelete(transaction);
     setDeleteDialogOpen(true);
+  };
+
+  const handleToggleUseForAvgPrice = (transaction, checked) => {
+    updateUseForAvgPriceMutation.mutate({
+      id: transaction._id,
+      useForAvgPrice: checked,
+    });
   };
 
   const confirmDelete = () => {
@@ -381,63 +390,83 @@ const StocksPage = () => {
     }).format(amount);
   };
 
+  // TOTAL BOUGHT — all BUY transactions (ignore useForAvgPrice)
   const calculateTotalInvestment = (transactionList) => {
     return transactionList.reduce((sum, t) => {
-      return t.type === "BUY" ? sum + t.totalAmount : sum;
+      return t.type === "BUY" ? sum + Number(t.totalAmount || 0) : sum;
     }, 0);
   };
 
+  // SOLD — all SELL transactions (ignore useForAvgPrice)
   const calculateTotalSold = (transactionList) => {
     return transactionList.reduce((sum, t) => {
-      return t.type === "SELL" ? sum + t.totalAmount : sum;
+      return t.type === "SELL" ? sum + Number(t.totalAmount || 0) : sum;
     }, 0);
   };
 
-  const calculateNetInvestment = (transactionList) => {
-    // Remaining invested capital = avgBuyPrice × shares still held
-    const avgPrice = calculateAveragePrice(transactionList);
-    const remainingQuantity = calculateTotalQuantity(transactionList);
-    return Math.max(0, avgPrice * remainingQuantity);
-  };
-
+  // Share quantity — all transactions (ignore useForAvgPrice)
   const calculateTotalQuantity = (transactionList) => {
     return transactionList.reduce((sum, t) => {
-      return t.type === "BUY" ? sum + t.quantity : sum - t.quantity;
+      const qty = Number(t.quantity || 0);
+      return t.type === "BUY" ? sum + qty : sum - qty;
     }, 0);
   };
 
-  const calculateAveragePrice = (transactionList) => {
-    const buyTransactions = transactionList.filter(
-      (t) => t.type === "BUY" && t.useForAvgPrice !== false
-    );
-    if (buyTransactions.length === 0) return 0;
+  // Weighted avg from a given set of BUY rows
+  const getWeightedAveragePrice = (buyTransactions) => {
+    if (!buyTransactions.length) return 0;
 
     const totalCost = buyTransactions.reduce(
-      (sum, t) => sum + t.totalAmount,
+      (sum, t) => sum + Number(t.totalAmount || 0),
       0
     );
     const totalQuantity = buyTransactions.reduce(
-      (sum, t) => sum + t.quantity,
+      (sum, t) => sum + Number(t.quantity || 0),
       0
     );
 
     return totalQuantity > 0 ? totalCost / totalQuantity : 0;
   };
 
+  // Buys used only for displayed AVG PRICE — strictly useForAvgPrice === true
+  const getBuysForAvgPrice = (transactionList) => {
+    return transactionList.filter(
+      (t) => t.type === "BUY" && t.useForAvgPrice === true
+    );
+  };
+
+  // AVG PRICE only — affected by useForAvgPrice toggle
+  // If user turns all OFF, avg stays 0 until they select buys again.
+  const calculateAveragePrice = (transactionList) => {
+    return getWeightedAveragePrice(getBuysForAvgPrice(transactionList));
+  };
+
+  // Full avg from ALL buys — used by remaining / P/L (toggle ignored)
+  const calculateOverallAveragePrice = (transactionList) => {
+    return getWeightedAveragePrice(
+      transactionList.filter((t) => t.type === "BUY")
+    );
+  };
+
+  // REMAINING — overall avg × shares held (toggle ignored)
+  const calculateNetInvestment = (transactionList) => {
+    const avgPrice = calculateOverallAveragePrice(transactionList);
+    const remainingQuantity = calculateTotalQuantity(transactionList);
+    return Math.max(0, avgPrice * remainingQuantity);
+  };
+
+  // REALIZED P/L — based on all transactions (toggle ignored)
   const calculateProfitLoss = (transactionList) => {
     const sellTransactions = transactionList.filter((t) => t.type === "SELL");
     if (sellTransactions.length === 0) return 0;
 
-    // Weighted average buy price across all BUY transactions
-    const avgBuyPrice = calculateAveragePrice(transactionList);
-
-    // Realized P&L = total sell revenue − (avgBuyPrice × total sold quantity)
+    const avgBuyPrice = calculateOverallAveragePrice(transactionList);
     const totalSellRevenue = sellTransactions.reduce(
-      (sum, t) => sum + t.totalAmount,
+      (sum, t) => sum + Number(t.totalAmount || 0),
       0
     );
     const totalSoldQuantity = sellTransactions.reduce(
-      (sum, t) => sum + t.quantity,
+      (sum, t) => sum + Number(t.quantity || 0),
       0
     );
 
@@ -1461,14 +1490,17 @@ const StocksPage = () => {
                                 >
                                   {transaction.type === "BUY" ? (
                                     <Switch
-                                      checked={transaction.useForAvgPrice !== false}
+                                      checked={transaction.useForAvgPrice === true}
                                       onChange={(e) =>
-                                        updateUseForAvgPriceMutation.mutate({
-                                          id: transaction._id,
-                                          useForAvgPrice: e.target.checked,
-                                        })
+                                        handleToggleUseForAvgPrice(
+                                          transaction,
+                                          e.target.checked
+                                        )
                                       }
-                                      disabled={updatingAvgPriceId === transaction._id}
+                                      disabled={
+                                        updatingAvgPriceId === transaction._id ||
+                                        updateUseForAvgPriceMutation.isPending
+                                      }
                                       size="small"
                                       color="primary"
                                     />
