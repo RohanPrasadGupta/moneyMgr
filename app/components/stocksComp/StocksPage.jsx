@@ -29,6 +29,7 @@ import {
   Snackbar,
   useMediaQuery,
   useTheme,
+  Switch,
 } from "@mui/material";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -175,12 +176,65 @@ const StocksPage = () => {
     },
   });
 
+  // Mutation for toggling transaction in avg price calculation
+  const updateUseForAvgPriceMutation = useMutation({
+    mutationFn: async ({ id, useForAvgPrice }) => {
+      const url = `${API_BASE_URL}/transactions/use-for-avg-price/${id}`;
+      let response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ useForAvgPrice }),
+      });
+
+      if (!response.ok && (response.status === 404 || response.status === 405)) {
+        response = await fetch(url, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ useForAvgPrice }),
+        });
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update avg price flag");
+      }
+
+      return response.json();
+    },
+    onMutate: ({ id }) => {
+      setUpdatingAvgPriceId(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      setSnackbar({
+        open: true,
+        message: "Average price selection updated",
+        severity: "success",
+      });
+    },
+    onError: (error) => {
+      setSnackbar({
+        open: true,
+        message: error.message || "Failed to update avg price selection",
+        severity: "error",
+      });
+    },
+    onSettled: () => {
+      setUpdatingAvgPriceId(null);
+    },
+  });
+
   const transactions = apiResponse?.data || [];
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [updatingAvgPriceId, setUpdatingAvgPriceId] = useState(null);
 
   // Use lazy initializer to avoid hydration mismatch
   const getDefaultFormData = () => ({
@@ -353,7 +407,9 @@ const StocksPage = () => {
   };
 
   const calculateAveragePrice = (transactionList) => {
-    const buyTransactions = transactionList.filter((t) => t.type === "BUY");
+    const buyTransactions = transactionList.filter(
+      (t) => t.type === "BUY" && t.useForAvgPrice !== false
+    );
     if (buyTransactions.length === 0) return 0;
 
     const totalCost = buyTransactions.reduce(
@@ -1234,6 +1290,23 @@ const StocksPage = () => {
                                   borderBottom: "2px solid primary.main",
                                   px: { xs: 1, sm: 2 },
                                   py: { xs: 1.5, sm: 2 },
+                                  display: { xs: "none", sm: "table-cell" },
+                                }}
+                              >
+                                Use For Avg
+                              </TableCell>
+                              <TableCell
+                                align="center"
+                                sx={{
+                                  fontWeight: "bold",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                  bgcolor: "background.paper",
+                                  color: "text.primary",
+                                  letterSpacing: 0.5,
+                                  textTransform: "uppercase",
+                                  borderBottom: "2px solid primary.main",
+                                  px: { xs: 1, sm: 2 },
+                                  py: { xs: 1.5, sm: 2 },
                                 }}
                               >
                                 Actions
@@ -1377,6 +1450,36 @@ const StocksPage = () => {
                                   >
                                     {formatDate(transaction.investedDate)}
                                   </Typography>
+                                </TableCell>
+                                <TableCell
+                                  align="center"
+                                  sx={{
+                                    px: { xs: 1, sm: 2 },
+                                    py: { xs: 1.5, sm: 2 },
+                                    display: { xs: "none", sm: "table-cell" },
+                                  }}
+                                >
+                                  {transaction.type === "BUY" ? (
+                                    <Switch
+                                      checked={transaction.useForAvgPrice !== false}
+                                      onChange={(e) =>
+                                        updateUseForAvgPriceMutation.mutate({
+                                          id: transaction._id,
+                                          useForAvgPrice: e.target.checked,
+                                        })
+                                      }
+                                      disabled={updatingAvgPriceId === transaction._id}
+                                      size="small"
+                                      color="primary"
+                                    />
+                                  ) : (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{ color: "text.secondary" }}
+                                    >
+                                      N/A
+                                    </Typography>
+                                  )}
                                 </TableCell>
                                 <TableCell
                                   align="center"
