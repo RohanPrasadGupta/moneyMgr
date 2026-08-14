@@ -28,11 +28,14 @@ const SpeedDialNavbar = () => {
         <IconButton
           onClick={toggleTheme}
           sx={{
+            width: 44,
+            height: 44,
             bgcolor: "background.paper",
             border: "1px solid",
             borderColor: "divider",
             boxShadow: theme.palette.mode === "dark" ? 4 : 2,
             "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.12) },
+            transition: "all 0.2s ease",
           }}
         >
           {mode === "dark" ? (

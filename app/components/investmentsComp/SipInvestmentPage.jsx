@@ -28,6 +28,7 @@ import {
   Stack,
   InputAdornment,
   Divider,
+  MenuItem,
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
@@ -39,6 +40,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCurrencyQuery, getCurrencyMenuOptions } from "../../services/useCurrencyServices";
 import {
   BarChart,
   Bar,
@@ -66,6 +68,7 @@ import {
   insetPanelSx,
   statCardSx,
 } from "../../themeStyles";
+import { InvestmentStatCard } from "./InvestmentFormUi";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK_CAPITAL;
 
@@ -78,7 +81,7 @@ const SIP_FUND_META = {
     badge: "NABIL",
   },
   NIC: {
-    accent: colors.error,
+    accent: colors.errorDark,
     subtitle: "NIC Asia Cap SIP",
     badge: "NIC",
   },
@@ -242,7 +245,7 @@ const SipDialogHeader = ({ title, subtitle, icon: Icon = SavingsIcon, onClose })
   </DialogTitle>
 );
 
-const SipFormFields = ({ formId, formData, onChange, onSubmit }) => (
+const SipFormFields = ({ formId, formData, onChange, onSubmit, currencies = [] }) => (
   <Box component="form" id={formId} onSubmit={onSubmit}>
     <Stack spacing={3}>
       <Paper elevation={0} sx={{ ...insetPanelSx, p: { xs: 2, sm: 2.5 } }}>
@@ -254,7 +257,7 @@ const SipFormFields = ({ formId, formData, onChange, onSubmit }) => (
           Details
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          Date and contribution amount in NPR
+          Date and contribution amount in {formData.currency || "NPR"}
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
@@ -296,13 +299,31 @@ const SipFormFields = ({ formId, formData, onChange, onSubmit }) => (
                 endAdornment: (
                   <InputAdornment position="end">
                     <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary" }}>
-                      NPR
+                      {formData.currency || "NPR"}
                     </Typography>
                   </InputAdornment>
                 ),
               }}
               sx={sipFieldSx}
             />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              select
+              fullWidth
+              label="Currency"
+              name="currency"
+              value={formData.currency || "NPR"}
+              onChange={onChange}
+              required
+              sx={sipFieldSx}
+            >
+              {getCurrencyMenuOptions(currencies, formData.currency).map((c) => (
+                <MenuItem key={c.code} value={c.code}>
+                  {c.code} — {c.name}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
         </Grid>
       </Box>
@@ -321,11 +342,12 @@ const SipInvestmentFormDialog = ({
   onSubmit,
   submitLabel,
   isPending,
+  currencies = [],
 }) => (
   <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: dialogPaperSx }}>
     <SipDialogHeader title={title} subtitle={subtitle} onClose={onClose} />
     <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
-      <SipFormFields formId={formId} formData={formData} onChange={onChange} onSubmit={onSubmit} />
+      <SipFormFields formId={formId} formData={formData} onChange={onChange} onSubmit={onSubmit} currencies={currencies} />
     </DialogContent>
     <DialogActions sx={{ ...dialogActionsSx, justifyContent: "flex-end", gap: 1.5 }}>
       <Button onClick={onClose} sx={{ ...cancelButtonSx, width: { xs: "100%", sm: "auto" } }}>
@@ -564,12 +586,15 @@ const SipCalculatorSection = () => {
 };
 
 const SipInvestmentPage = () => {
+  const theme = useTheme();
+  const investmentColors = investmentChartColors(theme.palette.mode);
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({ name: "Nabil", date: "", amount: "" });
+  const [formData, setFormData] = useState({ name: "Nabil", date: "", amount: "", currency: "NPR" });
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState(null);
+  const { data: currenciesFetched = [] } = useCurrencyQuery();
 
   // Fetch all SIP capital investments
   const { data: apiResponse, isLoading, error } = useQuery({
@@ -596,7 +621,7 @@ const SipInvestmentPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sipCapitalInvestments"] });
-      setFormData({ name: "Nabil", date: "", amount: "" });
+      setFormData({ name: "Nabil", date: "", amount: "", currency: "NPR" });
       setOpenAddDialog(false);
     },
   });
@@ -614,7 +639,7 @@ const SipInvestmentPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sipCapitalInvestments"] });
-      setFormData({ name: "Nabil", date: "", amount: "" });
+      setFormData({ name: "Nabil", date: "", amount: "", currency: "NPR" });
       setOpenEditDialog(false);
       setSelectedInvestment(null);
     },
@@ -642,7 +667,7 @@ const SipInvestmentPage = () => {
   };
 
   const handleOpenAddDialog = () => {
-    setFormData({ name: "Nabil", date: "", amount: "" });
+    setFormData({ name: "Nabil", date: "", amount: "", currency: "NPR" });
     setOpenAddDialog(true);
   };
 
@@ -652,6 +677,7 @@ const SipInvestmentPage = () => {
       name: normalizeSipFundName(investment.name),
       date: investment.date.split("T")[0],
       amount: investment.amount.toString(),
+      currency: investment.currency || "NPR",
     });
     setOpenEditDialog(true);
   };
@@ -668,6 +694,7 @@ const SipInvestmentPage = () => {
         name: formData.name,
         date: formData.date,
         amount: parseFloat(formData.amount),
+        currency: formData.currency,
       });
     }
   };
@@ -681,6 +708,7 @@ const SipInvestmentPage = () => {
           name: formData.name,
           date: formData.date,
           amount: parseFloat(formData.amount),
+          currency: formData.currency,
         },
       });
     }
@@ -757,19 +785,19 @@ const SipInvestmentPage = () => {
 
     if (normalized.includes("nabil")) {
       return {
-        primaryColor: "#00a651",
-        start: colors.success,
+        primaryColor: colors.successDark,
+        start: colors.successDark,
         end: colors.successDark,
-        gradient: `linear-gradient(180deg, ${colors.success} 0%, ${colors.successDark} 100%)`,
+        gradient: `linear-gradient(180deg, ${colors.successDark} 0%, ${colors.successDark} 100%)`,
       };
     }
 
     if (normalized.includes("nic")) {
       return {
-        primaryColor: colors.error,
-        start: colors.error,
-        end: "#b71c1c",
-        gradient: `linear-gradient(180deg, ${colors.error} 0%, #b71c1c 100%)`,
+        primaryColor: colors.errorDark,
+        start: colors.errorDark,
+        end: colors.errorDark,
+        gradient: `linear-gradient(180deg, ${colors.errorDark} 0%, ${colors.errorDark} 100%)`,
       };
     }
 
@@ -865,6 +893,7 @@ const SipInvestmentPage = () => {
         onSubmit={handleAddSubmit}
         submitLabel="Add Investment"
         isPending={addMutation.isPending}
+        currencies={currenciesFetched}
       />
 
       <SipInvestmentFormDialog
@@ -878,6 +907,7 @@ const SipInvestmentPage = () => {
         onSubmit={handleEditSubmit}
         submitLabel="Save Changes"
         isPending={updateMutation.isPending}
+        currencies={currenciesFetched}
       />
 
       <Dialog
@@ -963,57 +993,62 @@ const SipInvestmentPage = () => {
       </Dialog>
 
       {/* Stats + Add Button */}
-      <Grid container spacing={3} sx={{ mb: 3, alignItems: "center" }}>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ ...statCardSx("success"), p: 3, borderRadius: 3 }}>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>TOTAL SIP INVESTED</Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "success.main", mt: 1 }}>
-              {formatCurrency(totalInvestment)}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper
-            sx={{
-              ...statCardSx("primary"),
-              p: 3,
-              borderRadius: 3,
-              borderColor: alpha("#f48fb1", 0.5),
-              bgcolor: alpha("#f48fb1", 0.08),
-              boxShadow: `0 4px 12px ${alpha("#f48fb1", 0.15)}`,
-            }}
-          >
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>TOTAL ENTRIES</Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "#f48fb1", mt: 1 }}>
-              {sipInvestments.length}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenAddDialog}
-            sx={{
-              background: "linear-gradient(135deg, #66bb6a, #43a047)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: 3,
-              py: 1.5,
-              boxShadow: "0 4px 12px rgba(102, 187, 106, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #43a047, #66bb6a)",
-                transform: "translateY(-2px)",
-                boxShadow: "0 6px 16px rgba(102, 187, 106, 0.4)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Add SIP Investment
-          </Button>
-        </Grid>
-      </Grid>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={{ xs: 1.5, sm: 1.5 }}
+        alignItems={{ xs: "stretch", sm: "center" }}
+        justifyContent="space-between"
+        sx={{ mb: 3 }}
+      >
+        <Stack
+          direction="row"
+          spacing={{ xs: 1.25, sm: 1.5 }}
+          sx={{
+            flex: 1,
+            overflowX: { xs: "auto", sm: "visible" },
+            pb: { xs: 0.5, sm: 0 },
+            "&::-webkit-scrollbar": { display: "none" },
+          }}
+        >
+          <InvestmentStatCard
+            label="Total SIP invested"
+            value={formatCurrency(totalInvestment)}
+            sub="All contributions"
+            color={colors.successDark}
+            icon={SavingsIcon}
+          />
+          <InvestmentStatCard
+            label="Total entries"
+            value={sipInvestments.length}
+            sub="Contribution records"
+            color={colors.primaryDark}
+            icon={PaymentsIcon}
+          />
+        </Stack>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleOpenAddDialog}
+          sx={{
+            background: gradients.income,
+            color: "#fff",
+            fontWeight: 600,
+            borderRadius: "999px",
+            px: 3,
+            py: 1.5,
+            whiteSpace: "nowrap",
+            boxShadow: `0 4px 12px ${alpha(colors.successDark, 0.3)}`,
+            "&:hover": {
+              background: gradients.incomeHover,
+              transform: "translateY(-2px)",
+              boxShadow: `0 6px 16px ${alpha(colors.successDark, 0.4)}`,
+            },
+            transition: "all 0.3s ease",
+          }}
+        >
+          Add SIP Investment
+        </Button>
+      </Stack>
 
       {/* Bar Chart */}
       {sipInvestments.length > 0 ? (
@@ -1040,22 +1075,22 @@ const SipInvestmentPage = () => {
                   );
                 })}
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={investmentChartColors.grid} />
+              <CartesianGrid strokeDasharray="3 3" stroke={investmentColors.grid} />
               <XAxis
                 dataKey="year"
-                stroke={investmentChartColors.axis}
-                tick={{ fill: investmentChartColors.axis, fontSize: 13, fontWeight: 700 }}
+                stroke={investmentColors.axis}
+                tick={{ fill: investmentColors.axis, fontSize: 13, fontWeight: 700 }}
                 interval="preserveStartEnd"
               />
               <YAxis
-                stroke={investmentChartColors.axis}
-                tick={{ fill: investmentChartColors.axis, fontSize: 13 }}
+                stroke={investmentColors.axis}
+                tick={{ fill: investmentColors.axis, fontSize: 13 }}
                 tickFormatter={(v) => formatCompactCurrency(v)}
                 label={{
                   value: "Amount (NPR)",
                   angle: -90,
                   position: "insideLeft",
-                  style: { fill: investmentChartColors.axis, fontSize: 12, fontWeight: 800 },
+                  style: { fill: investmentColors.axis, fontSize: 12, fontWeight: 800 },
                 }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(102, 187, 106, 0.12)" }} />
@@ -1063,7 +1098,7 @@ const SipInvestmentPage = () => {
                 wrapperStyle={{ paddingTop: 20 }}
                 iconType="circle"
                 formatter={(value) => (
-                  <span style={{ color: investmentChartColors.legend, fontSize: 14, fontWeight: 700 }}>{value}</span>
+                  <span style={{ color: investmentColors.legend, fontSize: 14, fontWeight: 700 }}>{value}</span>
                 )}
               />
               {fundNames.map((fund, idx) => (

@@ -13,13 +13,23 @@ import {
   Alert,
 } from "@mui/material";
 import TitleHeader from "../header/TitleHeader";
+import { alpha } from "@mui/material/styles";
 import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { useCategoryQuery } from "../../services/useCategoryServices";
-import { themedCardSx, chartColors, colors, insetPanelSx } from "../../themeStyles";
+import { themedCardSx, chartColors, colors, insetPanelSx, gradients, chartPieGradients, chartPalette } from "../../themeStyles";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import SpeedIcon from "@mui/icons-material/Speed";
+import DonutLargeIcon from "@mui/icons-material/DonutLarge";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import StackedLineChartIcon from "@mui/icons-material/StackedLineChart";
+import CategoryIcon from "@mui/icons-material/Category";
 
 const Months = [
   "January",
@@ -45,18 +55,7 @@ const AnalysisPage = () => {
   const netChartHeight = isMobile ? 260 : 340;
   const columnChartHeight = isMobile ? 280 : 320;
   const barCategoryHeight = isMobile ? 280 : 320;
-  const pieColors = [
-    "#ff8a65",
-    "#ffa726",
-    "#ffd54f",
-    "#4db6ac",
-    "#64b5f6",
-    "#ba68c8",
-    "#f06292",
-    "#7986cb",
-    "#aed581",
-    "#90a4ae",
-  ];
+  const pieColors = chartPalette;
   const pieDataLabelDist = isMobile ? 12 : 20;
   const pieInnerSize = isMobile ? "55%" : "60%";
   const isDark = theme.palette.mode === "dark";
@@ -237,6 +236,14 @@ const AnalysisPage = () => {
     [pieDataIncome]
   );
 
+  const netBalance = pieIncomeTotal - pieTotalExpense;
+  const savingsRate = pieIncomeTotal > 0 ? ((pieIncomeTotal - pieTotalExpense) / pieIncomeTotal) * 100 : null;
+  const savingsRateColor =
+    savingsRate == null ? colors.text.secondary : savingsRate >= 20 ? colors.successDark : savingsRate >= 0 ? colors.warning : colors.errorDark;
+  const savingsRateLabel = savingsRate == null ? "—" : `${savingsRate >= 0 ? "+" : ""}${savingsRate.toFixed(1)}%`;
+  const savingsRateHint =
+    savingsRate == null ? "No income recorded" : savingsRate >= 20 ? "Healthy savings" : savingsRate >= 0 ? "Low buffer" : "Spending more than earned";
+
   const topExpenseCategories = React.useMemo(
     () => pieDataExpense.slice(0, 10).map((d) => ({ name: d.label, value: d.value })),
     [pieDataExpense]
@@ -323,6 +330,52 @@ const AnalysisPage = () => {
     return allData;
   }, [allTransactionData, barYear, barType]);
 
+  // Trailing 12-month trend for the top expense categories — independent of the
+  // monthly/yearly/all-time filter above, so it always gives a rolling view.
+  const categoryTrendData = React.useMemo(() => {
+    const txs = allTransactionData?.data;
+    if (!txs || txs.length === 0) return { months: [], series: [] };
+
+    const monthCursors = Array.from({ length: 12 }, (_, i) => dayjs().subtract(11 - i, "month"));
+    const monthKeys = monthCursors.map((m) => m.format("YYYY-MM"));
+    const monthLabels = monthCursors.map((m) => m.format("MMM YY"));
+
+    const categoryTotals = {};
+    const monthCategoryMap = {};
+    monthKeys.forEach((k) => (monthCategoryMap[k] = {}));
+
+    txs.forEach((tx) => {
+      if (tx.type !== "Expense") return;
+      const key = dayjs(tx.date).format("YYYY-MM");
+      if (!(key in monthCategoryMap)) return;
+      const cat = tx.category || "Uncategorized";
+      const amt = Number(tx.amount || 0);
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
+      monthCategoryMap[key][cat] = (monthCategoryMap[key][cat] || 0) + amt;
+    });
+
+    const topCats = Object.entries(categoryTotals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([cat]) => cat);
+
+    const series = topCats.map((cat) => ({
+      name: cat,
+      data: monthKeys.map((k) => convertAmount(monthCategoryMap[k][cat] || 0)),
+    }));
+
+    const otherData = monthKeys.map((k) => {
+      const monthTotal = Object.values(monthCategoryMap[k]).reduce((s, v) => s + v, 0);
+      const topTotal = topCats.reduce((s, cat) => s + (monthCategoryMap[k][cat] || 0), 0);
+      return convertAmount(monthTotal - topTotal);
+    });
+    if (otherData.some((v) => v > 0.5)) {
+      series.push({ name: "Other", data: otherData });
+    }
+
+    return { months: monthLabels, series };
+  }, [allTransactionData, convertAmount]);
+
   return (
     <Box
       sx={{
@@ -356,65 +409,276 @@ const AnalysisPage = () => {
               </Typography>
             </Box>
 
-            {/* Quick Stats Grid */}
-            <Box sx={{ display: "flex", gap: { xs: 1.5, sm: 2 }, flexWrap: "wrap", width: { xs: "100%", lg: "auto" } }}>
-              <Box sx={{ flex: { xs: "1 1 45%", sm: "none" }, bgcolor: "rgba(67, 160, 71, 0.1)", p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: "1px solid rgba(67, 160, 71, 0.3)", textAlign: "center", minWidth: { sm: "140px" } }}>
-                <Typography variant="caption" sx={{ color: "success.main", fontWeight: "bold", display: "block", mb: 0.5 }}>INCOME</Typography>
-                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{formatAmount(pieIncomeTotal)}</Typography>
-              </Box>
-              <Box sx={{ flex: { xs: "1 1 45%", sm: "none" }, bgcolor: "rgba(239, 83, 80, 0.1)", p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: "1px solid rgba(239, 83, 80, 0.3)", textAlign: "center", minWidth: { sm: "140px" } }}>
-                <Typography variant="caption" sx={{ color: "error.main", fontWeight: "bold", display: "block", mb: 0.5 }}>EXPENSE</Typography>
-                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{formatAmount(pieTotalExpense)}</Typography>
-              </Box>
-              <Box sx={{ flex: { xs: "1 1 100%", sm: "none" }, bgcolor: (pieIncomeTotal - pieTotalExpense) >= 0 ? "rgba(144, 202, 249, 0.1)" : "rgba(255, 138, 128, 0.1)", p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: `1px solid ${(pieIncomeTotal - pieTotalExpense) >= 0 ? "rgba(144, 202, 249, 0.3)" : "rgba(255, 138, 128, 0.3)"}`, textAlign: "center", minWidth: { sm: "140px" } }}>
-                <Typography variant="caption" sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "primary.main" : "error.main", fontWeight: "bold", display: "block", mb: 0.5 }}>NET BALANCE</Typography>
-                <Typography variant="h6" sx={{ color: (pieIncomeTotal - pieTotalExpense) >= 0 ? "primary.main" : "error.main", fontWeight: "bold", fontSize: { xs: "1.1rem", sm: "1.25rem" } }}>{(pieIncomeTotal - pieTotalExpense) >= 0 ? "+" : ""}{formatAmount(pieIncomeTotal - pieTotalExpense)}</Typography>
-              </Box>
+            {/* Quick Stats Grid — vibrant gradient KPI cards (fixed track widths so the
+                grid never reflows as values change length between renders) */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "repeat(2, 1fr)",
+                  sm: "repeat(4, 152px)",
+                  md: "repeat(4, 190px)",
+                  lg: "repeat(4, 220px)",
+                  xl: "repeat(4, 240px)",
+                },
+                gap: { xs: 1.5, sm: 2 },
+                width: { xs: "100%", lg: "auto" },
+                flexShrink: 0,
+              }}
+            >
+              <KpiCard
+                icon={TrendingUpIcon}
+                label="Income"
+                value={formatAmount(pieIncomeTotal)}
+                gradient={gradients.income}
+                glow={colors.successDark}
+              />
+              <KpiCard
+                icon={TrendingDownIcon}
+                label="Expense"
+                value={formatAmount(pieTotalExpense)}
+                gradient={gradients.expense}
+                glow={colors.errorDark}
+              />
+              <KpiCard
+                icon={AccountBalanceWalletIcon}
+                label="Net balance"
+                value={`${netBalance >= 0 ? "+" : ""}${formatAmount(netBalance)}`}
+                gradient={netBalance >= 0 ? gradients.primary : gradients.expense}
+                glow={netBalance >= 0 ? colors.primaryDark : colors.errorDark}
+              />
+              <KpiCard
+                icon={SpeedIcon}
+                label="Savings rate"
+                value={savingsRateLabel}
+                sub={savingsRateHint}
+                gradient={`linear-gradient(135deg, ${savingsRateColor} 0%, ${alpha(savingsRateColor, 0.7)} 100%)`}
+                glow={savingsRateColor}
+              />
             </Box>
           </Box>
           
           {/* Controls */}
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center", bgcolor: "background.default", p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-              <Chip label="Current View:" size="small" sx={{ bgcolor: "transparent", color: "text.secondary", fontWeight: 600, border: "none", px: 0 }} />
-              <Chip label={`${viewMode === "monthly" ? currentMonth : viewMode === "yearly" ? "Full year" : "All time"}`} size="small" sx={{ bgcolor: "action.selected", color: "text.primary", fontWeight: 600, border: "none" }} />
-              <Chip label={`${currentYear}`} size="small" sx={{ bgcolor: "action.selected", color: "text.secondary", border: "none" }} />
-            </Box>
-            
+          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center", bgcolor: "background.default", p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
+            {/* View mode pill toggle */}
+            <Stack
+              direction="row"
+              sx={{ bgcolor: "background.paper", borderRadius: "999px", border: "1px solid", borderColor: "divider", p: 0.4 }}
+            >
+              {[
+                { key: "monthly", label: "Monthly" },
+                { key: "yearly", label: "Yearly" },
+                { key: "all", label: "All time" },
+              ].map((opt) => {
+                const active = viewMode === opt.key;
+                return (
+                  <Box
+                    key={opt.key}
+                    component="button"
+                    onClick={() => setViewMode(opt.key)}
+                    sx={{
+                      all: "unset",
+                      cursor: "pointer",
+                      px: 1.75,
+                      py: 0.75,
+                      borderRadius: "999px",
+                      fontWeight: active ? 800 : 600,
+                      fontSize: "0.8rem",
+                      color: active ? "#fff" : "text.secondary",
+                      bgcolor: active ? colors.primaryDark : "transparent",
+                      transition: "all 0.2s ease",
+                      "&:hover": { bgcolor: active ? colors.primaryDark : "action.hover" },
+                    }}
+                  >
+                    {opt.label}
+                  </Box>
+                );
+              })}
+            </Stack>
+
+            {/* Month / Year pill */}
+            {viewMode !== "all" && (
+              <Stack
+                direction="row"
+                alignItems="center"
+                divider={<Box sx={{ width: "1px", height: 18, bgcolor: alpha(colors.primaryDark, 0.25) }} />}
+                sx={{ bgcolor: alpha(colors.primaryDark, 0.08), borderRadius: "999px", border: "1px solid", borderColor: "divider" }}
+              >
+                {viewMode === "monthly" && (
+                  <Select
+                    value={currentMonth}
+                    onChange={(e) => setCurrentMonth(e.target.value)}
+                    variant="standard"
+                    disableUnderline
+                    sx={{
+                      "& .MuiSelect-select": { fontSize: "0.8rem", fontWeight: 700, color: colors.primaryDark, py: 0.7, pl: 1.75, pr: "26px !important" },
+                      "& .MuiSelect-icon": { color: colors.primaryDark, right: 4, fontSize: "1.1rem" },
+                    }}
+                  >
+                    {Months.map((month, index) => <MenuItem key={index} value={month}>{month}</MenuItem>)}
+                  </Select>
+                )}
+                <Select
+                  value={currentYear}
+                  onChange={(e) => setCurrentYear(e.target.value)}
+                  variant="standard"
+                  disableUnderline
+                  sx={{
+                    "& .MuiSelect-select": { fontSize: "0.8rem", fontWeight: 700, color: colors.primaryDark, py: 0.7, pl: 1.5, pr: "26px !important" },
+                    "& .MuiSelect-icon": { color: colors.primaryDark, right: 4, fontSize: "1.1rem" },
+                  }}
+                >
+                  {Years.map((year, index) => <MenuItem key={index} value={year}>{year}</MenuItem>)}
+                </Select>
+              </Stack>
+            )}
+
             <Box sx={{ flexGrow: 1 }} />
 
+            {/* Currency pill toggle */}
             <Stack direction="row" spacing={1.5} flexWrap="wrap" justifyContent={{ xs: "center", md: "flex-end" }} sx={{ width: { xs: "100%", md: "auto" } }}>
-              <Button
-                variant={selectedCurrency === "THB" ? "contained" : "outlined"}
-                onClick={() => setSelectedCurrency((prev) => (prev === "THB" ? "NPR" : "THB"))}
-                disableElevation
-                sx={{
-                  borderRadius: 2,
-                  minWidth: 140,
-                  fontWeight: 700,
-                  textTransform: "none",
-                  borderColor: selectedCurrency === "THB" ? "transparent" : "divider",
-                  background: selectedCurrency === "THB" ? "linear-gradient(135deg, #7c4dff 0%, #00bcd4 100%)" : "transparent",
-                  boxShadow: selectedCurrency === "THB" ? "0 4px 15px rgba(124,77,255,0.3)" : "none",
-                  "&:hover": { background: selectedCurrency === "THB" ? "linear-gradient(135deg, #6f42f5 0%, #00acc1 100%)" : "action.hover" },
+              <Stack direction="row" sx={{ bgcolor: "background.paper", borderRadius: "999px", border: "1px solid", borderColor: "divider", p: 0.4 }}>
+                {["THB", "NPR"].map((cur) => {
+                  const active = selectedCurrency === cur;
+                  return (
+                    <Box
+                      key={cur}
+                      component="button"
+                      onClick={() => setSelectedCurrency(cur)}
+                      sx={{
+                        all: "unset",
+                        cursor: "pointer",
+                        px: 2,
+                        py: 0.75,
+                        borderRadius: "999px",
+                        fontWeight: active ? 800 : 600,
+                        fontSize: "0.8rem",
+                        color: active ? "#fff" : "text.secondary",
+                        bgcolor: active ? "#7c4dff" : "transparent",
+                        transition: "all 0.2s ease",
+                        "&:hover": { bgcolor: active ? "#7c4dff" : "action.hover" },
+                      }}
+                    >
+                      {cur}
+                    </Box>
+                  );
+                })}
+              </Stack>
+              {selectedCurrency === "NPR" && (
+                <Select value={selectedExchangeRange} onChange={(e) => setSelectedExchangeRange(e.target.value)} size="small" sx={{ minWidth: 140, bgcolor: "background.paper", borderRadius: "999px", "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
+                  {exchangeRateOptions.map((rate) => <MenuItem key={rate.value} value={rate.value}>1 THB = {rate.label}</MenuItem>)}
+                </Select>
+              )}
+            </Stack>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Savings rate gauge */}
+      <Box sx={{ width: "100%", mb: { xs: 3, sm: 4 } }}>
+        <Box sx={{ ...sectionPaperSx, width: "100%" }}>
+          <SectionHeader
+            icon={SpeedIcon}
+            iconColor={savingsRateColor}
+            title="Savings rate"
+            subtitle="How much of your income you're keeping for the selected period, at a glance."
+          />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: "center",
+              gap: { xs: 1, sm: 5 },
+            }}
+          >
+            <Box sx={{ position: "relative", width: { xs: 220, sm: 260 }, height: { xs: 130, sm: 150 }, flexShrink: 0 }}>
+              <HighchartsReact
+                highcharts={Highcharts}
+                options={{
+                  chart: {
+                    type: "pie",
+                    height: isMobile ? 130 : 150,
+                    backgroundColor: "transparent",
+                    margin: [0, 0, 0, 0],
+                    spacing: [0, 0, 0, 0],
+                  },
+                  title: { text: "" },
+                  credits: { enabled: false },
+                  tooltip: { enabled: false },
+                  plotOptions: {
+                    pie: {
+                      startAngle: -90,
+                      endAngle: 90,
+                      innerSize: "78%",
+                      size: "175%",
+                      center: ["50%", "100%"],
+                      dataLabels: { enabled: false },
+                      borderWidth: 0,
+                      states: { hover: { enabled: false } },
+                      enableMouseTracking: false,
+                    },
+                  },
+                  series: [
+                    {
+                      data: [
+                        {
+                          y: Math.max(Math.min(savingsRate ?? 0, 100), 0),
+                          color: {
+                            linearGradient: { x1: 0, y1: 0, x2: 1, y2: 0 },
+                            stops: [
+                              [0, alpha(savingsRateColor, 0.75)],
+                              [1, savingsRateColor],
+                            ],
+                          },
+                        },
+                        {
+                          y: 100 - Math.max(Math.min(savingsRate ?? 0, 100), 0),
+                          color: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                        },
+                      ],
+                    },
+                  ],
                 }}
-              >
-                {selectedCurrency === "THB" ? "Switch to NPR" : "Switch to THB"}
-              </Button>
-              <Select value={selectedExchangeRange} onChange={(e) => setSelectedExchangeRange(e.target.value)} disabled={selectedCurrency !== "NPR"} size="small" sx={{ minWidth: 140, bgcolor: "background.default", borderRadius: 2, "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
-                {exchangeRateOptions.map((rate) => <MenuItem key={rate.value} value={rate.value}>1 THB = {rate.label}</MenuItem>)}
-              </Select>
-              <Select value={viewMode} onChange={(e) => setViewMode(e.target.value)} size="small" sx={{ minWidth: 100, bgcolor: "background.default", borderRadius: 2, "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
-                <MenuItem value="monthly">Monthly</MenuItem>
-                <MenuItem value="yearly">Yearly</MenuItem>
-                <MenuItem value="all">View All</MenuItem>
-              </Select>
-              <Select value={currentYear} onChange={(e) => setCurrentYear(e.target.value)} disabled={viewMode === "all"} size="small" sx={{ minWidth: 90, bgcolor: "background.default", borderRadius: 2, "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
-                {Years.map((year, index) => <MenuItem key={index} value={year}>{year}</MenuItem>)}
-              </Select>
-              <Select value={currentMonth} onChange={(e) => setCurrentMonth(e.target.value)} disabled={viewMode === "yearly" || viewMode === "all"} size="small" sx={{ minWidth: 110, bgcolor: "background.default", borderRadius: 2, "& .MuiOutlinedInput-notchedOutline": { borderColor: "divider" } }}>
-                {Months.map((month, index) => <MenuItem key={index} value={month}>{month}</MenuItem>)}
-              </Select>
+              />
+              <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, textAlign: "center" }}>
+                <Typography variant="h4" fontWeight={900} sx={{ color: savingsRateColor, lineHeight: 1 }}>
+                  {savingsRateLabel}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {savingsRateHint}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Stack spacing={1.25} sx={{ flex: 1, width: "100%" }}>
+              {[
+                { label: "Overspending", range: "Below 0%", color: colors.errorDark },
+                { label: "Low buffer", range: "0% – 20%", color: colors.warning },
+                { label: "Healthy savings", range: "20%+", color: colors.successDark },
+              ].map((row) => (
+                <Stack
+                  key={row.label}
+                  direction="row"
+                  alignItems="center"
+                  spacing={1.5}
+                  sx={{
+                    p: 1,
+                    px: 1.5,
+                    borderRadius: 2,
+                    bgcolor: row.color === savingsRateColor ? alpha(row.color, 0.12) : "transparent",
+                    border: "1px solid",
+                    borderColor: row.color === savingsRateColor ? alpha(row.color, 0.35) : "divider",
+                  }}
+                >
+                  <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: row.color, flexShrink: 0 }} />
+                  <Typography variant="body2" fontWeight={700} sx={{ flex: 1 }}>
+                    {row.label}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {row.range}
+                  </Typography>
+                </Stack>
+              ))}
             </Stack>
           </Box>
         </Box>
@@ -422,12 +686,12 @@ const AnalysisPage = () => {
 
       <Box sx={{ width: "100%", mb: { xs: 2, sm: 3 } }}>
         <Box sx={{ ...sectionPaperSx, width: "100%" }}>
-          <Typography variant="h6" fontWeight={800} sx={{ mb: 0.5 }}>
-            Category split
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Donut charts show where money came from and where it went for the selected view.
-          </Typography>
+          <SectionHeader
+            icon={DonutLargeIcon}
+            iconColor={colors.primaryDark}
+            title="Category split"
+            subtitle="Donut charts show where money came from and where it went for the selected view."
+          />
           {selectedCurrency === "NPR" && (
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
               Converted with 1 THB = {selectedExchangeRate.toFixed(2)} NPR
@@ -706,7 +970,8 @@ const AnalysisPage = () => {
           title="Top Expense Categories"
           seriesName="Expense"
           data={topExpenseCategories}
-          color={colors.error}
+          color={colors.errorDark}
+          icon={TrendingDownIcon}
           height={barCategoryHeight}
           currencySymbol={currencySymbol}
           currencyCode={currencyCode}
@@ -716,7 +981,8 @@ const AnalysisPage = () => {
           title="Top Income Categories"
           seriesName="Income"
           data={topIncomeCategories}
-          color={colors.success}
+          color={colors.successDark}
+          icon={TrendingUpIcon}
           height={barCategoryHeight}
           sx={{ mt: 3 }}
           currencySymbol={currencySymbol}
@@ -727,13 +993,79 @@ const AnalysisPage = () => {
 
       <Box sx={{ width: "100%", mb: { xs: 3, sm: 4 } }}>
         <Box sx={{ ...sectionPaperSx, width: "100%" }}>
-          <Typography variant="h6" fontWeight={800} sx={{ mb: 0.5 }}>
-            Year-at-a-glance
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Pick a year to compare income and expenses month by month, then see how net results add up over
-            time.
-          </Typography>
+          <SectionHeader
+            icon={CategoryIcon}
+            iconColor={colors.primaryDark}
+            title="Top categories — 12 month trend"
+            subtitle="Rolling monthly totals for your biggest expense categories, independent of the filters above."
+          />
+          {categoryTrendData.series.length === 0 ? (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
+              Not enough expense history yet to chart a trend.
+            </Typography>
+          ) : (
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={{
+                chart: {
+                  type: "area",
+                  backgroundColor: "transparent",
+                  height: columnChartHeight,
+                },
+                title: { text: "" },
+                colors: chartPieGradients.map((g) => g.start),
+                xAxis: {
+                  categories: categoryTrendData.months,
+                  labels: { style: { color: chartAxisColor } },
+                  lineColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)",
+                  tickColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)",
+                },
+                yAxis: {
+                  title: { text: `Amount (${currencyCode})`, style: { color: chartAxisColor } },
+                  labels: { style: { color: chartAxisColor } },
+                  gridLineColor: chartGridColor,
+                },
+                legend: {
+                  enabled: true,
+                  itemStyle: { color: chartAxisColor, fontWeight: 600 },
+                  itemHoverStyle: { color: theme.palette.text.primary },
+                },
+                credits: { enabled: false },
+                tooltip: {
+                  shared: true,
+                  backgroundColor: isDark ? "rgba(17, 20, 24, 0.92)" : "rgba(255, 255, 255, 0.97)",
+                  borderWidth: 0,
+                  style: { color: isDark ? "#fff" : "#0f1115", fontWeight: 600 },
+                  valueDecimals: 0,
+                  valuePrefix: currencySymbol,
+                },
+                plotOptions: {
+                  area: {
+                    stacking: "normal",
+                    marker: { enabled: false, symbol: "circle" },
+                    fillOpacity: 0.75,
+                    lineWidth: 1.5,
+                    states: { hover: { lineWidth: 2 } },
+                  },
+                },
+                series: categoryTrendData.series.map((s) => ({
+                  name: s.name,
+                  data: s.data,
+                })),
+              }}
+            />
+          )}
+        </Box>
+      </Box>
+
+      <Box sx={{ width: "100%", mb: { xs: 3, sm: 4 } }}>
+        <Box sx={{ ...sectionPaperSx, width: "100%" }}>
+          <SectionHeader
+            icon={CalendarMonthIcon}
+            iconColor={colors.warning}
+            title="Year-at-a-glance"
+            subtitle="Pick a year to compare income and expenses month by month, then see how net results add up over time."
+          />
 
         <Box
           sx={{
@@ -1019,12 +1351,12 @@ const AnalysisPage = () => {
         </Box>
 
          <Box sx={{ ...sectionPaperSx, width: "100%", mb: { xs: 3, sm: 4 } }}>
-          <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
-            Monthly net (income − expense)
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Positive months build surplus; negative months draw it down.
-          </Typography>
+          <SectionHeader
+            icon={ShowChartIcon}
+            iconColor={colors.primaryDark}
+            title="Monthly net (income − expense)"
+            subtitle="Positive months build surplus; negative months draw it down."
+          />
           <HighchartsReact
             highcharts={Highcharts}
             options={{
@@ -1077,18 +1409,18 @@ const AnalysisPage = () => {
                   fillColor: {
                     linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
                     stops: [
-                      [0, "rgba(144,202,249,0.35)"],
-                      [1, "rgba(144,202,249,0.05)"],
+                      [0, alpha(colors.primaryDark, 0.55)],
+                      [1, alpha(colors.primaryDark, 0.04)],
                     ],
                   },
-                  lineColor: "#64b5f6",
-                  lineWidth: 2.5,
+                  lineColor: colors.primaryDark,
+                  lineWidth: 3,
                   marker: {
                     enabled: true,
-                    radius: 3,
-                    fillColor: "#64b5f6",
+                    radius: 3.5,
+                    fillColor: colors.primaryDark,
                     lineColor: theme.palette.mode === "dark" ? "#0f1115" : "#fff",
-                    lineWidth: 1,
+                    lineWidth: 1.5,
                   },
                 },
               },
@@ -1103,13 +1435,12 @@ const AnalysisPage = () => {
         </Box>
 
         <Box sx={{ ...sectionPaperSx, width: "100%", mb: { xs: 3, sm: 4 } }}>
-          <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
-            Cumulative net (year to date)
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Running total of monthly net through {barYear}—shows whether you are building or eroding surplus
-            across the year.
-          </Typography>
+          <SectionHeader
+            icon={StackedLineChartIcon}
+            iconColor={colors.warning}
+            title="Cumulative net (year to date)"
+            subtitle={`Running total of monthly net through ${barYear}—shows whether you are building or eroding surplus across the year.`}
+          />
           <HighchartsReact
             highcharts={Highcharts}
             options={{
@@ -1161,19 +1492,19 @@ const AnalysisPage = () => {
               credits: { enabled: false },
               plotOptions: {
                 areaspline: {
-                  lineWidth: 2.5,
-                  lineColor: "#ffb74d",
+                  lineWidth: 3,
+                  lineColor: colors.warning,
                   fillColor: {
                     linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
                     stops: [
-                      [0, "rgba(255, 183, 77, 0.4)"],
-                      [1, "rgba(255, 183, 77, 0.06)"],
+                      [0, alpha(colors.warning, 0.5)],
+                      [1, alpha(colors.warning, 0.04)],
                     ],
                   },
                   marker: {
                     enabled: true,
-                    radius: 3,
-                    fillColor: "#ffb74d",
+                    radius: 3.5,
+                    fillColor: colors.warning,
                     lineColor: theme.palette.mode === "dark" ? "#0f1115" : "#fff",
                     lineWidth: 1,
                   },
@@ -1194,10 +1525,114 @@ const AnalysisPage = () => {
   );
 };
 
+const KpiCard = ({ icon: Icon, label, value, sub, gradient, glow }) => (
+  <Box
+    sx={{
+      position: "relative",
+      overflow: "hidden",
+      borderRadius: 3,
+      p: { xs: 1.5, sm: 2, md: 2.5, lg: 2.75 },
+      background: gradient,
+      boxShadow: `0 10px 24px ${alpha(glow, 0.4)}`,
+      color: "#fff",
+      width: "100%",
+      minWidth: 0,
+      boxSizing: "border-box",
+    }}
+  >
+    <Box
+      sx={{
+        position: "absolute",
+        top: -24,
+        right: -24,
+        width: 90,
+        height: 90,
+        borderRadius: "50%",
+        bgcolor: "rgba(255,255,255,0.14)",
+      }}
+    />
+    {Icon && (
+      <Box
+        sx={{
+          position: "relative",
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          bgcolor: "rgba(255,255,255,0.22)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 1,
+        }}
+      >
+        <Icon sx={{ fontSize: 16, color: "#fff" }} />
+      </Box>
+    )}
+    <Typography
+      variant="caption"
+      sx={{ position: "relative", fontWeight: 800, letterSpacing: 0.6, opacity: 0.92, display: "block", whiteSpace: "nowrap" }}
+    >
+      {label.toUpperCase()}
+    </Typography>
+    <Typography
+      variant="h6"
+      fontWeight={800}
+      sx={{
+        position: "relative",
+        fontSize: { xs: "0.95rem", sm: "1.1rem", md: "1.25rem", lg: "1.4rem" },
+        mt: 0.25,
+        wordBreak: "break-word",
+        overflowWrap: "break-word",
+        lineHeight: 1.2,
+      }}
+    >
+      {value}
+    </Typography>
+    {sub && (
+      <Typography variant="caption" sx={{ position: "relative", opacity: 0.9, display: "block", mt: 0.25 }}>
+        {sub}
+      </Typography>
+    )}
+  </Box>
+);
+
+const SectionHeader = ({ icon: Icon, iconColor = colors.primaryDark, title, subtitle }) => (
+  <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mb: 2 }}>
+    {Icon && (
+      <Box
+        sx={{
+          width: { xs: 36, sm: 40 },
+          height: { xs: 36, sm: 40 },
+          borderRadius: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: `linear-gradient(135deg, ${iconColor} 0%, ${alpha(iconColor, 0.65)} 100%)`,
+          boxShadow: `0 4px 14px ${alpha(iconColor, 0.45)}`,
+          flexShrink: 0,
+        }}
+      >
+        <Icon sx={{ color: "#fff", fontSize: { xs: 18, sm: 20 } }} />
+      </Box>
+    )}
+    <Box>
+      <Typography variant="h6" fontWeight={800}>
+        {title}
+      </Typography>
+      {subtitle && (
+        <Typography variant="body2" color="text.secondary">
+          {subtitle}
+        </Typography>
+      )}
+    </Box>
+  </Stack>
+);
+
 const GridLikeTopCategories = ({
   title,
   data,
   color,
+  icon,
   seriesName,
   sx,
   height = 320,
@@ -1214,21 +1649,20 @@ const GridLikeTopCategories = ({
   const convertedValues = data.map((d) => Number(d.value || 0) * conversionRate);
 
   const base = Highcharts.color(color).get() || color;
-  const shades = data.map((_, idx) => {
-    const factor = (idx / Math.max(data.length - 1, 1)) * 0.35 - 0.15;
-    return Highcharts.color(base).brighten(factor).get();
-  });
 
-  const barData = convertedValues.map((y, idx) => ({
-    y,
-    color: {
-      linearGradient: { x1: 0, y1: 0, x2: 1, y2: 0 },
-      stops: [
-        [0, Highcharts.color(shades[idx]).brighten(0.12).get()],
-        [1, shades[idx]],
-      ],
-    },
-  }));
+  const barData = convertedValues.map((y, idx) => {
+    const grad = chartPieGradients[idx % chartPieGradients.length];
+    return {
+      y,
+      color: {
+        linearGradient: { x1: 0, y1: 0, x2: 1, y2: 0 },
+        stops: [
+          [0, grad.start],
+          [1, grad.end],
+        ],
+      },
+    };
+  });
 
   return (
     <Box
@@ -1243,12 +1677,12 @@ const GridLikeTopCategories = ({
         ...sx,
       }}
     >
-      <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
-        {title}
-      </Typography>
-      <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-        Ranked by total amount for the selected analysis period.
-      </Typography>
+      <SectionHeader
+        icon={icon}
+        iconColor={color}
+        title={title}
+        subtitle="Ranked by total amount for the selected analysis period."
+      />
       <HighchartsReact
         highcharts={Highcharts}
         options={{
