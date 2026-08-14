@@ -30,6 +30,7 @@ import {
   Divider,
   MenuItem,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SavingsIcon from "@mui/icons-material/Savings";
@@ -587,6 +588,7 @@ const SipCalculatorSection = () => {
 
 const SipInvestmentPage = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const investmentColors = investmentChartColors(theme.palette.mode);
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({ name: "Nabil", date: "", amount: "", currency: "NPR" });
@@ -1052,17 +1054,17 @@ const SipInvestmentPage = () => {
 
       {/* Bar Chart */}
       {sipInvestments.length > 0 ? (
-        <Paper sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-            <Box sx={{ background: "linear-gradient(135deg, #66bb6a, #43a047)", borderRadius: 2, p: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <SavingsIcon sx={{ fontSize: 32, color: "#fff" }} />
+        <Paper sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, gap: 2, mb: { xs: 2, sm: 2.5, md: 3 } }}>
+            <Box sx={{ background: gradients.income, borderRadius: 2, p: { xs: 1, sm: 1.25, md: 1.5 }, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <SavingsIcon sx={{ fontSize: { xs: 24, sm: 28, md: 32 }, color: "#fff" }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>SIP by Year & Fund</Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>Contributions split by SIP fund name</Typography>
+              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" } }}>SIP by Year & Fund</Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary", fontSize: { xs: "0.8125rem", sm: "0.875rem" } }}>Contributions split by SIP fund name</Typography>
             </Box>
           </Box>
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <defs>
                 {fundNames.map((fund, idx) => {
@@ -1086,12 +1088,17 @@ const SipInvestmentPage = () => {
                 stroke={investmentColors.axis}
                 tick={{ fill: investmentColors.axis, fontSize: 13 }}
                 tickFormatter={(v) => formatCompactCurrency(v)}
-                label={{
-                  value: "Amount (NPR)",
-                  angle: -90,
-                  position: "insideLeft",
-                  style: { fill: investmentColors.axis, fontSize: 12, fontWeight: 800 },
-                }}
+                width={isMobile ? 44 : 60}
+                label={
+                  isMobile
+                    ? undefined
+                    : {
+                        value: "Amount (NPR)",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { fill: investmentColors.axis, fontSize: 12, fontWeight: 800 },
+                      }
+                }
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(102, 187, 106, 0.12)" }} />
               <Legend
@@ -1115,12 +1122,12 @@ const SipInvestmentPage = () => {
           </ResponsiveContainer>
         </Paper>
       ) : (
-        <Paper sx={{ p: 6, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3, textAlign: "center" }}>
-          <Box sx={{ display: "inline-flex", background: "linear-gradient(135deg, #66bb6a, #43a047)", borderRadius: 3, p: 3, mb: 3 }}>
-            <SavingsIcon sx={{ fontSize: 64, color: "#fff", opacity: 0.7 }} />
+        <Paper sx={{ p: { xs: 3, sm: 5, md: 6 }, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3, textAlign: "center" }}>
+          <Box sx={{ display: "inline-flex", background: gradients.income, borderRadius: 3, p: { xs: 2, sm: 3 }, mb: 3 }}>
+            <SavingsIcon sx={{ fontSize: { xs: 40, sm: 64 }, color: "#fff", opacity: 0.7 }} />
           </Box>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", mb: 1 }}>No SIP Data</Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", mb: 1, fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" } }}>No SIP Data</Typography>
+          <Typography variant="body1" sx={{ color: "text.secondary", fontSize: { xs: "0.875rem", sm: "1rem" } }}>
             Start by adding your first SIP investment using the button above.
           </Typography>
         </Paper>
@@ -1130,14 +1137,14 @@ const SipInvestmentPage = () => {
       {sipInvestments.length > 0 && (
         <>
         {/* Pie Chart — Investment by Name */}
-        <Paper sx={{ p: 4, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-            <Box sx={{ background: "linear-gradient(135deg, #66bb6a, #43a047)", borderRadius: 2, p: 1.5, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <SavingsIcon sx={{ fontSize: 32, color: "#fff" }} />
+        <Paper sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", mb: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, gap: 2, mb: { xs: 2, sm: 2.5, md: 3 } }}>
+            <Box sx={{ background: gradients.income, borderRadius: 2, p: { xs: 1, sm: 1.25, md: 1.5 }, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <SavingsIcon sx={{ fontSize: { xs: 24, sm: 28, md: 32 }, color: "#fff" }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>SIP Distribution by Fund</Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>Total invested per SIP fund across all transactions</Typography>
+              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" } }}>SIP Distribution by Fund</Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary", fontSize: { xs: "0.8125rem", sm: "0.875rem" } }}>Total invested per SIP fund across all transactions</Typography>
             </Box>
           </Box>
           <Grid container spacing={3} alignItems="center">
@@ -1147,7 +1154,7 @@ const SipInvestmentPage = () => {
                 options={{
                   chart: {
                     type: "pie",
-                    height: 340,
+                    height: isMobile ? 280 : 340,
                     backgroundColor: "transparent",
                     marginTop: 0,
                     marginBottom: 0,
@@ -1225,9 +1232,9 @@ const SipInvestmentPage = () => {
 
         {/* Transaction Table */}
         <Paper sx={{ borderRadius: 3, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-          <Box sx={{ p: 3, borderBottom: "1px solid", borderBottomColor: "divider", bgcolor: "background.default" }}>
-            <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>SIP Transaction History</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>Detailed list of all SIP investments</Typography>
+          <Box sx={{ p: { xs: 2, sm: 3 }, borderBottom: "1px solid", borderBottomColor: "divider", bgcolor: "background.default" }}>
+            <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" } }}>SIP Transaction History</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5, fontSize: { xs: "0.8125rem", sm: "0.875rem" } }}>Detailed list of all SIP investments</Typography>
           </Box>
           <TableContainer sx={{ maxHeight: 500 }}>
             <Table stickyHeader>

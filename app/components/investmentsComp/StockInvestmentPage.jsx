@@ -18,6 +18,7 @@ import {
   Alert,
   Stack,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -55,6 +56,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK_CAPITAL;
 
 const StockInvestmentPage = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const investmentColors = investmentChartColors(theme.palette.mode);
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
@@ -507,37 +509,37 @@ const StockInvestmentPage = () => {
       {stockInvestments.length > 0 ? (
         <Paper
           sx={{
-            p: 4,
+            p: { xs: 2, sm: 3, md: 4 },
             borderRadius: 3,
             bgcolor: "background.paper",
             border: "1px solid", borderColor: "divider",
             mb: 3,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, gap: 2, mb: { xs: 2, sm: 2.5, md: 3 } }}>
             <Box
               sx={{
-                background: "linear-gradient(135deg, #ef5350, #e53935)",
+                background: gradients.expense,
                 borderRadius: 2,
-                p: 1.5,
+                p: { xs: 1, sm: 1.25, md: 1.5 },
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <ShowChartIcon sx={{ fontSize: 32, color: "#fff" }} />
+              <ShowChartIcon sx={{ fontSize: { xs: 24, sm: 28, md: 32 }, color: "#fff" }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>
+              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" } }}>
                 Yearly Investment Overview
               </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", fontSize: { xs: "0.8125rem", sm: "0.875rem" } }}>
                 Total amount invested per year
               </Typography>
             </Box>
           </Box>
 
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <defs>
                 <linearGradient id="stockGradient" x1="0" y1="0" x2="0" y2="1">
@@ -578,7 +580,7 @@ const StockInvestmentPage = () => {
       ) : (
         <Paper
           sx={{
-            p: 6,
+            p: { xs: 3, sm: 5, md: 6 },
             borderRadius: 3,
             bgcolor: "background.paper",
             border: "1px solid", borderColor: "divider",
@@ -589,18 +591,18 @@ const StockInvestmentPage = () => {
           <Box
             sx={{
               display: "inline-flex",
-              background: "linear-gradient(135deg, #ef5350, #e53935)",
+              background: gradients.expense,
               borderRadius: 3,
-              p: 3,
+              p: { xs: 2, sm: 3 },
               mb: 3,
             }}
           >
-            <ShowChartIcon sx={{ fontSize: 64, color: "#fff", opacity: 0.7 }} />
+            <ShowChartIcon sx={{ fontSize: { xs: 40, sm: 64 }, color: "#fff", opacity: 0.7 }} />
           </Box>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", mb: 1 }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", mb: 1, fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" } }}>
             No Investment Data
           </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
+          <Typography variant="body1" sx={{ color: "text.secondary", fontSize: { xs: "0.875rem", sm: "1rem" } }}>
             Start by adding your first stock capital investment using the button above.
           </Typography>
         </Paper>
@@ -610,37 +612,37 @@ const StockInvestmentPage = () => {
       {timelineData.length > 0 && (
         <Paper
           sx={{
-            p: 4,
+            p: { xs: 2, sm: 3, md: 4 },
             borderRadius: 3,
             bgcolor: "background.paper",
             border: "1px solid", borderColor: "divider",
             mb: 3,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, gap: 2, mb: { xs: 2, sm: 2.5, md: 3 } }}>
             <Box
               sx={{
-                background: "linear-gradient(135deg, #66bb6a, #43a047)",
+                background: gradients.income,
                 borderRadius: 2,
-                p: 1.5,
+                p: { xs: 1, sm: 1.25, md: 1.5 },
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <ShowChartIcon sx={{ fontSize: 32, color: "#fff" }} />
+              <ShowChartIcon sx={{ fontSize: { xs: 24, sm: 28, md: 32 }, color: "#fff" }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>
+              <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" } }}>
                 Investment Momentum
               </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", fontSize: { xs: "0.8125rem", sm: "0.875rem" } }}>
                 Monthly contributions and the running total over time
               </Typography>
             </Box>
           </Box>
 
-          <ResponsiveContainer width="100%" height={380}>
+          <ResponsiveContainer width="100%" height={isMobile ? 300 : 380}>
             <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
               <defs>
                 <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
@@ -659,12 +661,17 @@ const StockInvestmentPage = () => {
                 stroke={investmentColors.axis}
                 tick={{ fill: investmentColors.axis, fontSize: 12 }}
                 tickFormatter={(value) => formatCompactCurrency(value)}
-                label={{
-                  value: "Amount (NPR)",
-                  angle: -90,
-                  position: "insideLeft",
-                  style: { fill: investmentColors.axis, fontSize: 12, fontWeight: 600 },
-                }}
+                width={isMobile ? 40 : 60}
+                label={
+                  isMobile
+                    ? undefined
+                    : {
+                        value: "Amount (NPR)",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { fill: investmentColors.axis, fontSize: 12, fontWeight: 600 },
+                      }
+                }
               />
               <Tooltip
                 content={<MomentumTooltip />}
@@ -732,15 +739,15 @@ const StockInvestmentPage = () => {
         >
         <Box
           sx={{
-            p: 3,
+            p: { xs: 2, sm: 3 },
             borderBottom: "1px solid", borderBottomColor: "divider",
             bgcolor: "background.default",
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary" }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: "text.primary", fontSize: { xs: "1.125rem", sm: "1.25rem", md: "1.5rem" } }}>
             Transaction History
           </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5, fontSize: { xs: "0.8125rem", sm: "0.875rem" } }}>
             Detailed list of all stock investments
           </Typography>
         </Box>

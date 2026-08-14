@@ -48,10 +48,16 @@ const SpeedDialNavbar = () => {
     <SpeedDial
       ariaLabel="SpeedDial navigation"
       sx={{
-        position: "static",
+        position: "relative",
         m: 0,
         zIndex: 1500,
         ".MuiSpeedDial-fab": speedDialFabSx,
+        ".MuiSpeedDial-actions": {
+          position: "absolute",
+          bottom: "100%",
+          left: "50%",
+          transform: "translateX(-50%)",
+        },
       }}
       icon={<WidgetsIcon sx={{ color: "common.white" }} />}
       onClose={handleClose}

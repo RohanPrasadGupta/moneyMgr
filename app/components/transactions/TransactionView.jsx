@@ -604,10 +604,12 @@ const TransactionView = () => {
             />
 
             <Stack
-              direction={{ xs: "column", sm: "row" }}
+              direction={{ xs: "column", md: "row" }}
               spacing={{ xs: 1, sm: 1.25 }}
-              alignItems="center"
-              justifyContent="center"
+              alignItems={{ xs: "stretch", md: "center" }}
+              justifyContent={{ xs: "flex-start", md: "center" }}
+              useFlexGap
+              flexWrap="wrap"
             >
               <Tooltip title="Filter by type">
                 <ToggleButtonGroup

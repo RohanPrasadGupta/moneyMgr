@@ -409,7 +409,8 @@ const CategoryFilterCard = ({ active, onClick, icon: Icon, label, count, color }
     elevation={0}
     sx={{
       cursor: "pointer",
-      flex: { xs: "0 0 130px", sm: 1 },
+      flex: { xs: "1 1 0", sm: 1 },
+      minWidth: 0,
       p: { xs: 1.5, sm: 1.75 },
       borderRadius: 2.5,
       bgcolor: active ? alpha(color, 0.14) : alpha(color, 0.05),
