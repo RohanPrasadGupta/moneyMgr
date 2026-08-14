@@ -287,7 +287,14 @@ export const chartPieGradients = [
 
 /** Recharts / Highcharts need real hex — not MUI palette paths */
 /** Bordered stat / summary cards (investments, etc.) */
-export const statCardSx = (variant = "default") => {
+/**
+ * Picks a calmer, more contrasted tint in light mode (Material "600"-level
+ * tones read better on white than the punchier "400"-level tones used for
+ * dark backgrounds) while keeping the vivid tones in dark mode.
+ */
+export const adaptiveColor = (base, darkTint, mode = "dark") => (mode === "light" ? darkTint : base);
+
+export const statCardSx = (variant = "default", mode = "dark") => {
   const base = {
     p: { xs: 2, sm: 2.5, md: 3 },
     borderRadius: { xs: 2, sm: 2.5, md: 3 },
@@ -295,6 +302,33 @@ export const statCardSx = (variant = "default") => {
     textAlign: "center",
     height: "100%",
     border: "1px solid",
+    position: "relative",
+    overflow: "hidden",
+    transition: "all 0.2s ease",
+  };
+  // Always use the calmer "Dark" tint (not just in light mode) — the punchier
+  // base tones read as too loud/neon for stat-card accents in either theme.
+  const accentFor = {
+    default: colors.text.secondary,
+    neutral: colors.text.secondary,
+    error: colors.errorDark,
+    primary: colors.primaryDark,
+    success: colors.successDark,
+    action: colors.primaryDark,
+  };
+  const accent = accentFor[variant] || colors.text.secondary;
+  const bgAlpha = mode === "light" ? 0.08 : 0.06;
+  const borderAlpha = mode === "light" ? 0.3 : 0.4;
+  const accentBar = {
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: "3px",
+      background: accent,
+    },
   };
   const variants = {
     default: {
@@ -307,39 +341,68 @@ export const statCardSx = (variant = "default") => {
       boxShadow: `0 0 0 1px ${alpha(colors.text.secondary, 0.12)}`,
     },
     error: {
-      borderColor: alpha(colors.error, 0.4),
-      bgcolor: alpha(colors.error, 0.06),
+      borderColor: alpha(accent, borderAlpha),
+      bgcolor: alpha(accent, bgAlpha),
     },
     primary: {
-      borderColor: alpha(colors.primary, 0.4),
-      bgcolor: alpha(colors.primary, 0.06),
+      borderColor: alpha(accent, borderAlpha),
+      bgcolor: alpha(accent, bgAlpha),
     },
     success: {
-      borderColor: alpha(colors.success, 0.5),
-      bgcolor: alpha(colors.success, 0.08),
-      boxShadow: `0 4px 12px ${alpha(colors.success, 0.2)}`,
+      borderColor: alpha(accent, borderAlpha + 0.1),
+      bgcolor: alpha(accent, bgAlpha + 0.02),
+      boxShadow: `0 4px 12px ${alpha(accent, mode === "light" ? 0.12 : 0.2)}`,
     },
     action: {
-      borderColor: alpha(colors.primary, 0.45),
-      bgcolor: alpha(colors.primary, 0.06),
+      borderColor: alpha(accent, borderAlpha + 0.05),
+      bgcolor: alpha(accent, bgAlpha),
       textAlign: "left",
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between",
     },
   };
-  return { ...base, ...variants[variant] };
+  return { ...base, ...variants[variant], ...accentBar, accentColor: accent };
 };
 
-export const investmentChartColors = {
-  stockBar: { top: colors.error, bottom: colors.errorDark },
-  coinBar: { top: colors.primary, bottom: colors.primaryDark },
-  sipBar: chartPalette,
-  areaLine: colors.success,
-  areaFillTop: colors.success,
-  areaFillBottom: colors.successDark,
-  cumulativeLine: colors.warning,
-  axis: colors.text.secondary,
-  grid: colors.border,
-  legend: colors.text.primary,
+const CURRENCY_COLOR_MAP = {
+  THB: colors.primary,
+  NPR: colors.warning,
+};
+
+/** Small pill treatment for a currency code (Badge/Chip content) */
+export const currencyBadgeSx = (code) => {
+  const accent = CURRENCY_COLOR_MAP[code] || colors.neutral.gray;
+  return {
+    bgcolor: alpha(accent, 0.15),
+    color: accent,
+    border: `1px solid ${alpha(accent, 0.35)}`,
+    fontWeight: 700,
+  };
+};
+
+/**
+ * Chart accent/axis colors, tuned per theme mode. The dark-mode palette
+ * (light gridlines, near-white legend text, "400-level" vivid accents) reads
+ * fine on a dark background but is nearly invisible or overly harsh on white,
+ * so light mode gets its own readable axis/grid/legend tones plus the calmer
+ * "Dark"-tint accent colors.
+ */
+export const investmentChartColors = (mode = "dark") => {
+  const isLight = mode === "light";
+  // Bar/area accents always use the calmer "Dark" tint now (not just in light
+  // mode) — the gradient's opacity taper still gives it visual depth without
+  // needing the punchier base tone.
+  return {
+    stockBar: { top: colors.errorDark, bottom: colors.errorDark },
+    coinBar: { top: colors.primaryDark, bottom: colors.primaryDark },
+    sipBar: chartPalette,
+    areaLine: colors.successDark,
+    areaFillTop: colors.successDark,
+    areaFillBottom: colors.successDark,
+    cumulativeLine: colors.warning,
+    axis: isLight ? "#555f6d" : colors.text.secondary,
+    grid: isLight ? "#e0e4ea" : colors.border,
+    legend: isLight ? "#1a1a2e" : colors.text.primary,
+  };
 };

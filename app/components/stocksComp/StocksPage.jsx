@@ -41,6 +41,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { themedCardSx, chartPieGradients } from "../../themeStyles";
+import { useCurrencyQuery, getCurrencyMenuOptions } from "../../services/useCurrencyServices";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_STOCK;
 
@@ -231,6 +232,7 @@ const StocksPage = () => {
   });
 
   const transactions = apiResponse?.data || [];
+  const { data: currenciesFetched = [] } = useCurrencyQuery();
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -246,6 +248,7 @@ const StocksPage = () => {
     price: "",
     quantity: "",
     investedDate: "",
+    currency: "NPR",
   });
 
   const [formData, setFormData] = useState(getDefaultFormData);
@@ -273,6 +276,7 @@ const StocksPage = () => {
       price: "",
       quantity: "",
       investedDate: new Date().toISOString().split("T")[0],
+      currency: "NPR",
     });
     setOpenDialog(true);
   };
@@ -289,6 +293,7 @@ const StocksPage = () => {
       investedDate: new Date(transaction.investedDate)
         .toISOString()
         .split("T")[0],
+      currency: transaction.currency || "NPR",
     });
     setOpenDialog(true);
   };
@@ -344,6 +349,7 @@ const StocksPage = () => {
         quantity: parseFloat(formData.quantity),
         totalAmount: totalAmount,
         investedDate: formData.investedDate,
+        currency: formData.currency,
       };
       updateTransactionMutation.mutate({
         id: editingTransaction._id,
@@ -359,6 +365,7 @@ const StocksPage = () => {
         quantity: parseFloat(formData.quantity),
         totalAmount: totalAmount,
         investedDate: formData.investedDate,
+        currency: formData.currency,
       };
       addTransactionMutation.mutate(newTransaction);
     }
@@ -1816,6 +1823,29 @@ const StocksPage = () => {
                     },
                   }}
                 />
+
+                {/* Currency */}
+                <TextField
+                  select
+                  label="Currency"
+                  value={formData.currency}
+                  onChange={(e) => handleFormChange("currency", e.target.value)}
+                  required
+                  fullWidth
+                  size={isMobile ? "small" : "medium"}
+                  helperText="Currency this trade was executed in"
+                  sx={{
+                    "& .MuiInputBase-input": {
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
+                    },
+                  }}
+                >
+                  {getCurrencyMenuOptions(currenciesFetched, formData.currency).map((c) => (
+                    <MenuItem key={c.code} value={c.code}>
+                      {c.code} — {c.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
                 {/* Date */}
                 <TextField

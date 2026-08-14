@@ -29,11 +29,15 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import CurrencyBitcoinIcon from "@mui/icons-material/CurrencyBitcoin";
-import { investmentChartColors, colors, statCardSx } from "../../themeStyles";
+import PaymentsIcon from "@mui/icons-material/Payments";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import CurrencyExchangeIcon from "@mui/icons-material/CurrencyExchange";
+import { investmentChartColors, colors, gradients } from "../../themeStyles";
 import {
   InvestmentFormDialog,
   InvestmentDeleteDialog,
   CoinFormFields,
+  InvestmentStatCard,
 } from "./InvestmentFormUi";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -55,6 +59,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_COIN_CAPITAL;
 
 const CoinInvestmentPage = () => {
   const theme = useTheme();
+  const investmentColors = investmentChartColors(theme.palette.mode);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   
@@ -324,14 +329,7 @@ const CoinInvestmentPage = () => {
   const grandTotal = apiResponse?.summary?.grandTotal || coinInvestments.reduce((sum, inv) => sum + inv.totalAmount, 0);
   const grandTotalInNPR = convertBhtToNpr(grandTotal);
 
-  const NprSubtext = ({ bhtAmount }) => (
-    <Typography
-      variant="caption"
-      sx={{ color: "text.secondary", display: "block", mt: 0.75, fontWeight: 600 }}
-    >
-      ≈ {formatCurrencyNPR(convertBhtToNpr(bhtAmount))}
-    </Typography>
-  );
+  const nprSubText = (bhtAmount) => `≈ ${formatCurrencyNPR(convertBhtToNpr(bhtAmount))}`;
 
   if (isLoading) {
     return (
@@ -479,82 +477,79 @@ const CoinInvestmentPage = () => {
         </Stack>
       </Paper>
 
-      {/* Statistics Cards with Add Button */}
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, alignItems: "stretch" }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={statCardSx("error")}>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.75rem" } }}>
-              TOTAL INVESTMENT (BHT)
-            </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "error.main", mt: 1, fontSize: { xs: "1.35rem", sm: "1.5rem", md: "1.75rem" } }}>
-              {formatCurrencyBHT(totalInvestment)}
-            </Typography>
-            <NprSubtext bhtAmount={totalInvestment} />
-            <Chip label="Principal" size="small" sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.error, 0.35) }} />
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={statCardSx("error")}>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.75rem" } }}>
-              TRANSACTION CHARGES
-            </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "error.main", mt: 1, fontSize: { xs: "1.35rem", sm: "1.5rem", md: "1.75rem" } }}>
-              {formatCurrencyBHT(totalCharges)}
-            </Typography>
-            <NprSubtext bhtAmount={totalCharges} />
-            <Chip label="Fees" size="small" sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.error, 0.35) }} />
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={statCardSx("primary")}>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.75rem" } }}>
-              GRAND TOTAL (BHT)
-            </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "primary.main", mt: 1, fontSize: { xs: "1.35rem", sm: "1.5rem", md: "1.75rem" } }}>
-              {formatCurrencyBHT(grandTotal)}
-            </Typography>
-            <NprSubtext bhtAmount={grandTotal} />
-            <Chip label="All time" size="small" sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.primary, 0.35) }} />
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={statCardSx("success")}>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.75rem" } }}>
-              NPR AMOUNT (×{conversionRate.toFixed(1)})
-            </Typography>
-            <Typography variant="h4" fontWeight="bold" sx={{ color: "success.main", mt: 1, fontSize: { xs: "1.35rem", sm: "1.5rem", md: "1.75rem" } }}>
-              {formatCurrencyNPR(grandTotalInNPR)}
-            </Typography>
-            <Chip label="Grand total converted" size="small" sx={{ mt: 1.5, border: "1px solid", borderColor: alpha(colors.success, 0.4) }} />
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sx={{ display: "flex", justifyContent: { xs: "center", md: "flex-end" }, alignItems: "center" }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />}
-            onClick={handleOpenAddDialog}
-            fullWidth={isMobile}
-            sx={{
-              background: "linear-gradient(135deg, #ef5350, #e53935)",
-              color: "#fff",
-              fontWeight: 600,
-              borderRadius: "12px",
-              px: { xs: 2.5, sm: 3, md: 3 },
-              py: { xs: 1.25, sm: 1.375, md: 1.5 },
-              fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
-              boxShadow: "0 4px 12px rgba(239, 83, 80, 0.3)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #e53935, #ef5350)",
-                transform: "translateY(-2px)",
-                boxShadow: "0 6px 16px rgba(239, 83, 80, 0.4)",
-              },
-              transition: "all 0.3s ease",
-            }}
-          >
-            Add Investment
-          </Button>
-        </Grid>
-      </Grid>
+      {/* Statistics + Add Button */}
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={{ xs: 1.5, md: 1.5 }}
+        alignItems={{ xs: "stretch", md: "center" }}
+        justifyContent="space-between"
+        sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}
+      >
+        <Stack
+          direction="row"
+          spacing={{ xs: 1.25, sm: 1.5 }}
+          sx={{
+            flex: 1,
+            overflowX: { xs: "auto", md: "visible" },
+            pb: { xs: 0.5, md: 0 },
+            "&::-webkit-scrollbar": { display: "none" },
+          }}
+        >
+          <InvestmentStatCard
+            label="Total investment (BHT)"
+            value={formatCurrencyBHT(totalInvestment)}
+            sub={nprSubText(totalInvestment)}
+            color={colors.errorDark}
+            icon={CurrencyBitcoinIcon}
+          />
+          <InvestmentStatCard
+            label="Transaction charges"
+            value={formatCurrencyBHT(totalCharges)}
+            sub={nprSubText(totalCharges)}
+            color={colors.errorDark}
+            icon={PaymentsIcon}
+          />
+          <InvestmentStatCard
+            label="Grand total (BHT)"
+            value={formatCurrencyBHT(grandTotal)}
+            sub={nprSubText(grandTotal)}
+            color={colors.primaryDark}
+            icon={AccountBalanceWalletIcon}
+          />
+          <InvestmentStatCard
+            label={`NPR amount (×${conversionRate.toFixed(1)})`}
+            value={formatCurrencyNPR(grandTotalInNPR)}
+            sub="Grand total converted"
+            color={colors.successDark}
+            icon={CurrencyExchangeIcon}
+          />
+        </Stack>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />}
+          onClick={handleOpenAddDialog}
+          fullWidth={isMobile}
+          sx={{
+            background: gradients.expense,
+            color: "#fff",
+            fontWeight: 600,
+            borderRadius: "999px",
+            px: { xs: 2.5, sm: 3, md: 3 },
+            py: { xs: 1.25, sm: 1.375, md: 1.5 },
+            fontSize: { xs: "0.875rem", sm: "0.9375rem", md: "1rem" },
+            whiteSpace: "nowrap",
+            boxShadow: `0 4px 12px ${alpha(colors.errorDark, 0.3)}`,
+            "&:hover": {
+              background: gradients.expenseHover,
+              transform: "translateY(-2px)",
+              boxShadow: `0 6px 16px ${alpha(colors.errorDark, 0.4)}`,
+            },
+            transition: "all 0.3s ease",
+          }}
+        >
+          Add Investment
+        </Button>
+      </Stack>
 
       {/* Bar Chart */}
       {coinInvestments.length > 0 ? (
@@ -594,19 +589,19 @@ const CoinInvestmentPage = () => {
           <BarChart data={chartData} margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 10 : 20, bottom: 5 }}>
             <defs>
               <linearGradient id="coinGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={investmentChartColors.coinBar.top} stopOpacity={1} />
-                <stop offset="100%" stopColor={investmentChartColors.coinBar.bottom} stopOpacity={0.85} />
+                <stop offset="0%" stopColor={investmentColors.coinBar.top} stopOpacity={1} />
+                <stop offset="100%" stopColor={investmentColors.coinBar.bottom} stopOpacity={0.85} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={investmentChartColors.grid} />
+            <CartesianGrid strokeDasharray="3 3" stroke={investmentColors.grid} />
             <XAxis
               dataKey="year"
-              stroke={investmentChartColors.axis}
-              tick={{ fill: investmentChartColors.axis, fontSize: isMobile ? 12 : 14, fontWeight: 600 }}
+              stroke={investmentColors.axis}
+              tick={{ fill: investmentColors.axis, fontSize: isMobile ? 12 : 14, fontWeight: 600 }}
             />
             <YAxis
-              stroke={investmentChartColors.axis}
-              tick={{ fill: investmentChartColors.axis, fontSize: isMobile ? 11 : 14 }}
+              stroke={investmentColors.axis}
+              tick={{ fill: investmentColors.axis, fontSize: isMobile ? 11 : 14 }}
               tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(100, 181, 246, 0.12)" }} />
@@ -614,7 +609,7 @@ const CoinInvestmentPage = () => {
               wrapperStyle={{ paddingTop: "20px" }}
               iconType="circle"
               formatter={(value) => (
-                <span style={{ color: investmentChartColors.legend, fontSize: isMobile ? "12px" : "14px", fontWeight: 600 }}>
+                <span style={{ color: investmentColors.legend, fontSize: isMobile ? "12px" : "14px", fontWeight: 600 }}>
                   {value}
                 </span>
               )}

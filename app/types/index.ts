@@ -13,6 +13,7 @@ export interface Category {
   _id: string;
   name: string;
   categoryType: "Income" | "Expense";
+  currency: string;
 }
 
 export interface SipInvestment {
@@ -20,12 +21,14 @@ export interface SipInvestment {
   name: string;
   date: string;
   amount: number;
+  currency: string;
 }
 
 export interface StockInvestment {
   _id: string;
   date: string;
   amount: number;
+  currency: string;
 }
 
 export interface CoinInvestment {
@@ -34,13 +37,15 @@ export interface CoinInvestment {
   amount: number;
   transactionCharge: number;
   totalAmount: number;
+  currency: string;
 }
 
 export interface Currency {
+  _id: string;
   code: string;
+  name: string;
   symbol: string;
-  locale: string;
-  label: string;
+  isDefault: boolean;
 }
 
 export interface MonthlySummary {

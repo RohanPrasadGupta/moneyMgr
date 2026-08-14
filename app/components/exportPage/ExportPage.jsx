@@ -10,7 +10,6 @@ import {
   FormLabel,
   TextField,
   Stack,
-  Divider,
   Tooltip,
   Chip,
   MenuItem,
@@ -25,10 +24,106 @@ import dayjs from "dayjs";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import TitleHeader from "../header/TitleHeader";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { themedCardSx } from "../../themeStyles";
+import { themedCardSx, colors, gradients, currencyBadgeSx } from "../../themeStyles";
+
+const KpiCard = ({ icon: Icon, label, value, gradient, glow }) => (
+  <Box
+    sx={{
+      position: "relative",
+      overflow: "hidden",
+      borderRadius: 3,
+      p: { xs: 1.5, sm: 2 },
+      background: gradient,
+      boxShadow: `0 10px 24px ${alpha(glow, 0.4)}`,
+      color: "#fff",
+      width: "100%",
+      minWidth: 0,
+      boxSizing: "border-box",
+    }}
+  >
+    <Box
+      sx={{
+        position: "absolute",
+        top: -24,
+        right: -24,
+        width: 90,
+        height: 90,
+        borderRadius: "50%",
+        bgcolor: "rgba(255,255,255,0.14)",
+      }}
+    />
+    {Icon && (
+      <Box
+        sx={{
+          position: "relative",
+          width: 28,
+          height: 28,
+          borderRadius: "50%",
+          bgcolor: "rgba(255,255,255,0.22)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 1,
+        }}
+      >
+        <Icon sx={{ fontSize: 16, color: "#fff" }} />
+      </Box>
+    )}
+    <Typography
+      variant="caption"
+      sx={{ position: "relative", fontWeight: 800, letterSpacing: 0.6, opacity: 0.92, display: "block", whiteSpace: "nowrap" }}
+    >
+      {label.toUpperCase()}
+    </Typography>
+    <Typography
+      variant="h6"
+      fontWeight={800}
+      sx={{ position: "relative", fontSize: { xs: "0.95rem", sm: "1.1rem" }, mt: 0.25, wordBreak: "break-word", overflowWrap: "break-word", lineHeight: 1.2 }}
+    >
+      {value}
+    </Typography>
+  </Box>
+);
+
+const SectionHeader = ({ icon: Icon, iconColor = colors.primaryDark, title, subtitle }) => (
+  <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ mb: 2 }}>
+    {Icon && (
+      <Box
+        sx={{
+          width: { xs: 36, sm: 40 },
+          height: { xs: 36, sm: 40 },
+          borderRadius: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: `linear-gradient(135deg, ${iconColor} 0%, ${alpha(iconColor, 0.65)} 100%)`,
+          boxShadow: `0 4px 14px ${alpha(iconColor, 0.45)}`,
+          flexShrink: 0,
+        }}
+      >
+        <Icon sx={{ color: "#fff", fontSize: { xs: 18, sm: 20 } }} />
+      </Box>
+    )}
+    <Box>
+      <Typography variant="h6" fontWeight={800}>
+        {title}
+      </Typography>
+      {subtitle && (
+        <Typography variant="body2" color="text.secondary">
+          {subtitle}
+        </Typography>
+      )}
+    </Box>
+  </Stack>
+);
 
 let jsPDF;
 
@@ -39,6 +134,16 @@ const ExportPage = () => {
   const [endDate, setEndDate] = useState(dayjs());
   const [selectedCategory, setSelectedCategory] = useState("");
   const [pdfLoaded, setPdfLoaded] = useState(false);
+  const [activeQuickRange, setActiveQuickRange] = useState(30);
+
+  const sectionPaperSx = {
+    ...themedCardSx,
+    mb: { xs: 3, sm: 4 },
+    p: { xs: 2, sm: 3, md: 4 },
+    borderRadius: { xs: 2, sm: 4 },
+    position: "relative",
+    overflow: "hidden",
+  };
 
   const extractTextAfterEmoji = (text) => {
     if (!text) return "";
@@ -325,7 +430,14 @@ const ExportPage = () => {
     const end = dayjs();
     setEndDate(end);
     setStartDate(end.subtract(days, "day"));
+    setActiveQuickRange(days);
   };
+
+  const quickRanges = [
+    { days: 7, label: "Last 7d" },
+    { days: 30, label: "Last 30d" },
+    { days: 90, label: "Last 90d" },
+  ];
 
   return (
     <Box
@@ -333,356 +445,430 @@ const ExportPage = () => {
         width: "100%",
         mx: "auto",
         mt: { xs: 1, sm: 3 },
-        p: { xs: 2, sm: 3 },
-        ...themedCardSx,
+        p: { xs: 1, sm: 3 },
+        bgcolor: "background.paper",
         borderRadius: { xs: 0, sm: 3 },
-        minHeight: { xs: 500, sm: 500 },
-        backgroundImage:
-          theme.palette.mode === "dark"
-            ? "radial-gradient(circle at top right, rgba(239,83,80,0.10), transparent 42%), radial-gradient(circle at bottom left, rgba(25,118,210,0.10), transparent 40%)"
-            : "radial-gradient(circle at top right, rgba(239,83,80,0.08), transparent 42%), radial-gradient(circle at bottom left, rgba(25,118,210,0.08), transparent 40%)",
+        boxShadow: { xs: 0, sm: 4 },
+        minHeight: { xs: 300, sm: 400 },
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <TitleHeader text="Export Transaction Data" />
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        sx={{ mb: 2, textAlign: "center", maxWidth: 760, mx: "auto" }}
-      >
-        Pick a date range, preview what will be exported, and download a clean CSV or PDF report in one click.
-      </Typography>
+      {/* Header */}
+      <Box sx={{ ...sectionPaperSx, width: "100%", mb: { xs: 3, sm: 4 }, p: { xs: 2, sm: 3, md: 4 } }}>
+        <Box sx={{ position: "absolute", top: "-50%", right: "-20%", width: "60%", height: "150%", background: "radial-gradient(ellipse at center, rgba(100, 181, 246, 0.15) 0%, transparent 70%)", zIndex: 0 }} />
 
-      <Paper
-        elevation={0}
-        sx={{
-          ...themedCardSx,
-          p: { xs: 2, sm: 3 },
-          borderRadius: 3,
-          mb: 3,
-        }}
-      >
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          spacing={1.5}
-          sx={{ mb: 2 }}
-        >
-          <Typography variant="body1" fontWeight={700}>
-            Select date range
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            <Chip label="Last 7d" onClick={() => applyQuickRange(7)} clickable size="small" />
-            <Chip label="Last 30d" onClick={() => applyQuickRange(30)} clickable size="small" />
-            <Chip label="Last 90d" onClick={() => applyQuickRange(90)} clickable size="small" />
-          </Stack>
-        </Stack>
+        <Box sx={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, justifyContent: "space-between", alignItems: { xs: "stretch", lg: "center" }, gap: 3 }}>
+            <Box>
+              <Typography variant="h4" fontWeight="bold" sx={{ color: "text.primary", letterSpacing: 0.5, fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.125rem" } }}>
+                Export Transaction Data
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary", fontSize: { xs: "0.8rem", sm: "0.875rem" }, maxWidth: 500 }}>
+                Pick a date range, preview what will be exported, and download a clean CSV or PDF report in one click.
+              </Typography>
+            </Box>
 
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={3}
-            alignItems={{ xs: "stretch", sm: "center" }}
-            sx={{ mb: 2 }}
-          >
-            <FormControl>
-              <FormLabel
-                sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-              >
-                <CalendarMonthIcon fontSize="small" color="primary" />
-                <span>Start Date</span>
-              </FormLabel>
-              <DatePicker
-                value={startDate}
-                onChange={(newValue) => setStartDate(newValue)}
-                disableFuture
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "outlined",
-                    error: !isDateRangeValid,
-                    helperText: !isDateRangeValid ? "Invalid date range" : "",
-                  },
-                }}
-                sx={{ minWidth: isMobile ? "100%" : 220 }}
-              />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel
-                sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
-              >
-                <CalendarMonthIcon fontSize="small" color="primary" />
-                <span>End Date</span>
-              </FormLabel>
-              <DatePicker
-                value={endDate}
-                onChange={(newValue) => setEndDate(newValue)}
-                disableFuture
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "outlined",
-                    error: !isDateRangeValid,
-                    helperText: !isDateRangeValid
-                      ? "End date must be after start date"
-                      : "",
-                  },
-                }}
-                sx={{ minWidth: isMobile ? "100%" : 220 }}
-              />
-            </FormControl>
-
-            <FormControl sx={{ minWidth: isMobile ? "100%" : 260 }}>
-              <FormLabel sx={{ mb: 1 }}>Category (Optional)</FormLabel>
-              <TextField
-                select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                disabled={isCategoryPending}
-                helperText="Leave as All Categories to export everything"
-              >
-                <MenuItem value="">All Categories</MenuItem>
-                {categories.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
-                    {cat}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </FormControl>
-          </Stack>
-        </LocalizationProvider>
-
-        {!isPending && !error && (
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ mb: 2 }}>
-            <Paper
+            {/* Quick stats — vibrant gradient KPI cards */}
+            <Box
               sx={{
-                p: 1.5,
-                borderRadius: 2,
+                display: "grid",
+                gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 152px)" },
+                gap: { xs: 1.5, sm: 2 },
+                width: { xs: "100%", lg: "auto" },
+                flexShrink: 0,
+              }}
+            >
+              <KpiCard
+                icon={ListAltIcon}
+                label="Transactions"
+                value={isPending ? "…" : filteredData.length}
+                gradient={gradients.primary}
+                glow={colors.primaryDark}
+              />
+              <KpiCard
+                icon={TrendingUpIcon}
+                label="Income"
+                value={isPending ? "…" : `${totalIncome} THB`}
+                gradient={gradients.income}
+                glow={colors.successDark}
+              />
+              <KpiCard
+                icon={TrendingDownIcon}
+                label="Expense"
+                value={isPending ? "…" : `${totalExpense} THB`}
+                gradient={gradients.expense}
+                glow={colors.errorDark}
+              />
+            </Box>
+          </Box>
+
+          {/* Quick range pill toggle */}
+          <Stack
+            direction="row"
+            sx={{ bgcolor: "background.paper", borderRadius: "999px", border: "1px solid", borderColor: "divider", p: 0.4, alignSelf: { xs: "stretch", sm: "flex-start" } }}
+          >
+            {quickRanges.map((opt) => {
+              const active = activeQuickRange === opt.days;
+              return (
+                <Box
+                  key={opt.days}
+                  component="button"
+                  onClick={() => applyQuickRange(opt.days)}
+                  sx={{
+                    all: "unset",
+                    cursor: "pointer",
+                    flex: { xs: 1, sm: "none" },
+                    textAlign: "center",
+                    px: 1.75,
+                    py: 0.75,
+                    borderRadius: "999px",
+                    fontWeight: active ? 800 : 600,
+                    fontSize: "0.8rem",
+                    color: active ? "#fff" : "text.secondary",
+                    bgcolor: active ? colors.primaryDark : "transparent",
+                    transition: "all 0.2s ease",
+                    "&:hover": { bgcolor: active ? colors.primaryDark : "action.hover" },
+                  }}
+                >
+                  {opt.label}
+                </Box>
+              );
+            })}
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* Filters */}
+      <Box sx={{ width: "100%", mb: { xs: 3, sm: 4 } }}>
+        <Box sx={{ ...sectionPaperSx, width: "100%" }}>
+          <SectionHeader
+            icon={FilterAltIcon}
+            iconColor={colors.primaryDark}
+            title="Filters"
+            subtitle="Narrow the export down to a date range and, optionally, a single category."
+          />
+
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={3}
+              alignItems={{ xs: "stretch", sm: "center" }}
+              sx={{ mb: 2 }}
+            >
+              <FormControl>
+                <FormLabel
+                  sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <CalendarMonthIcon fontSize="small" sx={{ color: colors.primaryDark }} />
+                  <span>Start Date</span>
+                </FormLabel>
+                <DatePicker
+                  value={startDate}
+                  onChange={(newValue) => {
+                    setStartDate(newValue);
+                    setActiveQuickRange(null);
+                  }}
+                  disableFuture
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: "outlined",
+                      error: !isDateRangeValid,
+                      helperText: !isDateRangeValid ? "Invalid date range" : "",
+                    },
+                  }}
+                  sx={{ minWidth: isMobile ? "100%" : 220 }}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel
+                  sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <CalendarMonthIcon fontSize="small" sx={{ color: colors.primaryDark }} />
+                  <span>End Date</span>
+                </FormLabel>
+                <DatePicker
+                  value={endDate}
+                  onChange={(newValue) => {
+                    setEndDate(newValue);
+                    setActiveQuickRange(null);
+                  }}
+                  disableFuture
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: "outlined",
+                      error: !isDateRangeValid,
+                      helperText: !isDateRangeValid
+                        ? "End date must be after start date"
+                        : "",
+                    },
+                  }}
+                  sx={{ minWidth: isMobile ? "100%" : 220 }}
+                />
+              </FormControl>
+
+              <FormControl sx={{ minWidth: isMobile ? "100%" : 260 }}>
+                <FormLabel sx={{ mb: 1 }}>Category (Optional)</FormLabel>
+                <TextField
+                  select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  disabled={isCategoryPending}
+                  helperText="Leave as All Categories to export everything"
+                >
+                  <MenuItem value="">All Categories</MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat} value={cat}>
+                      {cat}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </FormControl>
+            </Stack>
+          </LocalizationProvider>
+
+          {isPending ? (
+            <Box sx={{ display: "flex", justifyContent: "center", my: 3 }}>
+              <CircularProgress size={32} sx={{ color: "primary.main" }} />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ borderRadius: 2 }}>
+              Error loading transaction data. Please try again later.
+            </Alert>
+          ) : (
+            <Alert
+              severity={filteredData.length ? "info" : "warning"}
+              sx={{ borderRadius: 2 }}
+            >
+              {filteredData.length
+                ? `${filteredData.length} transactions found for the selected filters.`
+                : "No transactions found for the selected filters."}
+            </Alert>
+          )}
+        </Box>
+      </Box>
+
+      {/* Download options */}
+      <Box sx={{ width: "100%", mb: { xs: 3, sm: 4 } }}>
+        <Box sx={{ ...sectionPaperSx, width: "100%" }}>
+          <SectionHeader
+            icon={FileDownloadIcon}
+            iconColor={colors.successDark}
+            title="Download options"
+            subtitle="Choose a format for the filtered transactions above."
+          />
+
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2.5}>
+            <Box
+              sx={{
+                flex: 1,
+                p: { xs: 2, sm: 2.5 },
+                borderRadius: 3,
                 border: "1px solid",
                 borderColor: "divider",
-                bgcolor: "background.paper",
-                minWidth: 120,
+                bgcolor: "background.default",
               }}
             >
-              <Typography variant="caption" color="text.secondary">Transactions</Typography>
-              <Typography variant="h6" fontWeight={800}>{filteredData.length}</Typography>
-            </Paper>
-            <Paper
-              sx={{
-                p: 1.5,
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: alpha("#43a047", 0.35),
-                bgcolor: alpha("#43a047", 0.09),
-                minWidth: 120,
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">Income</Typography>
-              <Typography variant="h6" fontWeight={800} sx={{ color: "success.dark" }}>{totalIncome} THB</Typography>
-            </Paper>
-            <Paper
-              sx={{
-                p: 1.5,
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: alpha("#ef5350", 0.35),
-                bgcolor: alpha("#ef5350", 0.09),
-                minWidth: 120,
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">Expense</Typography>
-              <Typography variant="h6" fontWeight={800} sx={{ color: "error.main" }}>{totalExpense} THB</Typography>
-            </Paper>
-          </Stack>
-        )}
-
-        {isPending ? (
-          <Box sx={{ display: "flex", justifyContent: "center", my: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            Error loading transaction data. Please try again later.
-          </Alert>
-        ) : (
-          <Alert
-            severity={filteredData.length ? "info" : "warning"}
-            sx={{ mb: 3 }}
-          >
-            {filteredData.length
-              ? `${filteredData.length} transactions found for the selected filters.`
-              : "No transactions found for the selected filters."}
-          </Alert>
-        )}
-      </Paper>
-
-      <Divider sx={{ my: 3 }}>
-        <Typography variant="body2" color="text.secondary">
-          Download Options
-        </Typography>
-      </Divider>
-
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={3}
-        justifyContent="center"
-        sx={{ mb: 3 }}
-      >
-        <Paper
-          sx={{
-            ...themedCardSx,
-            p: 2,
-            borderRadius: 3,
-            flex: 1,
-            maxWidth: 360,
-          }}
-        >
-          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-            CSV Export
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Best for spreadsheet analysis and bulk edits.
-          </Typography>
-          <Tooltip title="Download as CSV for spreadsheet applications">
-            <span>
-              <Button
-                variant="contained"
-                fullWidth
-                startIcon={<InsertDriveFileIcon />}
-                onClick={handleExportCSV}
-                disabled={!isDateRangeValid || isPending || !filteredData.length}
-                sx={{
-                  py: 1.3,
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 700,
-                  background: "linear-gradient(135deg, #1e88e5, #1565c0)",
-                  boxShadow: "0 8px 20px rgba(30,136,229,0.28)",
-                  "&:hover": {
-                    background: "linear-gradient(135deg, #1976d2, #0d47a1)",
-                    transform: "translateY(-1px)",
-                  },
-                }}
-              >
-                Export as CSV
-              </Button>
-            </span>
-          </Tooltip>
-        </Paper>
-
-        <Paper
-          sx={{
-            ...themedCardSx,
-            p: 2,
-            borderRadius: 3,
-            flex: 1,
-            maxWidth: 360,
-          }}
-        >
-          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-            PDF Export
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Best for printing, reporting, and sharing snapshots.
-          </Typography>
-          <Tooltip title="Download as PDF for printing or sharing">
-            <span>
-              <Button
-                variant="contained"
-                fullWidth
-                startIcon={<PictureAsPdfIcon />}
-                onClick={handleExportPDF}
-                disabled={
-                  !isDateRangeValid ||
-                  isPending ||
-                  !filteredData.length ||
-                  !pdfLoaded
-                }
-                sx={{
-                  py: 1.3,
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 700,
-                  background: "linear-gradient(135deg, #ef5350, #e53935)",
-                  boxShadow: "0 8px 20px rgba(239,83,80,0.28)",
-                  "&:hover": {
-                    background: "linear-gradient(135deg, #e53935, #b71c1c)",
-                    transform: "translateY(-1px)",
-                  },
-                }}
-              >
-                Export as PDF
-              </Button>
-            </span>
-          </Tooltip>
-        </Paper>
-      </Stack>
-
-      {!isPending && filteredData.length > 0 && (
-        <Paper
-          sx={{
-            p: { xs: 2, sm: 2.5 },
-            mt: 3,
-            bgcolor: "background.default",
-            borderRadius: 3,
-            maxHeight: 400,
-            overflow: "auto",
-            border: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
-            Preview: {Math.min(5, filteredData.length)} of {filteredData.length}{" "}
-            transactions
-          </Typography>
-
-          <Box component="ul" sx={{ pl: 0, listStyleType: "none" }}>
-            {filteredData.slice(0, 5).map((tx) => (
-              <Box
-                component="li"
-                key={tx._id}
-                sx={{
-                  p: 1,
-                  mb: 1,
-                  borderLeft: "4px solid",
-                  borderColor: tx.type === "Expense" ? "error.main" : "success.dark",
-                  bgcolor: "background.paper",
-                  borderRadius: 1,
-                  boxShadow: 1,
-                }}
-              >
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {tx.category}
-                  </Typography>
-                  <Typography
-                    variant="body2"
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: gradients.primary,
+                    boxShadow: `0 4px 14px ${alpha(colors.primaryDark, 0.4)}`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <InsertDriveFileIcon sx={{ color: "#fff", fontSize: 20 }} />
+                </Box>
+                <Typography variant="subtitle1" fontWeight={800}>
+                  CSV Export
+                </Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Best for spreadsheet analysis and bulk edits.
+              </Typography>
+              <Tooltip title="Download as CSV for spreadsheet applications">
+                <span>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    startIcon={<InsertDriveFileIcon />}
+                    onClick={handleExportCSV}
+                    disabled={!isDateRangeValid || isPending || !filteredData.length}
                     sx={{
-                      fontWeight: 600,
-                      color: tx.type === "Expense" ? "error.main" : "success.dark",
+                      py: 1.3,
+                      borderRadius: "999px",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      background: gradients.primary,
+                      boxShadow: `0 8px 20px ${alpha(colors.primaryDark, 0.35)}`,
+                      "&:hover": {
+                        background: gradients.primaryHover,
+                        transform: "translateY(-1px)",
+                      },
                     }}
                   >
-                    {tx.type === "Expense" ? "-" : "+"}
-                    {tx.amount} {tx.currency}
-                  </Typography>
+                    Export as CSV
+                  </Button>
+                </span>
+              </Tooltip>
+            </Box>
+
+            <Box
+              sx={{
+                flex: 1,
+                p: { xs: 2, sm: 2.5 },
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: "background.default",
+              }}
+            >
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: gradients.expense,
+                    boxShadow: `0 4px 14px ${alpha(colors.errorDark, 0.4)}`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <PictureAsPdfIcon sx={{ color: "#fff", fontSize: 20 }} />
                 </Box>
-                <Typography variant="caption" color="text.secondary">
-                  {dayjs(tx.date).format("YYYY-MM-DD")} • {tx.account}
-                  {tx.note && ` • ${tx.note}`}
+                <Typography variant="subtitle1" fontWeight={800}>
+                  PDF Export
                 </Typography>
-              </Box>
-            ))}
-            {filteredData.length > 5 && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", textAlign: "center" }}
-              >
-                ...and {filteredData.length - 5} more transactions
+              </Stack>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Best for printing, reporting, and sharing snapshots.
               </Typography>
-            )}
+              <Tooltip title="Download as PDF for printing or sharing">
+                <span>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    startIcon={<PictureAsPdfIcon />}
+                    onClick={handleExportPDF}
+                    disabled={
+                      !isDateRangeValid ||
+                      isPending ||
+                      !filteredData.length ||
+                      !pdfLoaded
+                    }
+                    sx={{
+                      py: 1.3,
+                      borderRadius: "999px",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      background: gradients.expense,
+                      boxShadow: `0 8px 20px ${alpha(colors.errorDark, 0.35)}`,
+                      "&:hover": {
+                        background: gradients.expenseHover,
+                        transform: "translateY(-1px)",
+                      },
+                    }}
+                  >
+                    Export as PDF
+                  </Button>
+                </span>
+              </Tooltip>
+            </Box>
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* Preview */}
+      {!isPending && filteredData.length > 0 && (
+        <Box sx={{ width: "100%" }}>
+          <Box sx={{ ...sectionPaperSx, width: "100%", mb: 0 }}>
+            <SectionHeader
+              icon={ReceiptLongIcon}
+              iconColor={colors.warning}
+              title="Preview"
+              subtitle={`Showing ${Math.min(5, filteredData.length)} of ${filteredData.length} transactions that will be exported.`}
+            />
+
+            <Box
+              sx={{
+                bgcolor: "background.default",
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+                p: { xs: 1.5, sm: 2 },
+                maxHeight: 400,
+                overflow: "auto",
+              }}
+            >
+              <Box component="ul" sx={{ pl: 0, m: 0, listStyleType: "none" }}>
+                {filteredData.slice(0, 5).map((tx) => {
+                  const isExpense = tx.type === "Expense";
+                  const accent = isExpense ? colors.errorDark : colors.successDark;
+                  return (
+                    <Box
+                      component="li"
+                      key={tx._id}
+                      sx={{
+                        p: 1.5,
+                        mb: 1,
+                        borderLeft: "4px solid",
+                        borderColor: accent,
+                        bgcolor: "background.paper",
+                        borderRadius: 2,
+                        "&:last-of-type": { mb: 0 },
+                      }}
+                    >
+                      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+                        <Typography variant="body2" fontWeight={700}>
+                          {tx.category}
+                        </Typography>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <Typography variant="body2" fontWeight={700} sx={{ color: accent }}>
+                            {isExpense ? "-" : "+"}
+                            {tx.amount}
+                          </Typography>
+                          <Chip
+                            label={tx.currency || "THB"}
+                            size="small"
+                            sx={{ ...currencyBadgeSx(tx.currency || "THB"), height: 20, fontSize: "0.65rem" }}
+                          />
+                        </Stack>
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        {dayjs(tx.date).format("YYYY-MM-DD")} • {tx.account}
+                        {tx.note && ` • ${tx.note}`}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+                {filteredData.length > 5 && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", textAlign: "center", pt: 0.5 }}
+                  >
+                    ...and {filteredData.length - 5} more transactions
+                  </Typography>
+                )}
+              </Box>
+            </Box>
           </Box>
-        </Paper>
+        </Box>
       )}
     </Box>
   );

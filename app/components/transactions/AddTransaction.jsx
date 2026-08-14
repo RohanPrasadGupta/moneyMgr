@@ -18,6 +18,7 @@ import {
   CircularProgress,
   Chip,
   FormHelperText,
+  MenuItem,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
@@ -37,6 +38,7 @@ import dayjs from "dayjs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useCategoryQuery } from "../../services/useCategoryServices";
+import { useCurrencyQuery, getCurrencyMenuOptions } from "../../services/useCurrencyServices";
 import {
   dialogPaperSx,
   dialogActionsSx,
@@ -61,6 +63,7 @@ const getDefaultForm = (type = "Expense") => ({
   note: "",
   type,
   amount: "",
+  currency: "THB",
 });
 
 const FormSection = ({ title, subtitle, children }) => (
@@ -81,8 +84,8 @@ const FormSection = ({ title, subtitle, children }) => (
 const TransactionTypeSelector = ({ value, onChange }) => (
   <Stack direction="row" spacing={2}>
     {[
-      { type: "Income", icon: TrendingUpIcon, accent: colors.success, hint: "Money in" },
-      { type: "Expense", icon: TrendingDownIcon, accent: colors.error, hint: "Money out" },
+      { type: "Income", icon: TrendingUpIcon, accent: colors.successDark, hint: "Money in" },
+      { type: "Expense", icon: TrendingDownIcon, accent: colors.errorDark, hint: "Money out" },
     ].map(({ type, icon: Icon, accent, hint }) => {
       const selected = value === type;
       return (
@@ -123,8 +126,8 @@ const TransactionTypeSelector = ({ value, onChange }) => (
 const CategoryTypeSelector = ({ value, onChange }) => (
   <RadioGroup row value={value} onChange={onChange} sx={{ gap: 2, "& .MuiFormControlLabel-root": { flex: 1, m: 0 } }}>
     {[
-      { type: "Income", accent: colors.success },
-      { type: "Expense", accent: colors.error },
+      { type: "Income", accent: colors.successDark },
+      { type: "Expense", accent: colors.errorDark },
     ].map(({ type, accent }) => {
       const selected = value === type;
       return (
@@ -162,13 +165,15 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [newCategoryType, setNewCategoryType] = useState("Expense");
+  const [newCategoryCurrency, setNewCategoryCurrency] = useState("THB");
   const queryClient = useQueryClient();
 
   const { isPending, data: categoriesFetched, refetch } = useCategoryQuery();
+  const { data: currenciesFetched = [] } = useCurrencyQuery();
 
   const isIncome = form.type === "Income";
   const accentKey = isIncome ? "success" : "error";
-  const accentColor = isIncome ? colors.success : colors.error;
+  const accentColor = isIncome ? colors.successDark : colors.errorDark;
   const headerVariant = isIncome ? "sip" : "stock";
 
   const handleClose = () => {
@@ -262,7 +267,11 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
     e?.preventDefault();
     const trimmed = newCategory.trim();
     if (!trimmed) return;
-    categoryMutation.mutate({ name: trimmed, categoryType: newCategoryType });
+    categoryMutation.mutate({
+      name: trimmed,
+      categoryType: newCategoryType,
+      currency: newCategoryCurrency,
+    });
   };
 
   const isFormValid =
@@ -289,7 +298,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
       account: form.account,
       category: form.category,
       note: form.note || "",
-      currency: "THB",
+      currency: form.currency,
       type: form.type,
       amount: Number(form.amount),
     });
@@ -314,7 +323,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
       >
         <InvestmentDialogHeader
           title="Add Transaction"
-          subtitle={`Record a new ${form.type.toLowerCase()} in THB`}
+          subtitle={`Record a new ${form.type.toLowerCase()} in ${form.currency}`}
           icon={AddIcon}
           onClose={handleClose}
           variant={headerVariant}
@@ -330,7 +339,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
               </Paper>
 
               <Paper elevation={0} sx={{ ...insetPanelSx, p: { xs: 2, sm: 2.5 } }}>
-                <FormSection title="When & how much" subtitle="Date, account, and amount in baht">
+                <FormSection title="When & how much" subtitle={`Date, account, and amount in ${form.currency}`}>
                   <Stack spacing={2}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DateTimePicker
@@ -384,37 +393,53 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
                       </Stack>
                     </Box>
 
-                    <Box>
-                    <TextField
-                      label="Amount"
-                      name="amount"
-                      type="number"
-                      inputProps={{ min: 0, step: "any" }}
-                      value={form.amount}
-                      onChange={handleChange}
-                      fullWidth
-                      required
-                      error={Boolean(errors.amount)}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PaymentsIcon sx={{ fontSize: 20 }} />
-                          </InputAdornment>
-                        ),
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary" }}>
-                              THB
-                            </Typography>
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={fieldSx}
-                    />
-                    {errors.amount && (
-                      <FormHelperText error sx={{ mx: 1.5 }}>{errors.amount}</FormHelperText>
-                    )}
-                    </Box>
+                    <Stack direction="row" spacing={1.5}>
+                      <Box sx={{ flex: 2 }}>
+                        <TextField
+                          label="Amount"
+                          name="amount"
+                          type="number"
+                          inputProps={{ min: 0, step: "any" }}
+                          value={form.amount}
+                          onChange={handleChange}
+                          fullWidth
+                          required
+                          error={Boolean(errors.amount)}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PaymentsIcon sx={{ fontSize: 20 }} />
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary" }}>
+                                  {form.currency}
+                                </Typography>
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={fieldSx}
+                        />
+                        {errors.amount && (
+                          <FormHelperText error sx={{ mx: 1.5 }}>{errors.amount}</FormHelperText>
+                        )}
+                      </Box>
+                      <TextField
+                        select
+                        label="Currency"
+                        name="currency"
+                        value={form.currency}
+                        onChange={handleChange}
+                        sx={{ flex: 1, ...fieldSx }}
+                      >
+                        {getCurrencyMenuOptions(currenciesFetched, form.currency).map((c) => (
+                          <MenuItem key={c.code} value={c.code}>
+                            {c.code}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Stack>
                   </Stack>
                 </FormSection>
               </Paper>
@@ -482,7 +507,7 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
                           <Chip
                             key={option?._id}
                             label={option?.name}
-                            onClick={() => { setForm((prev) => ({ ...prev, category: option?.name })); setErrors((prev) => ({ ...prev, category: "" })); }}
+                            onClick={() => { setForm((prev) => ({ ...prev, category: option?.name, currency: option?.currency || prev.currency })); setErrors((prev) => ({ ...prev, category: "" })); }}
                             sx={{
                               fontWeight: selected ? 700 : 500,
                               cursor: "pointer",
@@ -582,6 +607,20 @@ const AddTransaction = ({ open = true, setAddModalOpen }) => {
                 required
                 sx={accentFieldSx("primary")}
               />
+              <TextField
+                select
+                label="Currency"
+                fullWidth
+                value={newCategoryCurrency}
+                onChange={(e) => setNewCategoryCurrency(e.target.value)}
+                sx={{ mt: 2.5, ...accentFieldSx("primary") }}
+              >
+                {getCurrencyMenuOptions(currenciesFetched, newCategoryCurrency).map((c) => (
+                  <MenuItem key={c.code} value={c.code}>
+                    {c.code} — {c.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Paper>
             <Paper elevation={0} sx={{ ...insetPanelSx, p: { xs: 2, sm: 2.5 } }}>
               <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1.2 }}>

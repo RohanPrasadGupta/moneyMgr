@@ -28,8 +28,10 @@ function buildTheme(mode) {
         mode: "light",
         primary: { main: lightColors.primary, dark: lightColors.primaryDark, contrastText: "#fff" },
         secondary: { main: lightColors.text.secondary, contrastText: "#fff" },
-        success: { main: colors.success, dark: colors.successDark, contrastText: "#fff" },
-        error: { main: colors.error, dark: colors.errorDark, contrastText: "#fff" },
+        // Light mode uses the deeper "Dark" tint as the main tone — the vivid
+        // dark-mode-tuned base colors read as too neon/candy on a white background.
+        success: { main: colors.successDark, dark: colors.successDark, contrastText: "#fff" },
+        error: { main: colors.errorDark, dark: colors.errorDark, contrastText: "#fff" },
         warning: { main: colors.warning, contrastText: "#fff" },
         info: { main: lightColors.primary, contrastText: "#fff" },
         background: { default: lightColors.bg.default, paper: lightColors.bg.paper },

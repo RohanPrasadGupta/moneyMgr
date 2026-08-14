@@ -8,7 +8,6 @@ import {
   Stack,
   Chip,
   IconButton,
-  Divider,
   TextField,
   Radio,
   RadioGroup,
@@ -17,13 +16,14 @@ import {
   Select,
   MenuItem,
   Button,
-  Grid,
   ToggleButton,
   ToggleButtonGroup,
   Tooltip,
+  Badge,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -48,7 +48,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 import { useCategoryQuery } from "../../services/useCategoryServices";
-import { themedCardSx, gradients, cancelButtonSx, primaryButtonSx, dangerButtonSx, successButtonSx, colors } from "../../themeStyles";
+import { useCurrencyQuery, getCurrencyMenuOptions } from "../../services/useCurrencyServices";
+import { themedCardSx, gradients, cancelButtonSx, primaryButtonSx, dangerButtonSx, successButtonSx, colors, currencyBadgeSx } from "../../themeStyles";
 
 function formatDateTime(dateString) {
   return dayjs(dateString).format("MMM D, YYYY h:mm A");
@@ -133,6 +134,7 @@ const TransactionView = () => {
     error,
     refetch,
   } = useCategoryQuery();
+  const { data: currenciesFetched = [] } = useCurrencyQuery();
 
   // category filtering for edit dialog will be computed after editData is available
 
@@ -270,6 +272,7 @@ const TransactionView = () => {
       date: tx.date || dayjs().toISOString(),
       amount: tx.amount != null ? String(tx.amount) : "",
       note: tx.note || "",
+      currency: tx.currency || "THB",
     });
     setEditDialogOpen(true);
   };
@@ -378,248 +381,198 @@ const TransactionView = () => {
       {/* Header Section */}
       <Box
         sx={{
-          mb: { xs: 3, sm: 4 },
-          pb: { xs: 2, sm: 3 },
-          borderBottom: `2px solid ${colors.border}`,
+          mb: { xs: 2.5, sm: 3 },
+          pb: { xs: 2, sm: 2.5 },
+          borderBottom: `1px solid ${colors.border}`,
         }}
       >
-        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-          <Typography
-            variant="h4"
-            fontWeight={800}
-            sx={{
-              background: "linear-gradient(135deg, #ef5350, #e53935)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              mb: 0.5,
-              fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" },
-            }}
-          >
-            Transaction History
-          </Typography>
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              color: "text.secondary",
-              fontSize: { xs: "0.8rem", sm: "0.875rem" },
-            }}
-          >
-            Track and manage your monthly transactions
-          </Typography>
-        </Box>
-
-        {/* Month/Year Selector and Stats */}
-        <Grid container spacing={{ xs: 1.5, sm: 2 }} alignItems="stretch">
-          <Grid item xs={12} md={6}>
-            <Paper
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={1.5}
+          sx={{ mb: { xs: 2, sm: 2.5 } }}
+        >
+          <Box>
+            <Typography
+              variant="h4"
+              fontWeight={800}
               sx={{
-                ...themedCardSx,
-                p: { xs: 1.5, sm: 2 },
-                border: `2px solid ${colors.border}`,
-                borderRadius: 2,
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                alignItems: { xs: "flex-start", sm: "center" },
-                gap: { xs: 1, sm: 2 },
-                height: "100%",
+                background: "linear-gradient(135deg, #ef5350, #e53935)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                mb: 0.5,
+                fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" },
               }}
             >
-              <Stack 
-                direction="row" 
-                alignItems="center" 
-                spacing={1} 
-                width={{ xs: "100%", sm: "auto" }}
-                sx={{ 
-                  justifyContent: { xs: "space-between", sm: "flex-start" },
-                }}
-              >
-                <ReceiptLongIcon sx={{ color: "error.main", fontSize: { xs: 20, sm: 24 } }} />
-                <Select
-                  value={currentYear}
-                  onChange={(e) => setCurrentYear(e.target.value)}
-                  size="small"
-                  sx={{
-                    minWidth: { xs: "auto", sm: 90 },
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      border: "none",
-                    },
-                    "& .MuiSelect-select": {
-                      fontSize: { xs: "0.8rem", sm: "0.875rem" },
-                      py: { xs: 0.5, sm: 1 },
-                      fontWeight: 600,
-                    },
-                  }}
-                >
-                  {yearOptions.map((year) => (
-                    <MenuItem key={year} value={year}>
-                      {year}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <Divider 
-                  orientation="vertical" 
-                  flexItem 
-                  sx={{ display: { xs: "none", sm: "block" } }}
-                />
-              </Stack>
-              <Select
-                value={currentMonth}
-                onChange={(e) => setCurrentMonth(e.target.value)}
-                size="small"
-                sx={{
-                  minWidth: { xs: "100%", sm: 120 },
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    border: "none",
-                  },
-                  "& .MuiSelect-select": {
-                    fontSize: { xs: "0.8rem", sm: "0.875rem" },
-                    py: { xs: 0.5, sm: 1 },
-                  },
-                }}
-              >
-                {Months.map((month, index) => (
-                  <MenuItem key={index} value={month}>
-                    {month}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Paper>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={{ xs: 1.5, sm: 2 }}
-              height="100%"
+              Transaction History
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                fontSize: { xs: "0.8rem", sm: "0.875rem" },
+              }}
             >
-              <Paper
-                sx={{
-                  ...themedCardSx,
-                  flex: 1,
-                  p: { xs: 1.5, sm: 2 },
-                  border: `2px solid ${colors.border}`,
-                  borderRadius: 2,
-                  minWidth: 0,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                  <TrendingUpIcon sx={{ color: "success.dark", fontSize: { xs: 18, sm: 20 } }} />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                    }}
-                  >
-                    Income
-                  </Typography>
-                </Stack>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  sx={{
-                    color: "success.dark",
-                    fontSize: { xs: "0.95rem", sm: "1.25rem" },
-                    wordBreak: "break-all",
-                  }}
-                >
-                  {totals.income === "-"
-                    ? "-"
-                    : new Intl.NumberFormat().format(totals.income)}
-                </Typography>
-              </Paper>
+              Track and manage your monthly transactions
+            </Typography>
+          </Box>
 
-              <Paper
-                sx={{
-                  ...themedCardSx,
-                  flex: 1,
-                  p: { xs: 1.5, sm: 2 },
-                  border: `2px solid ${colors.border}`,
-                  borderRadius: 2,
-                  minWidth: 0,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                  <TrendingDownIcon sx={{ color: "error.main", fontSize: { xs: 18, sm: 20 } }} />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                    }}
-                  >
-                    Expense
-                  </Typography>
-                </Stack>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  sx={{
-                    color: "error.main",
-                    fontSize: { xs: "0.95rem", sm: "1.25rem" },
-                    wordBreak: "break-all",
-                  }}
-                >
-                  {totals.expense === "-"
-                    ? "-"
-                    : new Intl.NumberFormat().format(totals.expense)}
-                </Typography>
-              </Paper>
+          {/* Month navigator */}
+          <Stack
+            direction="row"
+            alignItems="center"
+            divider={<Box sx={{ width: "1px", height: 18, bgcolor: alpha(colors.error, 0.25) }} />}
+            sx={{
+              bgcolor: alpha(colors.error, 0.08),
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: "999px",
+              justifyContent: "center",
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
+            <Select
+              value={currentMonth}
+              onChange={(e) => setCurrentMonth(e.target.value)}
+              variant="standard"
+              disableUnderline
+              sx={{
+                flex: { xs: 1, sm: "none" },
+                "& .MuiSelect-select": {
+                  fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                  fontWeight: 700,
+                  color: "error.main",
+                  py: 0.9,
+                  pl: 2,
+                  pr: "26px !important",
+                  textAlign: { xs: "center", sm: "left" },
+                },
+                "& .MuiSelect-icon": { color: "error.main", right: 4, fontSize: "1.1rem" },
+              }}
+            >
+              {Months.map((month, index) => (
+                <MenuItem key={index} value={month}>
+                  {month}
+                </MenuItem>
+              ))}
+            </Select>
+            <Select
+              value={currentYear}
+              onChange={(e) => setCurrentYear(e.target.value)}
+              variant="standard"
+              disableUnderline
+              sx={{
+                flex: { xs: 1, sm: "none" },
+                "& .MuiSelect-select": {
+                  fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                  fontWeight: 700,
+                  color: "error.main",
+                  py: 0.9,
+                  pl: 1.5,
+                  pr: "26px !important",
+                  textAlign: { xs: "center", sm: "left" },
+                },
+                "& .MuiSelect-icon": { color: "error.main", right: 4, fontSize: "1.1rem" },
+              }}
+            >
+              {yearOptions.map((year) => (
+                <MenuItem key={year} value={year}>
+                  {year}
+                </MenuItem>
+              ))}
+            </Select>
+          </Stack>
+        </Stack>
 
-              <Paper
-                sx={{
-                  ...themedCardSx,
-                  flex: 1,
-                  p: { xs: 1.5, sm: 2 },
-                  border: `2px solid ${colors.border}`,
-                  borderRadius: 2,
-                  minWidth: 0,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                  <AccountBalanceWalletIcon sx={{ color: netTotal >= 0 ? "primary.main" : "error.main", fontSize: { xs: 18, sm: 20 } }} />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                    }}
-                  >
-                    Net
-                  </Typography>
-                </Stack>
+        {/* Stat strip */}
+        <Stack
+          direction="row"
+          spacing={{ xs: 1.25, sm: 1.5 }}
+          sx={{
+            overflowX: { xs: "auto", sm: "visible" },
+            pb: { xs: 0.5, sm: 0 },
+            "&::-webkit-scrollbar": { display: "none" },
+          }}
+        >
+          {[
+            {
+              key: "income",
+              label: "Income",
+              icon: TrendingUpIcon,
+              color: colors.success,
+              value: totals.income === "-" ? null : totals.income,
+            },
+            {
+              key: "expense",
+              label: "Expense",
+              icon: TrendingDownIcon,
+              color: colors.error,
+              value: totals.expense === "-" ? null : totals.expense,
+            },
+            {
+              key: "net",
+              label: "Net",
+              icon: AccountBalanceWalletIcon,
+              color: netTotal >= 0 ? colors.primary : colors.error,
+              value: filteredTransactions.length === 0 ? null : netTotal,
+            },
+          ].map((stat) => (
+            <Paper
+              key={stat.key}
+              elevation={0}
+              sx={{
+                flex: { xs: "0 0 148px", sm: 1 },
+                p: { xs: 1.5, sm: 1.75 },
+                borderRadius: 2.5,
+                bgcolor: alpha(stat.color, 0.07),
+                border: "1px solid",
+                borderColor: alpha(stat.color, 0.25),
+                position: "relative",
+                overflow: "hidden",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "3px",
+                  background: stat.color,
+                },
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={0.75} mb={0.5}>
+                <stat.icon sx={{ fontSize: { xs: 15, sm: 17 }, color: stat.color }} />
                 <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  sx={{
-                    color: netTotal >= 0 ? "primary.main" : "error.main",
-                    fontSize: { xs: "0.95rem", sm: "1.25rem" },
-                    wordBreak: "break-all",
-                  }}
+                  variant="caption"
+                  sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 0.3, fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
                 >
-                  {filteredTransactions.length === 0 ? "-" : new Intl.NumberFormat().format(netTotal)}
+                  {stat.label.toUpperCase()}
                 </Typography>
-              </Paper>
-            </Stack>
-          </Grid>
-        </Grid>
+              </Stack>
+              <Typography
+                variant="h6"
+                fontWeight={800}
+                sx={{ color: stat.color, fontSize: { xs: "1rem", sm: "1.15rem" }, wordBreak: "break-all" }}
+              >
+                {stat.value == null ? "-" : new Intl.NumberFormat().format(stat.value)}
+              </Typography>
+            </Paper>
+          ))}
+        </Stack>
       </Box>
 
       {/* Interactive Filters */}
       <Paper
+        elevation={0}
         sx={{
           ...themedCardSx,
           mb: { xs: 2, sm: 3 },
-          p: { xs: 1.5, sm: 2 },
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          borderRadius: 2,
+          p: { xs: 1.5, sm: 1.75 },
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 3,
         }}
       >
         <Stack spacing={{ xs: 1.5, sm: 2 }}>
@@ -644,8 +597,8 @@ const TransactionView = () => {
               sx={{
                 flex: 1,
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  bgcolor: "background.paper",
+                  borderRadius: "999px",
+                  bgcolor: "background.default",
                 },
               }}
             />
@@ -663,15 +616,16 @@ const TransactionView = () => {
                   onChange={(e, val) => val && setTypeFilter(val)}
                   size={isMobile ? "small" : "medium"}
                   sx={{
-                    bgcolor: "background.paper",
-                    borderRadius: 2,
+                    bgcolor: "background.default",
+                    borderRadius: "999px",
                     border: "1px solid", borderColor: "divider",
                     overflow: "hidden",
+                    "& .MuiToggleButton-root": { border: "none", textTransform: "none", fontWeight: 600 },
                   }}
                 >
-                  <ToggleButton value="all" sx={{ px: 1.5 }}>All</ToggleButton>
-                  <ToggleButton value="income" sx={{ px: 1.5 }}>Income</ToggleButton>
-                  <ToggleButton value="expense" sx={{ px: 1.5 }}>Expense</ToggleButton>
+                  <ToggleButton value="all" sx={{ px: 1.75 }}>All</ToggleButton>
+                  <ToggleButton value="income" sx={{ px: 1.75 }}>Income</ToggleButton>
+                  <ToggleButton value="expense" sx={{ px: 1.75 }}>Expense</ToggleButton>
                 </ToggleButtonGroup>
               </Tooltip>
 
@@ -682,15 +636,16 @@ const TransactionView = () => {
                   onChange={(e, val) => val && setAccountFilter(val)}
                   size={isMobile ? "small" : "medium"}
                   sx={{
-                    bgcolor: "background.paper",
-                    borderRadius: 2,
+                    bgcolor: "background.default",
+                    borderRadius: "999px",
                     border: "1px solid", borderColor: "divider",
                     overflow: "hidden",
+                    "& .MuiToggleButton-root": { border: "none", textTransform: "none", fontWeight: 600 },
                   }}
                 >
-                  <ToggleButton value="all" sx={{ px: 1.5 }}>All Accounts</ToggleButton>
-                  <ToggleButton value="cash" sx={{ px: 1.5 }}>Cash</ToggleButton>
-                  <ToggleButton value="online" sx={{ px: 1.5 }}>Online</ToggleButton>
+                  <ToggleButton value="all" sx={{ px: 1.75 }}>All Accounts</ToggleButton>
+                  <ToggleButton value="cash" sx={{ px: 1.75 }}>Cash</ToggleButton>
+                  <ToggleButton value="online" sx={{ px: 1.75 }}>Online</ToggleButton>
                 </ToggleButtonGroup>
               </Tooltip>
 
@@ -702,14 +657,15 @@ const TransactionView = () => {
                     onChange={(e, val) => val && setSortBy(val)}
                     size={isMobile ? "small" : "medium"}
                     sx={{
-                      bgcolor: "background.paper",
-                      borderRadius: 2,
+                      bgcolor: "background.default",
+                      borderRadius: "999px",
                       border: "1px solid", borderColor: "divider",
                       overflow: "hidden",
+                      "& .MuiToggleButton-root": { border: "none", textTransform: "none", fontWeight: 600 },
                     }}
                   >
-                    <ToggleButton value="date" sx={{ px: 1.5 }}>Date</ToggleButton>
-                    <ToggleButton value="amount" sx={{ px: 1.5 }}>Amount</ToggleButton>
+                    <ToggleButton value="date" sx={{ px: 1.75 }}>Date</ToggleButton>
+                    <ToggleButton value="amount" sx={{ px: 1.75 }}>Amount</ToggleButton>
                   </ToggleButtonGroup>
                 </Tooltip>
                 <Tooltip title={`Sort ${sortDir === "desc" ? "descending" : "ascending"}`}>
@@ -717,11 +673,11 @@ const TransactionView = () => {
                     onClick={() => setSortDir((prev) => (prev === "desc" ? "asc" : "desc"))}
                     sx={{
                       border: "1px solid", borderColor: "divider",
-                      bgcolor: "background.paper",
-                      borderRadius: 2,
+                      bgcolor: "background.default",
+                      borderRadius: "999px",
                     }}
                   >
-                    <SortIcon />
+                    <SortIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               </Stack>
@@ -733,7 +689,8 @@ const TransactionView = () => {
               <Chip
                 icon={<TuneIcon />}
                 label="Filters applied"
-                sx={{ bgcolor: "rgba(255,255,255,0.05)", border: "1px solid", borderColor: "divider" }}
+                size="small"
+                sx={{ bgcolor: "transparent", color: "text.secondary", border: "none", px: 0 }}
               />
               {typeFilter !== "all" && (
                 <Chip
@@ -820,17 +777,18 @@ const TransactionView = () => {
               groupTotals.income === "-" ? 0 : Number(groupTotals.income);
             const expenseVal =
               groupTotals.expense === "-" ? 0 : Number(groupTotals.expense);
-            const net = incomeVal - expenseVal;
 
             return (
               <Box key={`${group.day}-${group.month}-${group.year}`}>
                 {/* Day Header */}
                 <Paper
+                  elevation={0}
                   sx={{
                     ...themedCardSx,
                     p: { xs: 1.5, sm: 2 },
                     mb: { xs: 1.5, sm: 2 },
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    border: "1px solid",
+                    borderColor: "divider",
                     borderRadius: 2,
                     display: "flex",
                     alignItems: "center",
@@ -850,82 +808,45 @@ const TransactionView = () => {
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 800,
-                        fontSize: { xs: "1rem", sm: "1.25rem" },
+                        fontSize: { xs: "1.05rem", sm: "1.25rem" },
                         color: "#fff",
+                        boxShadow: "0 4px 12px rgba(239, 83, 80, 0.35)",
                       }}
                     >
                       {group.day}
                     </Box>
                     <Box>
-                      <Typography 
-                        variant="body1" 
-                        fontWeight={700}
-                        sx={{ fontSize: { xs: "0.9rem", sm: "1rem" } }}
-                      >
+                      <Typography variant="body1" fontWeight={700} sx={{ fontSize: { xs: "0.95rem", sm: "1.05rem" } }}>
                         {group.weekday}
                       </Typography>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: "text.secondary",
-                          fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                        }}
-                      >
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: { xs: "0.72rem", sm: "0.78rem" } }}>
                         {group.month}/{group.year}
                       </Typography>
                     </Box>
                   </Stack>
 
-                  <Stack 
-                    direction={{ xs: "row", sm: "row" }} 
+                  <Stack
+                    direction="row"
                     spacing={{ xs: 2, sm: 3 }}
-                    sx={{ 
+                    sx={{
                       width: { xs: "100%", sm: "auto" },
                       justifyContent: { xs: "space-between", sm: "flex-start" },
                     }}
                   >
                     <Box>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: "text.secondary", 
-                          display: "block",
-                          fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                        }}
-                      >
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", fontSize: { xs: "0.72rem", sm: "0.78rem" } }}>
                         Income
                       </Typography>
-                      <Typography 
-                        variant="body1" 
-                        fontWeight={700} 
-                        sx={{ 
-                          color: "success.dark",
-                          fontSize: { xs: "0.9rem", sm: "1rem" },
-                        }}
-                      >
-                        ฿{new Intl.NumberFormat().format(Math.abs(incomeVal))}
+                      <Typography variant="body1" fontWeight={700} sx={{ color: "success.dark", fontSize: { xs: "0.95rem", sm: "1.05rem" } }}>
+                        {incomeVal > 0 ? new Intl.NumberFormat().format(incomeVal) : "-"}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: "text.secondary", 
-                          display: "block",
-                          fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                        }}
-                      >
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", fontSize: { xs: "0.72rem", sm: "0.78rem" } }}>
                         Expense
                       </Typography>
-                      <Typography 
-                        variant="body1" 
-                        fontWeight={700} 
-                        sx={{ 
-                          color: "error.main",
-                          fontSize: { xs: "0.9rem", sm: "1rem" },
-                        }}
-                      >
-                        ฿{new Intl.NumberFormat().format(Math.abs(expenseVal))}
+                      <Typography variant="body1" fontWeight={700} sx={{ color: "error.main", fontSize: { xs: "0.95rem", sm: "1.05rem" } }}>
+                        {expenseVal > 0 ? new Intl.NumberFormat().format(expenseVal) : "-"}
                       </Typography>
                     </Box>
                   </Stack>
@@ -936,11 +857,12 @@ const TransactionView = () => {
                   {group.transactions.map((tx) => (
                     <Paper
                       key={tx._id}
+                      elevation={0}
                       sx={{
                         ...themedCardSx,
                         p: { xs: 1.5, sm: 2 },
                         borderRadius: 2,
-                        border: `1px solid ${tx.type === "Income" ? "rgba(67, 160, 71, 0.3)" : "rgba(239, 83, 80, 0.3)"}`,
+                        border: `1px solid ${tx.type === "Income" ? alpha(colors.success, 0.3) : alpha(colors.error, 0.3)}`,
                         display: "flex",
                         flexDirection: { xs: "column", sm: "row" },
                         alignItems: { xs: "flex-start", sm: "center" },
@@ -948,57 +870,72 @@ const TransactionView = () => {
                         transition: "all 0.2s ease",
                         "&:hover": {
                           transform: { xs: "none", sm: "translateY(-2px)" },
-                          boxShadow: `0 4px 12px ${tx.type === "Income" ? "rgba(67, 160, 71, 0.2)" : "rgba(239, 83, 80, 0.2)"}`,
+                          boxShadow: `0 4px 12px ${alpha(tx.type === "Income" ? colors.success : colors.error, 0.2)}`,
                           borderColor: tx.type === "Income" ? "success.dark" : "error.main",
                         },
                       }}
                     >
-                      {/* Icon and Details - Mobile Horizontal Layout */}
-                      <Stack 
-                        direction="row" 
+                      {/* Icon and Details */}
+                      <Stack
+                        direction="row"
                         alignItems="center"
                         spacing={1.5}
-                        sx={{ 
+                        sx={{
                           width: { xs: "100%", sm: "auto" },
                           flex: { xs: "none", sm: 1 },
                           minWidth: { xs: "auto", sm: 0 },
                         }}
                       >
                         {/* Icon */}
-                        <Box
+                        <Badge
+                          badgeContent={tx.currency || "THB"}
+                          overlap="circular"
+                          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                           sx={{
-                            width: { xs: 36, sm: 40 },
-                            height: { xs: 36, sm: 40 },
-                            borderRadius: "50%",
-                            bgcolor: tx.type === "Income" ? "rgba(67, 160, 71, 0.1)" : "rgba(239, 83, 80, 0.1)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            "& .MuiBadge-badge": {
+                              ...currencyBadgeSx(tx.currency || "THB"),
+                              fontSize: { xs: "0.6rem", sm: "0.65rem" },
+                              height: 17,
+                              minWidth: 28,
+                              px: 0.6,
+                              borderRadius: "7px",
+                              border: "1.5px solid",
+                              borderColor: "background.paper",
+                            },
                             flexShrink: 0,
                           }}
                         >
-                          {tx.type === "Income" ? (
-                            <ArrowUpwardIcon sx={{ color: "success.dark", fontSize: { xs: 20, sm: 24 } }} />
-                          ) : (
-                            <ArrowDownwardIcon sx={{ color: "error.main", fontSize: { xs: 20, sm: 24 } }} />
-                          )}
-                        </Box>
+                          <Box
+                            sx={{
+                              width: { xs: 38, sm: 42 },
+                              height: { xs: 38, sm: 42 },
+                              borderRadius: "50%",
+                              bgcolor: tx.type === "Income" ? alpha(colors.success, 0.1) : alpha(colors.error, 0.1),
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {tx.type === "Income" ? (
+                              <ArrowUpwardIcon sx={{ color: "success.dark", fontSize: { xs: 20, sm: 22 } }} />
+                            ) : (
+                              <ArrowDownwardIcon sx={{ color: "error.main", fontSize: { xs: 20, sm: 22 } }} />
+                            )}
+                          </Box>
+                        </Badge>
 
                         {/* Details */}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Stack 
-                            direction={{ xs: "column", sm: "row" }} 
-                            alignItems={{ xs: "flex-start", sm: "center" }} 
-                            spacing={{ xs: 0.5, sm: 1 }} 
+                          <Stack
+                            direction={{ xs: "column", sm: "row" }}
+                            alignItems={{ xs: "flex-start", sm: "center" }}
+                            spacing={{ xs: 0.5, sm: 1 }}
                             mb={0.5}
                           >
-                            <Typography 
-                              variant="body1" 
-                              fontWeight={700} 
-                              sx={{ 
-                                color: "text.primary",
-                                fontSize: { xs: "0.9rem", sm: "1rem" },
-                              }}
+                            <Typography
+                              variant="body1"
+                              fontWeight={700}
+                              sx={{ color: "text.primary", fontSize: { xs: "0.9rem", sm: "1rem" } }}
                             >
                               {tx.category}
                             </Typography>
@@ -1032,20 +969,20 @@ const TransactionView = () => {
                             size="small"
                             sx={{
                               mt: 0.5,
-                              bgcolor: "rgba(255,255,255,0.04)",
+                              bgcolor: "background.default",
                               border: "1px solid", borderColor: "divider",
-                              fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                              fontSize: { xs: "0.68rem", sm: "0.75rem" },
                             }}
                           />
                         </Box>
                       </Stack>
 
-                      {/* Amount and Actions - Mobile Full Width */}
-                      <Stack 
-                        direction="row" 
-                        alignItems="center" 
+                      {/* Amount and Actions */}
+                      <Stack
+                        direction="row"
+                        alignItems="center"
                         justifyContent="space-between"
-                        sx={{ 
+                        sx={{
                           width: { xs: "100%", sm: "auto" },
                           gap: { xs: 2, sm: 2 },
                         }}
@@ -1057,19 +994,10 @@ const TransactionView = () => {
                             fontWeight={700}
                             sx={{
                               color: tx.type === "Income" ? "success.dark" : "error.main",
-                              fontSize: { xs: "1rem", sm: "1.25rem" },
+                              fontSize: { xs: "1.05rem", sm: "1.25rem" },
                             }}
                           >
                             {tx.amount && new Intl.NumberFormat().format(tx.amount)}
-                          </Typography>
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              color: "text.secondary",
-                              fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                            }}
-                          >
-                            {tx.currency}
                           </Typography>
                         </Box>
 
@@ -1401,30 +1329,54 @@ const TransactionView = () => {
                 </RadioGroup>
               </Box>
 
-              {/* Amount */}
-              <TextField
-                label="Amount"
-                name="amount"
-                type="number"
-                value={editData?.amount || ""}
-                onChange={handleEditChange}
-                fullWidth
-                size={isMobile ? "small" : "medium"}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">THB</InputAdornment>
-                  ),
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                    bgcolor: "background.default",
-                  },
-                  "& .MuiInputBase-input": {
-                    fontSize: { xs: "0.875rem", sm: "1rem" },
-                  },
-                }}
-              />
+              {/* Amount & Currency */}
+              <Stack direction="row" spacing={1.5}>
+                <TextField
+                  label="Amount"
+                  name="amount"
+                  type="number"
+                  value={editData?.amount || ""}
+                  onChange={handleEditChange}
+                  fullWidth
+                  size={isMobile ? "small" : "medium"}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">{editData?.currency || "THB"}</InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    flex: 2,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      bgcolor: "background.default",
+                    },
+                    "& .MuiInputBase-input": {
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
+                    },
+                  }}
+                />
+                <TextField
+                  select
+                  label="Currency"
+                  name="currency"
+                  value={editData?.currency || "THB"}
+                  onChange={handleEditChange}
+                  size={isMobile ? "small" : "medium"}
+                  sx={{
+                    flex: 1,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      bgcolor: "background.default",
+                    },
+                  }}
+                >
+                  {getCurrencyMenuOptions(currenciesFetched, editData?.currency).map((c) => (
+                    <MenuItem key={c.code} value={c.code}>
+                      {c.code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
 
               {/* Note */}
               <TextField

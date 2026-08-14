@@ -17,6 +17,7 @@ import {
   Stack,
   InputAdornment,
   Divider,
+  MenuItem,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
@@ -36,15 +37,18 @@ import {
   gradients,
   insetPanelSx,
 } from "../../themeStyles";
+import { getCurrencyMenuOptions } from "../../services/useCurrencyServices";
 
+// Calmer "Dark" tints throughout — the punchier base tones read as too
+// vivid/neon for form field accents.
 const ACCENT_MAP = {
-  error: colors.error,
-  primary: colors.primary,
+  error: colors.errorDark,
+  primary: colors.primaryDark,
   success: colors.successDark,
 };
 
 export const accentFieldSx = (accentKey = "primary") => {
-  const accent = ACCENT_MAP[accentKey] || colors.primary;
+  const accent = ACCENT_MAP[accentKey] || colors.primaryDark;
   return {
     ...textFieldOutlinedSx,
     "& .MuiOutlinedInput-root": {
@@ -55,6 +59,52 @@ export const accentFieldSx = (accentKey = "primary") => {
     "& .MuiInputAdornment-root .MuiSvgIcon-root": { color: accent },
   };
 };
+
+/**
+ * Shared glass-style stat card — a colored top accent bar over a soft tinted
+ * background, used consistently across the Investments overview and every
+ * sub-tab so stats always look like one connected strip, not disconnected
+ * boxes of different sizes/styles.
+ */
+export const InvestmentStatCard = ({ label, value, sub, color, icon: Icon, flexBasis = "0 0 190px" }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      flex: { xs: flexBasis, sm: 1 },
+      p: { xs: 1.75, sm: 2 },
+      borderRadius: 2.5,
+      bgcolor: alpha(color, 0.07),
+      border: "1px solid",
+      borderColor: alpha(color, 0.3),
+      position: "relative",
+      overflow: "hidden",
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: "3px",
+        background: color,
+      },
+    }}
+  >
+    <Stack direction="row" alignItems="center" spacing={0.75} mb={0.5}>
+      {Icon && <Icon sx={{ fontSize: 16, color }} />}
+      <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 0.3, fontSize: "0.68rem" }}>
+        {label.toUpperCase()}
+      </Typography>
+    </Stack>
+    <Typography variant="h6" fontWeight={800} sx={{ color, fontSize: { xs: "1.05rem", sm: "1.2rem" } }}>
+      {value}
+    </Typography>
+    {sub && (
+      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.25 }}>
+        {sub}
+      </Typography>
+    )}
+  </Paper>
+);
 
 const HEADER_GRADIENT = {
   stock: gradients.expense,
@@ -82,7 +132,7 @@ export const InvestmentDialogHeader = ({
             alignItems: "center",
             justifyContent: "center",
             boxShadow: `0 6px 16px ${alpha(
-              variant === "stock" ? colors.error : variant === "sip" ? colors.success : colors.primary,
+              variant === "stock" ? colors.errorDark : variant === "sip" ? colors.successDark : colors.primaryDark,
               0.35
             )}`,
           }}
@@ -127,13 +177,15 @@ const FormSection = ({ title, subtitle, children }) => (
   </Box>
 );
 
-export const StockFormFields = ({ formId, formData, onChange, onSubmit, accent = "error" }) => {
+export const StockFormFields = ({ formId, formData, onChange, onSubmit, currencies = [], accent = "error" }) => {
   const fieldSx = accentFieldSx(accent);
+  const accentColor = ACCENT_MAP[accent] || colors.primaryDark;
+  const previewAmount = formData.amount && !Number.isNaN(Number(formData.amount)) ? Number(formData.amount) : null;
   return (
     <Box component="form" id={formId} onSubmit={onSubmit}>
       <Stack spacing={3}>
         <Paper elevation={0} sx={{ ...insetPanelSx, p: { xs: 2, sm: 2.5 } }}>
-          <FormSection title="Investment details" subtitle="Capital contribution in NPR">
+          <FormSection title="Investment details" subtitle={`Capital contribution in ${formData.currency || "NPR"}`}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -174,7 +226,7 @@ export const StockFormFields = ({ formId, formData, onChange, onSubmit, accent =
                     endAdornment: (
                       <InputAdornment position="end">
                         <Typography variant="caption" fontWeight={700} sx={{ color: "text.secondary" }}>
-                          NPR
+                          {formData.currency || "NPR"}
                         </Typography>
                       </InputAdornment>
                     ),
@@ -182,7 +234,46 @@ export const StockFormFields = ({ formId, formData, onChange, onSubmit, accent =
                   sx={fieldSx}
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Currency"
+                  name="currency"
+                  value={formData.currency || "NPR"}
+                  onChange={onChange}
+                  required
+                  sx={fieldSx}
+                >
+                  {getCurrencyMenuOptions(currencies, formData.currency).map((c) => (
+                    <MenuItem key={c.code} value={c.code}>
+                      {c.code} — {c.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
             </Grid>
+            {previewAmount != null && (
+              <Paper
+                elevation={0}
+                sx={{
+                  mt: 2,
+                  p: 1.5,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: alpha(accentColor, 0.35),
+                  bgcolor: alpha(accentColor, 0.08),
+                  textAlign: "center",
+                }}
+              >
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                  You're about to add
+                </Typography>
+                <Typography variant="h6" fontWeight={800} sx={{ color: accentColor, mt: 0.25 }}>
+                  {previewAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} {formData.currency || "NPR"}
+                </Typography>
+              </Paper>
+            )}
           </FormSection>
         </Paper>
       </Stack>
@@ -297,15 +388,15 @@ export const CoinFormFields = ({
                   p: 1.5,
                   borderRadius: 2,
                   border: "1px solid",
-                  borderColor: alpha(colors.primary, 0.35),
-                  bgcolor: alpha(colors.primary, 0.08),
+                  borderColor: alpha(colors.primaryDark, 0.35),
+                  bgcolor: alpha(colors.primaryDark, 0.08),
                   textAlign: "center",
                 }}
               >
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
                   Estimated total (amount + charges)
                 </Typography>
-                <Typography variant="h6" fontWeight={800} sx={{ color: "primary.main", mt: 0.25 }}>
+                <Typography variant="h6" fontWeight={800} sx={{ color: colors.primaryDark, mt: 0.25 }}>
                   {totalPreview.toLocaleString(undefined, { maximumFractionDigits: 2 })} BHT
                 </Typography>
               </Paper>

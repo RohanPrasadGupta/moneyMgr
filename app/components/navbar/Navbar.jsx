@@ -1,12 +1,13 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, Button, Stack, IconButton, Tooltip, useTheme } from "@mui/material";
+import { Box, Typography, Stack, IconButton, Tooltip, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { usePathname, useRouter } from "next/navigation";
 import { navItems } from "../../navConfig";
-import { navbarRadialBg } from "../../themeStyles";
+import { navbarRadialBg, gradients, colors } from "../../themeStyles";
 import { useThemeMode } from "../../context/ThemeContext";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 
@@ -33,58 +34,103 @@ const Navbar = () => {
         flexDirection: "column",
       }}
     >
-      <Stack spacing={1} sx={{ mb: 3, px: 1 }}>
-        <Typography variant="h5" fontWeight={800} sx={{ letterSpacing: 0.4 }}>
+      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3, px: 1 }}>
+        <Box
+          sx={{
+            width: 38,
+            height: 38,
+            borderRadius: 2,
+            background: gradients.primary,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: `0 6px 16px ${alpha(colors.primary, 0.35)}`,
+            flexShrink: 0,
+          }}
+        >
+          <AccountBalanceWalletIcon sx={{ color: "common.white", fontSize: 21 }} />
+        </Box>
+        <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: 0.3, lineHeight: 1.15 }}>
           Money Manager
         </Typography>
       </Stack>
-      <Stack spacing={2.5} padding={2} sx={{ flex: 1 }}>
+
+      <Stack spacing={0.75} padding={1} sx={{ flex: 1 }}>
         {navItems.map((item) => {
           const active = pathname === item.link;
           return (
-            <Button
+            <Box
               key={item.link}
-              variant={active ? "contained" : "outlined"}
-              startIcon={item.icon}
+              component="button"
               onClick={() => router.push(item.link)}
               sx={{
-                borderRadius: 2.5,
-                textTransform: "none",
-                justifyContent: "flex-start",
-                fontWeight: active ? 800 : 700,
-                fontSize: "0.98rem",
+                all: "unset",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
                 width: "100%",
-                py: 1.25,
-                px: 2,
-                color: active ? "common.white" : "text.primary",
-                whiteSpace: "nowrap",
-                borderColor: active ? "transparent" : alpha(item.color, 0.45),
-                bgcolor: active ? "transparent" : alpha(item.color, 0.08),
+                boxSizing: "border-box",
+                borderRadius: "999px",
+                py: 1,
+                pl: 1,
+                pr: 2,
+                bgcolor: active ? "transparent" : "transparent",
                 background: active ? item.gradient : undefined,
-                boxShadow: active
-                  ? `0 10px 22px ${alpha(item.color, 0.38)}`
-                  : `0 2px 10px ${alpha(item.color, 0.16)}`,
-                transition: "all 0.22s ease",
+                boxShadow: active ? `0 8px 20px ${alpha(item.color, 0.4)}` : "none",
+                transition: "all 0.2s ease",
                 "&:hover": {
-                  transform: "translateY(-1px)",
-                  borderColor: alpha(item.color, 0.7),
-                  bgcolor: active ? "transparent" : alpha(item.color, 0.13),
-                  boxShadow: active
-                    ? `0 12px 24px ${alpha(item.color, 0.46)}`
-                    : `0 6px 16px ${alpha(item.color, 0.28)}`,
+                  bgcolor: active ? undefined : alpha(item.color, 0.08),
+                  transform: "translateX(2px)",
                 },
               }}
             >
-              {item.label}
-            </Button>
+              <Box
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: active ? alpha("#ffffff", 0.22) : alpha(item.color, 0.12),
+                }}
+              >
+                {React.cloneElement(item.icon, {
+                  sx: { fontSize: 18, color: active ? "common.white" : item.color },
+                })}
+              </Box>
+              <Typography
+                sx={{
+                  fontWeight: active ? 800 : 600,
+                  fontSize: "0.9rem",
+                  color: active ? "common.white" : "text.primary",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.label}
+              </Typography>
+            </Box>
           );
         })}
       </Stack>
 
       {/* Bottom controls */}
-      <Box sx={{ px: 2, mt: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
-        {/* Theme toggle */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 0.5 }}>
+      <Box sx={{ px: 1.5, mt: 2 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{
+            bgcolor: alpha(theme.palette.primary.main, 0.06),
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: "999px",
+            py: 0.75,
+            px: 1.5,
+          }}
+        >
           <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
             {mode === "dark" ? "Dark mode" : "Light mode"}
           </Typography>
@@ -93,20 +139,20 @@ const Navbar = () => {
               onClick={toggleTheme}
               size="small"
               sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                bgcolor: alpha(theme.palette.primary.main, 0.08),
-                "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.16) },
+                width: 30,
+                height: 30,
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.18) },
               }}
             >
               {mode === "dark" ? (
-                <Brightness7Icon sx={{ fontSize: 18, color: "primary.main" }} />
+                <Brightness7Icon sx={{ fontSize: 16, color: "primary.main" }} />
               ) : (
-                <Brightness4Icon sx={{ fontSize: 18, color: "primary.main" }} />
+                <Brightness4Icon sx={{ fontSize: 16, color: "primary.main" }} />
               )}
             </IconButton>
           </Tooltip>
-        </Box>
+        </Stack>
       </Box>
     </Box>
   );
