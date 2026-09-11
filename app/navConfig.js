@@ -2,6 +2,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import CategoryIcon from "@mui/icons-material/Category";
+import StickyNote2Icon from "@mui/icons-material/StickyNote2";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import { colors, gradients } from "./themeStyles";
@@ -14,6 +15,7 @@ export const navItems = [
   { label: "Analysis", link: "/pages/analysis", icon: <BarChartIcon /> },
   { label: "Export Data", link: "/pages/exportinfo", icon: <FileDownloadIcon /> },
   { label: "Categories", link: "/pages/categories", icon: <CategoryIcon /> },
+  { label: "Notes", link: "/pages/notes", icon: <StickyNote2Icon /> },
   { label: "Stock Analysis", link: "/pages/stocks", icon: <TrendingUpIcon /> },
   { label: "Investments", link: "/pages/investments", icon: <AccountBalanceIcon /> },
 ].map((item) => ({
