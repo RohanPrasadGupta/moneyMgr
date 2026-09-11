@@ -40,6 +40,14 @@ export interface CoinInvestment {
   currency: string;
 }
 
+export interface Note {
+  _id: string;
+  title: string;
+  content: string;
+  date: string;
+  __v?: number;
+}
+
 export interface Currency {
   _id: string;
   code: string;

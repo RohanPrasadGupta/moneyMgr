@@ -1,6 +1,6 @@
 # MoneyMgr — Personal Finance Manager
 
-A personal finance web app for tracking day-to-day transactions, analyzing spending, managing categories and currencies, exporting records, and monitoring investments (stock trades, stock capital, crypto/coin, and SIP). Built with **Next.js** and **Material UI**, with a light/dark theme, a shared vibrant-gradient design language across every page, and multi-currency support (THB and NPR today, extensible via a managed currency list).
+A personal finance web app for tracking day-to-day transactions, analyzing spending, managing categories and currencies, keeping sticky notes, exporting records, and monitoring investments (stock trades, stock capital, crypto/coin, and SIP). Built with **Next.js** and **Material UI**, with a light/dark theme, a shared vibrant-gradient design language across every page, and multi-currency support (THB and NPR today, extensible via a managed currency list).
 
 ![Transaction Dashboard](https://github.com/user-attachments/assets/a019d9b6-29ec-496b-a30f-208f7873665d)
 
@@ -19,7 +19,7 @@ A personal finance web app for tracking day-to-day transactions, analyzing spend
 
 This is a **frontend-only** app — there are no Next.js API routes in the repo. It talks to two independent, sibling Express/Mongoose backends over REST, configured through `NEXT_PUBLIC_API_URL*` environment variables:
 
-- **`moneyMgrBackend`** — transactions, categories, and the managed currency list (`NEXT_PUBLIC_API_URL`)
+- **`moneyMgrBackend`** — transactions, categories, the managed currency list, and sticky notes (`NEXT_PUBLIC_API_URL`)
 - **`stock_analysis_backend`** — the per-trade stock ledger, and stock/coin/SIP investment capital (`NEXT_PUBLIC_API_URL_STOCK`, `NEXT_PUBLIC_API_URL_STOCK_CAPITAL`, `NEXT_PUBLIC_API_URL_COIN_CAPITAL`)
 
 There is **no authentication** anywhere in the stack — this is a single-user app by design.
@@ -31,6 +31,7 @@ There is **no authentication** anywhere in the stack — this is a single-user a
 - Every other place a currency can be set (categories, transactions, stock capital, SIP capital, the stock ledger) has a real currency dropdown, sourced from a single shared list fetched from `moneyMgrBackend`'s `/api/currency` endpoint (`app/services/useCurrencyServices.ts`) — even from pages that otherwise talk to `stock_analysis_backend`. That backend never needs to know the currency list exists; it just stores whatever code string the frontend sends.
 - **Currency badges**: transaction rows render a MUI `Badge` showing the record's currency (`currencyBadgeSx` in `themeStyles.js`), so mixed-currency history stays legible at a glance.
 - **Manage Currencies**: the Categories page includes a small CRUD UI for the currency list itself (add / edit / delete, mark one as default) on top of the read-only dropdowns everywhere else.
+- Sticky **notes** are not currency-aware — they are free-form title + body reminders stored on `moneyMgrBackend`.
 - Because Mongoose `default` only applies to newly-created documents, records saved before the `currency` field existed simply don't have it — the frontend always falls back gracefully (`|| "THB"` for moneyMgrBackend data, `|| "NPR"` for stock/SIP data, `|| "THB"` for Coin) rather than crashing on legacy rows.
 - **Out of scope by design**: there's no live FX conversion or per-currency subtotal breakdown — totals across the app (day/month totals, portfolio totals) naively sum `amount` regardless of currency.
 
@@ -77,6 +78,18 @@ There is **no authentication** anywhere in the stack — this is a single-user a
 - **Manage Currencies** panel: add/edit/delete entries in the shared currency list and mark one as the default
 
 ![Category Management](https://github.com/user-attachments/assets/5d6b5b74-6814-4e54-bb55-9b669729796b)
+
+### Notes (`/pages/notes`)
+
+Pinned reminders and details, presented as a sticky-note board rather than a table.
+
+- Desktop sidebar and mobile speed dial both include a **Notes** item (sticky-note icon)
+- Colored sticky cards (pin, ruled paper, slight tilt) in a responsive grid, with search across title and body
+- **Add Note** opens a large sticky-note editor; **title and body are both required** — the save button stays disabled until both are filled, and empty saves are rejected with a toast
+- Tap a card to open it for editing: the page fetches the latest copy via `GET /api/getNote/:id`, then saves with `PUT /api/updateNote/:id` (again requiring both title and content)
+- Delete from the card or from the open sticky, using the shared confirmation dialog (`InvestmentDeleteDialog`)
+- Loading, error, and empty states match the rest of the app; create / update / delete surface success and failure toasts
+- Notes API is unauthenticated; write calls send `Content-Type: application/json` (no `credentials`)
 
 ### Export (`/pages/exportinfo`)
 
@@ -130,7 +143,7 @@ Central styling lives under `app/`:
 - **`MuiThemeProvider.jsx`** — builds full MUI themes for both light and dark modes via `createTheme`, with component style overrides
 - **`context/ThemeContext.jsx`** — `ThemeModeProvider` and the `useThemeMode` hook
 - **`navConfig.js`** — unified navigation config shared by the sidebar and speed dial
-- **`InvestmentFormUi.jsx`** — reusable dialog header, form shell, delete dialog, `InvestmentStatCard`, and `accentFieldSx` (used by investments, categories, and transactions)
+- **`InvestmentFormUi.jsx`** — reusable dialog header, form shell, delete dialog, `InvestmentStatCard`, and `accentFieldSx` (used by investments, categories, transactions, and notes delete confirm)
 - Design language conventions used across every page: pill-shaped buttons/toggles/badges (`borderRadius: "999px"`), glass stat cards with a colored top accent bar, gradient icon-avatar section headers, and vibrant gradient KPI cards on dashboard-style pages (Analysis, Export)
 
 ## Navigation & layout
@@ -142,6 +155,7 @@ Central styling lives under `app/`:
 | `/pages/analysis` | Financial analysis & charts |
 | `/pages/exportinfo` | Data export |
 | `/pages/categories` | Category & currency management |
+| `/pages/notes` | Sticky notes (add / view / edit / delete) |
 | `/pages/stocks` | Stock portfolio (per-trade) |
 | `/pages/investments` | Overview / Stock / Coin / SIP investments |
 
@@ -163,12 +177,13 @@ moneyMgr/
 │   │   ├── header/             # TitleHeader
 │   │   ├── investmentsComp/    # InvestmentsPage, Stock/Coin/SIP, InvestmentFormUi
 │   │   ├── navbar/             # Navbar, SpeedDialNavbar
+│   │   ├── notesComp/          # NotesPage (sticky-note board + editor)
 │   │   ├── stocksComp/         # StocksPage
 │   │   ├── transactions/       # TransactionView, AddTransaction
 │   │   └── Homepage.jsx
 │   ├── context/                # ThemeContext (light/dark mode)
-│   ├── pages/                  # App Router routes (home, analysis, …)
-│   ├── services/                # React Query hooks (categories, currencies, transactions)
+│   ├── pages/                  # App Router routes (home, analysis, notes, …)
+│   ├── services/               # React Query hooks (categories, currencies, transactions, notes)
 │   ├── types/                  # Shared TypeScript interfaces
 │   ├── constant/
 │   ├── themeStyles.js
@@ -186,7 +201,7 @@ moneyMgr/
 
 - Node.js 18+
 - npm
-- Both backend APIs running (see [Environment variables](#environment-variables)) — `moneyMgrBackend` for transactions/categories/currencies, `stock_analysis_backend` for the stock ledger and investment capital
+- Both backend APIs running (see [Environment variables](#environment-variables)) — `moneyMgrBackend` for transactions/categories/currencies/notes, `stock_analysis_backend` for the stock ledger and investment capital
 
 ### Install and run
 
@@ -211,7 +226,7 @@ npm start
 Create a `.env.local` in the project root (not committed). Example:
 
 ```env
-# moneyMgrBackend — transactions, categories, currencies
+# moneyMgrBackend — transactions, categories, currencies, notes
 NEXT_PUBLIC_API_URL=https://your-money-mgr-backend.example.com
 
 # stock_analysis_backend — stock ledger, stock/SIP capital, coin capital
@@ -222,12 +237,12 @@ NEXT_PUBLIC_API_URL_COIN_CAPITAL=https://your-stock-analysis-backend.example.com
 
 | Variable | Backend | Used for |
 |----------|---------|----------|
-| `NEXT_PUBLIC_API_URL` | moneyMgrBackend | Transactions, categories, currencies, analysis, and export report endpoints |
+| `NEXT_PUBLIC_API_URL` | moneyMgrBackend | Transactions, categories, currencies, notes, analysis, and export report endpoints |
 | `NEXT_PUBLIC_API_URL_STOCK` | stock_analysis_backend | Stock portfolio / per-trade page |
 | `NEXT_PUBLIC_API_URL_STOCK_CAPITAL` | stock_analysis_backend | Stock capital investments and SIP |
 | `NEXT_PUBLIC_API_URL_COIN_CAPITAL` | stock_analysis_backend | Coin/crypto investment entries |
 
-`NEXT_PUBLIC_API_URL_STOCK`, `NEXT_PUBLIC_API_URL_STOCK_CAPITAL`, and `NEXT_PUBLIC_API_URL_COIN_CAPITAL` typically all point at the same `stock_analysis_backend` deployment — they're kept as separate variables because each corresponds to a different route prefix. Transaction/category/currency/analysis/export requests are sent with `credentials: "include"`; the investment and stock-portfolio APIs are called without credentials.
+`NEXT_PUBLIC_API_URL_STOCK`, `NEXT_PUBLIC_API_URL_STOCK_CAPITAL`, and `NEXT_PUBLIC_API_URL_COIN_CAPITAL` typically all point at the same `stock_analysis_backend` deployment — they're kept as separate variables because each corresponds to a different route prefix. Transaction/category/currency/analysis/export requests are sent with `credentials: "include"`; notes, investment, and stock-portfolio APIs are called without credentials.
 
 ## Scripts
 
@@ -250,6 +265,14 @@ The UI expects REST-style endpoints such as:
 - `GET /api/data/report?startDate=&endDate=[&category=]`
 - `GET /api/category`, `POST /api/category`, `PUT /api/category/:id`, `DELETE /api/category/:id`
 - `GET /api/currency`, `POST /api/currency`, `PUT /api/currency/:id`, `DELETE /api/currency/:id`
+- Notes (`Content-Type: application/json` on writes; no auth):
+  - `GET /api/allnotes` → `{ message, data: Note[] }` (sorted by date desc)
+  - `GET /api/getNote/:id` → `{ message, data: Note }`
+  - `POST /api/addNote` with `{ title, content }` (optional `date`) → `201` `{ message, data: Note }`
+  - `PUT /api/updateNote/:id` with `{ title?, content?, date? }` → `{ message, data: Note }`
+  - `DELETE /api/deleteNote/:id` → `{ message: "note deleted successfully" }` (no `data` field)
+
+  Note shape: `{ _id, title, content, date, __v }`. The UI always sends both `title` and `content` on create and update.
 
 **`NEXT_PUBLIC_API_URL_STOCK_CAPITAL`**
 - `GET/POST /capital`, `PUT/DELETE /capital/:id`
